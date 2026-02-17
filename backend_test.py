@@ -208,28 +208,115 @@ class LittleEatItalyAPITester:
         self.log_result("Get Contact Messages", success, details)
         return success
 
-    def test_get_settings(self):
-        """Test get site settings"""
+    def test_get_content(self):
+        """Test get site content (CMS system)"""
         try:
-            response = requests.get(f"{self.api_url}/settings", timeout=10)
+            response = requests.get(f"{self.api_url}/content", timeout=10)
             success = response.status_code == 200
             
             if success:
                 data = response.json()
-                required_fields = ['address', 'phone', 'email', 'hours', 'about_text']
-                missing_fields = [field for field in required_fields if field not in data]
-                if missing_fields:
+                # Check for main content sections
+                required_sections = ['hero', 'features', 'menu_page', 'about_page', 'contact_page', 'footer', 'nav']
+                missing_sections = [section for section in required_sections if section not in data]
+                if missing_sections:
                     success = False
-                    details = f"Missing fields in settings: {missing_fields}"
+                    details = f"Missing content sections: {missing_sections}"
                 else:
-                    details = "Settings retrieved successfully"
+                    # Check hero buttons specifically
+                    hero = data.get('hero', {})
+                    buttons = hero.get('buttons', [])
+                    if len(buttons) < 4:
+                        success = False
+                        details = f"Expected 4 hero buttons, found {len(buttons)}"
+                    else:
+                        button_labels = [btn.get('label') for btn in buttons]
+                        expected_labels = ['UBER EATS', 'LIEFERANDO', 'BESTELLEN ZUM ABHOLEN', 'TISCHRESERVIERUNG']
+                        missing_buttons = [label for label in expected_labels if label not in button_labels]
+                        if missing_buttons:
+                            success = False
+                            details = f"Missing expected buttons: {missing_buttons}"
+                        else:
+                            details = f"Content retrieved successfully with {len(buttons)} action buttons"
             else:
                 details = f"Status: {response.status_code}"
         except Exception as e:
             success = False
             details = f"Exception: {str(e)}"
         
-        self.log_result("Get Site Settings", success, details)
+        self.log_result("Get Site Content (CMS)", success, details)
+        return success
+
+    def test_update_hero_content(self):
+        """Test update hero content"""
+        test_hero = {
+            "background_image": "https://images.unsplash.com/photo-1760001484733-61cd5917f5c3?q=85&w=1920&auto=format&fit=crop",
+            "subtitle": "Test subtitle for automated testing - Authentische neapolitanische Pizza",
+            "buttons": [
+                {"id": "uber_eats", "label": "UBER EATS", "url": "https://ubereats.com", "is_active": True, "icon": "utensils"},
+                {"id": "lieferando", "label": "LIEFERANDO", "url": "https://lieferando.de", "is_active": True, "icon": "bike"},
+                {"id": "pickup", "label": "BESTELLEN ZUM ABHOLEN", "url": "#pickup", "is_active": True, "icon": "shopping-bag"},
+                {"id": "reservation", "label": "TISCHRESERVIERUNG", "url": "#reservation", "is_active": True, "icon": "calendar"}
+            ]
+        }
+        
+        try:
+            response = requests.put(
+                f"{self.api_url}/content/hero", 
+                json=test_hero, 
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if 'message' in data and 'hero' in data:
+                    details = f"Hero content updated successfully"
+                else:
+                    success = False
+                    details = "Unexpected response format"
+            else:
+                details = f"Status: {response.status_code}, Response: {response.text[:100]}"
+        except Exception as e:
+            success = False
+            details = f"Exception: {str(e)}"
+        
+        self.log_result("Update Hero Content", success, details)
+        return success
+
+    def test_update_button_links(self):
+        """Test update button links"""
+        test_buttons = [
+            {"id": "uber_eats", "label": "UBER EATS", "url": "https://ubereats.com/test", "is_active": True, "icon": "utensils"},
+            {"id": "lieferando", "label": "LIEFERANDO", "url": "https://lieferando.de/test", "is_active": True, "icon": "bike"},
+            {"id": "pickup", "label": "BESTELLEN ZUM ABHOLEN", "url": "#pickup-test", "is_active": True, "icon": "shopping-bag"},
+            {"id": "reservation", "label": "TISCHRESERVIERUNG", "url": "#reservation-test", "is_active": True, "icon": "calendar"}
+        ]
+        
+        try:
+            response = requests.put(
+                f"{self.api_url}/content/buttons", 
+                json=test_buttons, 
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if 'message' in data and 'buttons' in data:
+                    details = f"Button links updated successfully"
+                else:
+                    success = False
+                    details = "Unexpected response format"
+            else:
+                details = f"Status: {response.status_code}, Response: {response.text[:100]}"
+        except Exception as e:
+            success = False
+            details = f"Exception: {str(e)}"
+        
+        self.log_result("Update Button Links", success, details)
         return success
 
     def run_all_tests(self):
