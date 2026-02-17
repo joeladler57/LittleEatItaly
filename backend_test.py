@@ -600,6 +600,75 @@ class LittleEatItalyAPITester:
         self.log_result("Protected Content Update (Footer)", success, details)
         return success
 
+    def test_update_impressum_content(self):
+        """Test updating impressum content"""
+        if not self.token:
+            self.log_result("Update Impressum Content", False, "No token available")
+            return False
+            
+        test_impressum = {
+            "title": "TEST IMPRESSUM",
+            "content": """**Test Impressum - Angaben gemäß § 5 TMG:**
+
+Little Eat Italy GmbH (TEST)
+Teststraße 123
+12345 Test Stadt
+Deutschland
+
+**Vertreten durch:**
+Test Manager (Geschäftsführer)
+
+**Kontakt:**
+Telefon: +49 (0) 123 456789
+E-Mail: test@littleeatitaly.de
+
+**Registereintrag:**
+Registergericht: Amtsgericht Teststadt
+Registernummer: HRB TEST123
+
+**Umsatzsteuer-ID:**
+DE TEST456789
+
+This is a test impressum content for automated testing purposes."""
+        }
+        
+        try:
+            response = requests.put(
+                f"{self.api_url}/content/impressum",
+                json=test_impressum,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {self.token}'
+                },
+                timeout=10
+            )
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if 'message' in data:
+                    # Verify the update by fetching the content
+                    verify_response = requests.get(f"{self.api_url}/impressum", timeout=10)
+                    if verify_response.status_code == 200:
+                        verify_data = verify_response.json()
+                        if verify_data.get('title') == test_impressum['title']:
+                            details = f"Impressum content updated and verified successfully"
+                        else:
+                            details = f"Impressum updated but verification failed"
+                    else:
+                        details = f"Impressum updated but verification request failed"
+                else:
+                    success = False
+                    details = "Unexpected response format"
+            else:
+                details = f"Status: {response.status_code}, Response: {response.text[:100]}"
+        except Exception as e:
+            success = False
+            details = f"Exception: {str(e)}"
+        
+        self.log_result("Update Impressum Content", success, details)
+        return success
+
     def run_all_tests(self):
         """Run all backend API tests"""
         print(f"🍕 Starting Little Eat Italy API Tests")
