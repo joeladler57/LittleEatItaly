@@ -233,6 +233,11 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* Instagram Feed Section */}
+      {instagramEnabled && instagramPosts.length > 0 && (
+        <InstagramFeed posts={instagramPosts} username={instagramUsername} />
+      )}
+
       {/* CTA Section */}
       <section className="relative py-32 overflow-hidden">
         <div
