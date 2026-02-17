@@ -153,11 +153,56 @@ class LittleEatItalyAPITester:
         return all_passed
 
     def test_contact_form_submission(self):
-        """Test contact form submission"""
+        """Test contact form submission with extended fields"""
+        # Test with all fields including phone and subject
         test_data = {
             "name": "Test Customer",
             "email": "test@littleeatitaly.com",
-            "message": "This is a test message from automated testing."
+            "phone": "+49 123 456789",
+            "subject": "Test Subject",
+            "message": "This is a test message from automated testing with extended fields."
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/contact", 
+                json=test_data, 
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                required_fields = ['id', 'name', 'email', 'message', 'created_at']
+                optional_fields = ['phone', 'subject']  # These should be included if sent
+                missing_fields = [field for field in required_fields if field not in data]
+                if missing_fields:
+                    success = False
+                    details = f"Missing required fields in response: {missing_fields}"
+                else:
+                    # Check if optional fields are preserved
+                    has_phone = data.get('phone') == test_data['phone']
+                    has_subject = data.get('subject') == test_data['subject']
+                    if not (has_phone and has_subject):
+                        details = f"Contact message created but optional fields not preserved correctly. ID: {data.get('id')}"
+                    else:
+                        details = f"Contact message created with all fields. ID: {data.get('id')}"
+            else:
+                details = f"Status: {response.status_code}, Response: {response.text[:100]}"
+        except Exception as e:
+            success = False
+            details = f"Exception: {str(e)}"
+        
+        self.log_result("Contact Form Submission (Extended Fields)", success, details)
+        return success
+    
+    def test_contact_form_minimal(self):
+        """Test contact form submission with minimal fields only"""
+        test_data = {
+            "name": "Test Minimal Customer",
+            "email": "minimal@littleeatitaly.com",
+            "message": "This is a minimal test message."
         }
         
         try:
@@ -175,16 +220,16 @@ class LittleEatItalyAPITester:
                 missing_fields = [field for field in required_fields if field not in data]
                 if missing_fields:
                     success = False
-                    details = f"Missing fields in response: {missing_fields}"
+                    details = f"Missing required fields in response: {missing_fields}"
                 else:
-                    details = f"Contact message created with ID: {data.get('id')}"
+                    details = f"Minimal contact message created with ID: {data.get('id')}"
             else:
                 details = f"Status: {response.status_code}, Response: {response.text[:100]}"
         except Exception as e:
             success = False
             details = f"Exception: {str(e)}"
         
-        self.log_result("Contact Form Submission", success, details)
+        self.log_result("Contact Form Submission (Minimal Fields)", success, details)
         return success
 
     def test_get_contact_messages(self):
