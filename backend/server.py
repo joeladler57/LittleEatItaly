@@ -497,7 +497,7 @@ def get_default_content():
     return {
         "id": "site_content",
         "hero": {
-            "background_image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=85&w=1920&auto=format&fit=crop",
+            "background_image": "https://images.unsplash.com/photo-1760001484733-61cd5917f5c3?q=85&w=1920&auto=format&fit=crop",
             "subtitle": "Authentische neapolitanische Pizza mit urbaner Seele. Holzofenperfektion aus den Straßen von Neapel.",
             "buttons": [
                 {"id": "uber_eats", "label": "UBER EATS", "url": "#", "is_active": True, "icon": "utensils"},
@@ -513,13 +513,6 @@ def get_default_content():
                 {"icon": "map-pin", "title": "IMPORTIERT", "description": "San Marzano Tomaten & italienischer Mozzarella"}
             ]
         },
-        "menu_page": {
-            "title": "UNSERE",
-            "title_highlight": "SPEISEKARTE",
-            "subtitle": "Von klassischen neapolitanischen Traditionen bis zu unseren einzigartigen urbanen Kreationen",
-            "bottom_title": "KANNST DICH NICHT ENTSCHEIDEN?",
-            "bottom_text": "Unsere Favoriten sind die Margherita für Puristen, Diavola für Schärfe-Fans und Funghi Porcini für Abenteurer."
-        },
         "about_page": {
             "hero_title": "UNSERE",
             "hero_title_highlight": "GESCHICHTE",
@@ -527,9 +520,9 @@ def get_default_content():
             "story_title": "GEBOREN IN",
             "story_title_highlight": "NEAPEL",
             "story_paragraphs": [
-                "Little Eat Italy begann mit einem einfachen Traum: den authentischen Geschmack der neapolitanischen Pizza auf die urbanen Straßen zu bringen. Unser Gründer, Marco Rossi, wuchs auf und sah seiner Großmutter beim Teigkneten in ihrer Familienküche in Neapel zu.",
-                "2015 eröffnete er unser erstes Lokal in einer umgebauten Garage, ausgestattet mit nichts als einem aus Italien importierten Holzofen und Rezepten, die über vier Generationen weitergegeben wurden. Die mit Graffiti bedeckten Wände waren nicht Teil des ursprünglichen Plans – sie kamen von lokalen Straßenkünstlern, die für ihre Pizzen mit Kunst bezahlten.",
-                "Heute erzählen diese Wände unsere Geschichte. Wir sind nicht nur eine Pizzeria – wir sind eine Leinwand für urbane Kultur, ein Treffpunkt für Träumer und vor allem ein Ort, an dem jede Pizza ein Meisterwerk ist."
+                "Little Eat Italy begann mit einem einfachen Traum: den authentischen Geschmack der neapolitanischen Pizza auf die urbanen Straßen zu bringen.",
+                "2015 eröffnete er unser erstes Lokal in einer umgebauten Garage, ausgestattet mit nichts als einem aus Italien importierten Holzofen und Rezepten, die über vier Generationen weitergegeben wurden.",
+                "Heute erzählen diese Wände unsere Geschichte. Wir sind nicht nur eine Pizzeria – wir sind eine Leinwand für urbane Kultur."
             ],
             "stats": [
                 {"number": "2015", "label": "GEGRÜNDET"},
@@ -540,9 +533,9 @@ def get_default_content():
             "philosophy_title": "UNSERE",
             "philosophy_title_highlight": "PHILOSOPHIE",
             "philosophy_items": [
-                {"title": "AUTHENTIZITÄT", "description": "Jede Zutat stammt aus Italien. San Marzano Tomaten, Büffelmozzarella, 00-Mehl – keine Kompromisse."},
-                {"title": "HANDWERKSKUNST", "description": "Unser Teig fermentiert mindestens 48 Stunden. Unser Ofen brennt bei 480°C. Das ist kein Fast Food – das ist Kunst."},
-                {"title": "GEMEINSCHAFT", "description": "Wir glauben, dass Pizza Menschen zusammenbringt. Unsere Türen stehen allen offen – Künstlern, Musikern, Familien, Träumern."}
+                {"title": "AUTHENTIZITÄT", "description": "Jede Zutat stammt aus Italien."},
+                {"title": "HANDWERKSKUNST", "description": "Unser Teig fermentiert mindestens 48 Stunden."},
+                {"title": "GEMEINSCHAFT", "description": "Wir glauben, dass Pizza Menschen zusammenbringt."}
             ],
             "quote_text": "PIZZA IST NICHT NUR ESSEN. ES IST EINE",
             "quote_highlight": "SPRACHE",
@@ -572,11 +565,19 @@ def get_default_content():
             "form_name_placeholder": "Gib deinen Namen ein",
             "form_email_label": "DEINE E-MAIL",
             "form_email_placeholder": "Gib deine E-Mail ein",
+            "form_phone_label": "DEINE TELEFONNUMMER",
+            "form_phone_placeholder": "Gib deine Telefonnummer ein",
+            "form_phone_enabled": True,
+            "form_subject_label": "BETREFF",
+            "form_subject_placeholder": "Worum geht es?",
+            "form_subject_enabled": True,
             "form_message_label": "DEINE NACHRICHT",
             "form_message_placeholder": "Was liegt dir auf dem Herzen?",
             "form_submit_text": "NACHRICHT SENDEN",
-            "form_note": "Wir antworten normalerweise innerhalb von 24 Stunden. Für dringende Angelegenheiten ruf uns an oder komm einfach vorbei – die Pizza ist immer heiß!"
+            "form_success_message": "Nachricht gesendet! Wir melden uns bald bei dir.",
+            "form_note": "Wir antworten normalerweise innerhalb von 24 Stunden."
         },
+        "impressum": ImpressumContent().model_dump(),
         "footer": {
             "marquee_text": "AUTHENTISCH NEAPOLITANISCH • STREET VIBES • LITTLE EAT ITALY • HOLZOFEN • HANDGEMACHTER TEIG • ",
             "brand_description": "Geboren auf den Straßen von Neapel, aufgewachsen im Herzen der Stadt. Authentische neapolitanische Pizza mit urbanem Twist.",
@@ -591,9 +592,9 @@ def get_default_content():
         "nav": {
             "links": [
                 {"name": "START", "path": "/"},
-                {"name": "SPEISEKARTE", "path": "/menu"},
                 {"name": "ÜBER UNS", "path": "/about"},
-                {"name": "KONTAKT", "path": "/contact"}
+                {"name": "KONTAKT", "path": "/contact"},
+                {"name": "IMPRESSUM", "path": "/impressum"}
             ]
         }
     }
