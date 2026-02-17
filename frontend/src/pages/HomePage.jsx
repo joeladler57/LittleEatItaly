@@ -166,37 +166,6 @@ const HomePage = () => {
             </motion.div>
           )}
 
-          {/* Navigation Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.2, duration: 0.5 }}
-            className="mt-8 flex flex-col sm:flex-row gap-4 justify-center"
-          >
-            <Link to="/about">
-              <motion.div whileHover={{ scale: 1.05, skewX: -3 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  data-testid="about-btn"
-                  className="bg-transparent border-2 border-pizza-red text-pizza-red hover:bg-pizza-red hover:text-pizza-white font-anton text-lg tracking-widest px-8 py-6 rounded-none"
-                >
-                  ÜBER UNS
-                  <ChevronRight className="ml-2" />
-                </Button>
-              </motion.div>
-            </Link>
-            <Link to="/contact">
-              <motion.div whileHover={{ scale: 1.05, skewX: 3 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  data-testid="find-us-btn"
-                  variant="outline"
-                  className="border-2 border-pizza-white/50 text-pizza-white/80 hover:bg-pizza-white hover:text-pizza-black font-anton text-lg tracking-widest px-8 py-6 rounded-none"
-                >
-                  KONTAKT
-                </Button>
-              </motion.div>
-            </Link>
-          </motion.div>
-
           {/* Floating drips decoration */}
           <div className="absolute bottom-20 left-1/4 hidden lg:block">
             <motion.div
