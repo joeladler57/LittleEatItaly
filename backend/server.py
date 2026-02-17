@@ -240,6 +240,40 @@ class SiteContentUpdate(BaseModel):
 async def root():
     return {"message": "Little Eat Italy API", "status": "running"}
 
+# ============ AUTH ENDPOINTS ============
+
+@api_router.post("/auth/login", response_model=TokenResponse)
+async def admin_login(credentials: AdminLogin):
+    admin = await get_or_create_admin()
+    
+    if credentials.username != admin["username"]:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if not verify_password(credentials.password, admin["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    token = create_token(credentials.username)
+    return TokenResponse(access_token=token)
+
+@api_router.get("/auth/verify")
+async def verify_admin(username: str = Depends(verify_token)):
+    return {"authenticated": True, "username": username}
+
+@api_router.post("/auth/change-password")
+async def change_admin_password(data: ChangePassword, username: str = Depends(verify_token)):
+    admin = await get_or_create_admin()
+    
+    if not verify_password(data.current_password, admin["password_hash"]):
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+    
+    new_hash = hash_password(data.new_password)
+    await db.admin_credentials.update_one(
+        {"id": "admin_credentials"},
+        {"$set": {"password_hash": new_hash}}
+    )
+    
+    return {"message": "Password changed successfully"}
+
 # Menu endpoints
 @api_router.get("/menu", response_model=List[MenuItem])
 async def get_menu():
