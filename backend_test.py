@@ -10,6 +10,7 @@ class LittleEatItalyAPITester:
         self.tests_run = 0
         self.tests_passed = 0
         self.failures = []
+        self.token = None
 
     def log_result(self, test_name, success, details=""):
         """Log test results"""
