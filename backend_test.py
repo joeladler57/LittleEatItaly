@@ -342,8 +342,10 @@ class LittleEatItalyAPITester:
         self.test_contact_form_submission()
         self.test_get_contact_messages()
         
-        # Test settings
-        self.test_get_settings()
+        # Test CMS content endpoints
+        self.test_get_content()
+        self.test_update_hero_content()
+        self.test_update_button_links()
         
         # Print summary
         print("\n" + "=" * 60)
