@@ -301,6 +301,36 @@ class SiteContentUpdate(BaseModel):
 async def root():
     return {"message": "Little Eat Italy API", "status": "running"}
 
+# ============ GLOBALFOOD MENU API ============
+
+@api_router.get("/globalfood/menu")
+async def get_globalfood_menu():
+    """Fetch menu from GlobalFood API"""
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(
+                GLOBALFOOD_API_URL,
+                headers={
+                    "Authorization": GLOBALFOOD_API_KEY,
+                    "Accept": "application/json",
+                    "Glf-Api-Version": "2"
+                }
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"GlobalFood API error: {response.status_code} - {response.text}")
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"GlobalFood API error: {response.text}"
+                )
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="GlobalFood API timeout")
+    except httpx.RequestError as e:
+        logger.error(f"GlobalFood API request error: {str(e)}")
+        raise HTTPException(status_code=502, detail=f"GlobalFood API connection error: {str(e)}")
+
 # ============ AUTH ENDPOINTS ============
 
 @api_router.post("/auth/login", response_model=TokenResponse)
