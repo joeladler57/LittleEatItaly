@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { API } from "../App";
 import DripBorder from "../components/DripBorder";
-import MenuCard from "../components/MenuCard";
 import { Button } from "../components/ui/button";
 import { ChevronRight, Flame, Clock, MapPin, Utensils, Bike, ShoppingBag, CalendarDays, ExternalLink } from "lucide-react";
 
@@ -35,19 +34,14 @@ const floatAnimation = {
 };
 
 const HomePage = () => {
-  const [featuredItems, setFeaturedItems] = useState([]);
   const [content, setContent] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [featuredRes, contentRes] = await Promise.all([
-          axios.get(`${API}/menu/featured`),
-          axios.get(`${API}/content`)
-        ]);
-        setFeaturedItems(featuredRes.data);
-        setContent(contentRes.data);
+        const response = await axios.get(`${API}/content`);
+        setContent(response.data);
       } catch (e) {
         console.error("Failed to fetch data:", e);
       } finally {
@@ -179,13 +173,13 @@ const HomePage = () => {
             transition={{ delay: 1.2, duration: 0.5 }}
             className="mt-8 flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Link to="/menu">
+            <Link to="/about">
               <motion.div whileHover={{ scale: 1.05, skewX: -3 }} whileTap={{ scale: 0.95 }}>
                 <Button
-                  data-testid="view-menu-btn"
+                  data-testid="about-btn"
                   className="bg-transparent border-2 border-pizza-red text-pizza-red hover:bg-pizza-red hover:text-pizza-white font-anton text-lg tracking-widest px-8 py-6 rounded-none"
                 >
-                  SPEISEKARTE
+                  ÜBER UNS
                   <ChevronRight className="ml-2" />
                 </Button>
               </motion.div>
@@ -197,7 +191,7 @@ const HomePage = () => {
                   variant="outline"
                   className="border-2 border-pizza-white/50 text-pizza-white/80 hover:bg-pizza-white hover:text-pizza-black font-anton text-lg tracking-widest px-8 py-6 rounded-none"
                 >
-                  FINDE UNS
+                  KONTAKT
                 </Button>
               </motion.div>
             </Link>
@@ -260,70 +254,6 @@ const HomePage = () => {
               );
             })}
           </div>
-        </div>
-      </section>
-
-      {/* Featured Menu Section */}
-      <section className="py-24 bg-pizza-dark/30 relative overflow-hidden">
-        <div className="absolute top-0 left-10 w-2 h-32 bg-pizza-red/20 rounded-b-full" />
-        <div className="absolute top-0 right-20 w-3 h-48 bg-pizza-white/10 rounded-b-full" />
-        <div className="absolute top-0 left-1/3 w-1 h-24 bg-pizza-red/30 rounded-b-full" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <motion.h2
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="font-anton text-4xl sm:text-5xl lg:text-6xl tracking-wider"
-            >
-              <span className="text-pizza-white">UNSERE</span>{" "}
-              <motion.span
-                className="text-pizza-red inline-block"
-                animate={{ 
-                  textShadow: ["0 0 0px #FF1F1F", "0 0 20px #FF1F1F", "0 0 0px #FF1F1F"],
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                HIGHLIGHTS
-              </motion.span>
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
-              className="font-mono text-base text-neutral-300 mt-4 max-w-lg mx-auto"
-            >
-              Handverlesene Favoriten aus unserer Küche auf deinen Tisch
-            </motion.p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredItems.map((item, index) => (
-              <MenuCard key={item.id} item={item} index={index} />
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mt-12"
-          >
-            <Link to="/menu">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  data-testid="see-full-menu-btn"
-                  className="bg-transparent border-2 border-pizza-red text-pizza-red hover:bg-pizza-red hover:text-pizza-white font-anton text-lg tracking-widest px-8 py-6 rounded-none transition-all duration-300"
-                >
-                  KOMPLETTE SPEISEKARTE
-                  <ChevronRight className="ml-2" />
-                </Button>
-              </motion.div>
-            </Link>
-          </motion.div>
         </div>
       </section>
 
