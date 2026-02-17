@@ -83,22 +83,42 @@ const Footer = () => {
               Authentische neapolitanische Pizza mit urbanem Twist.
             </p>
             <div className="flex space-x-4 mt-6">
-              <motion.a
-                href="#"
-                data-testid="social-instagram"
-                className="p-2 border border-pizza-dark hover:border-pizza-red hover:text-pizza-red transition-colors"
-                whileHover={{ scale: 1.2, rotate: 5 }}
-              >
-                <Instagram size={20} />
-              </motion.a>
-              <motion.a
-                href="#"
-                data-testid="social-facebook"
-                className="p-2 border border-pizza-dark hover:border-pizza-red hover:text-pizza-red transition-colors"
-                whileHover={{ scale: 1.2, rotate: -5 }}
-              >
-                <Facebook size={20} />
-              </motion.a>
+              {socialLinks.filter(link => link.is_active && link.url).map((link) => {
+                const IconComponent = getSocialIcon(link.platform);
+                return (
+                  <motion.a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid={`social-${link.platform}`}
+                    className="p-2 border border-pizza-dark hover:border-pizza-red hover:text-pizza-red transition-colors"
+                    whileHover={{ scale: 1.2, rotate: 5 }}
+                  >
+                    <IconComponent size={20} />
+                  </motion.a>
+                );
+              })}
+              {socialLinks.filter(link => link.is_active && link.url).length === 0 && (
+                <>
+                  <motion.a
+                    href="#"
+                    data-testid="social-instagram"
+                    className="p-2 border border-pizza-dark hover:border-pizza-red hover:text-pizza-red transition-colors"
+                    whileHover={{ scale: 1.2, rotate: 5 }}
+                  >
+                    <Instagram size={20} />
+                  </motion.a>
+                  <motion.a
+                    href="#"
+                    data-testid="social-facebook"
+                    className="p-2 border border-pizza-dark hover:border-pizza-red hover:text-pizza-red transition-colors"
+                    whileHover={{ scale: 1.2, rotate: -5 }}
+                  >
+                    <Facebook size={20} />
+                  </motion.a>
+                </>
+              )}
             </div>
           </div>
 
