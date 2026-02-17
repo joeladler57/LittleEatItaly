@@ -477,6 +477,22 @@ async def update_footer_content(footer: FooterContent):
     )
     return {"message": "Footer content updated"}
 
+@api_router.put("/content/impressum")
+async def update_impressum_content(impressum: ImpressumContent):
+    await db.site_content.update_one(
+        {"id": "site_content"},
+        {"$set": {"impressum": impressum.model_dump()}},
+        upsert=True
+    )
+    return {"message": "Impressum content updated"}
+
+@api_router.get("/impressum")
+async def get_impressum():
+    content = await db.site_content.find_one({"id": "site_content"}, {"_id": 0})
+    if content and "impressum" in content:
+        return content["impressum"]
+    return ImpressumContent().model_dump()
+
 def get_default_content():
     return {
         "id": "site_content",
