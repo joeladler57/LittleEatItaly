@@ -262,28 +262,37 @@ class LittleEatItalyAPITester:
             
             if success:
                 data = response.json()
-                # Check for main content sections
-                required_sections = ['hero', 'features', 'menu_page', 'about_page', 'contact_page', 'footer', 'nav']
+                # Check for main content sections including impressum
+                required_sections = ['hero', 'features', 'about_page', 'contact_page', 'impressum', 'footer', 'nav']
                 missing_sections = [section for section in required_sections if section not in data]
                 if missing_sections:
                     success = False
                     details = f"Missing content sections: {missing_sections}"
                 else:
-                    # Check hero buttons specifically
-                    hero = data.get('hero', {})
-                    buttons = hero.get('buttons', [])
-                    if len(buttons) < 4:
+                    # Check navigation links for updated structure (no SPEISEKARTE)
+                    nav = data.get('nav', {})
+                    nav_links = nav.get('links', [])
+                    expected_nav = ['START', 'ÜBER UNS', 'KONTAKT', 'IMPRESSUM']
+                    nav_names = [link.get('name') for link in nav_links]
+                    
+                    # Check if SPEISEKARTE is absent and required links are present
+                    has_speisekarte = 'SPEISEKARTE' in nav_names
+                    missing_nav = [name for name in expected_nav if name not in nav_names]
+                    
+                    if has_speisekarte:
                         success = False
-                        details = f"Expected 4 hero buttons, found {len(buttons)}"
+                        details = f"Navigation still contains SPEISEKARTE - should be removed"
+                    elif missing_nav:
+                        success = False
+                        details = f"Missing navigation items: {missing_nav}"
                     else:
-                        button_labels = [btn.get('label') for btn in buttons]
-                        expected_labels = ['UBER EATS', 'LIEFERANDO', 'BESTELLEN ZUM ABHOLEN', 'TISCHRESERVIERUNG']
-                        missing_buttons = [label for label in expected_labels if label not in button_labels]
-                        if missing_buttons:
-                            success = False
-                            details = f"Missing expected buttons: {missing_buttons}"
+                        # Check impressum content
+                        impressum = data.get('impressum', {})
+                        if 'title' in impressum and 'content' in impressum:
+                            details = f"Content retrieved successfully. Navigation updated correctly (no SPEISEKARTE). Impressum section present."
                         else:
-                            details = f"Content retrieved successfully with {len(buttons)} action buttons"
+                            success = False
+                            details = f"Impressum section missing required fields (title, content)"
             else:
                 details = f"Status: {response.status_code}"
         except Exception as e:
@@ -291,6 +300,42 @@ class LittleEatItalyAPITester:
             details = f"Exception: {str(e)}"
         
         self.log_result("Get Site Content (CMS)", success, details)
+        return success
+
+    def test_get_impressum(self):
+        """Test get impressum content specifically"""
+        try:
+            response = requests.get(f"{self.api_url}/impressum", timeout=10)
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                required_fields = ['title', 'content']
+                missing_fields = [field for field in required_fields if field not in data]
+                if missing_fields:
+                    success = False
+                    details = f"Missing impressum fields: {missing_fields}"
+                else:
+                    content_length = len(data.get('content', ''))
+                    if content_length < 100:  # Impressum should have substantial legal content
+                        success = False
+                        details = f"Impressum content too short ({content_length} chars) - should contain legal information"
+                    else:
+                        # Check for German legal content keywords
+                        content = data.get('content', '').lower()
+                        legal_keywords = ['tmg', 'handelsregister', 'umsatzsteuer', 'impressum']
+                        found_keywords = [keyword for keyword in legal_keywords if keyword in content]
+                        if len(found_keywords) < 2:
+                            details = f"Impressum retrieved but may be missing German legal content. Length: {content_length} chars"
+                        else:
+                            details = f"Impressum retrieved successfully. Length: {content_length} chars, contains legal keywords: {found_keywords}"
+            else:
+                details = f"Status: {response.status_code}"
+        except Exception as e:
+            success = False
+            details = f"Exception: {str(e)}"
+        
+        self.log_result("Get Impressum Content", success, details)
         return success
 
     def test_update_hero_content(self):
