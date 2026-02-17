@@ -1,8 +1,5 @@
 # Little Eat Italy - PRD
 
-## Original Problem Statement
-Build a modern website for "Little Eat Italy" Neapolitan pizzeria with urban graffiti style. German language. Password-protected admin dashboard for content management.
-
 ## Admin Access
 - **URL**: /admin
 - **Username**: admin
@@ -10,36 +7,48 @@ Build a modern website for "Little Eat Italy" Neapolitan pizzeria with urban gra
 
 ## What's Been Implemented (Feb 17, 2026)
 
-### Core Website
-- ✅ Full-stack app (React + FastAPI + MongoDB)
-- ✅ German language throughout
-- ✅ Urban graffiti design with red/black/white palette
-- ✅ Custom logos (chef icon + drippy text)
-- ✅ Maradona graffiti hero background
-- ✅ 4 Action buttons (Uber Eats, Lieferando, Abholen, Tischreservierung)
+### Pages
+- ✅ **Startseite**: Hero mit Maradona Graffiti, Action-Buttons, Features
+- ✅ **Über Uns**: Geschichte, Philosophie, Stats
+- ✅ **Kontakt**: Erweitertes Formular + Kontaktinfos + Karte
+- ✅ **Impressum**: Deutsche Rechtsstandards (§5 TMG, etc.)
+- ❌ **Speisekarte**: Entfernt wie gewünscht
 
-### Admin Dashboard (NEW)
-- ✅ Password-protected login (JWT authentication)
-- ✅ Small "Admin" link in footer
-- ✅ **STARTSEITE Tab**: Edit hero background & action button URLs
-- ✅ **KONTAKT Tab**: Edit address, phone, email, opening hours
-- ✅ **FOOTER Tab**: Edit marquee text, description, copyright
-- ✅ **EINSTELLUNGEN Tab**: Change admin password
-- ✅ Logout functionality
+### Kontaktformular-Felder
+- Name (Pflicht)
+- E-Mail (Pflicht)
+- Telefonnummer (optional, ein/ausschaltbar)
+- Betreff (optional, ein/ausschaltbar)
+- Nachricht (Pflicht)
+
+### Admin Dashboard Tabs
+1. **STARTSEITE**: Hintergrundbild, Untertitel, 4 Action-Buttons (URLs)
+2. **KONTAKT**: Adresse, Telefon, E-Mail, Öffnungszeiten, Formular-Einstellungen
+3. **IMPRESSUM**: Titel + Markdown-Inhalt vollständig editierbar
+4. **FOOTER**: Lauftext, Beschreibung, Copyright
+5. **EINSTELLUNGEN**: Passwort ändern
 
 ### API Endpoints
-```
-POST /api/auth/login        - Admin login
-GET  /api/auth/verify       - Verify JWT token
-POST /api/auth/change-password - Change password
+```bash
+# Content
+GET  /api/content              # Alle Inhalte
+PUT  /api/content/hero         # Hero-Bereich
+PUT  /api/content/contact      # Kontaktseite
+PUT  /api/content/impressum    # Impressum (Markdown)
+PUT  /api/content/footer       # Footer
+GET  /api/impressum            # Nur Impressum
 
-PUT  /api/content/hero      - Update hero section
-PUT  /api/content/contact   - Update contact info
-PUT  /api/content/footer    - Update footer
-GET  /api/content           - Get all content
+# Auth
+POST /api/auth/login           # Admin Login
+GET  /api/auth/verify          # Token prüfen
+POST /api/auth/change-password # Passwort ändern
+
+# Kontakt
+POST /api/contact              # Nachricht senden
+GET  /api/contact              # Alle Nachrichten
 ```
 
 ## Next Tasks
-1. Add menu item management to admin dashboard
-2. Add image upload functionality
-3. Connect real delivery service URLs
+1. E-Mail-Benachrichtigung bei neuen Kontaktanfragen
+2. Bildergalerie hinzufügen
+3. Social Media Links im Footer editierbar machen
