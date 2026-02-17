@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { API } from "../App";
@@ -15,18 +15,42 @@ const ContactPage = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
+    subject: "",
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [content, setContent] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const response = await axios.get(`${API}/content`);
+        setContent(response.data?.contact_page);
+      } catch (e) {
+        console.error("Failed to fetch content:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchContent();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      await axios.post(`${API}/contact`, formData);
-      toast.success("Nachricht gesendet! Wir melden uns bald bei dir.");
-      setFormData({ name: "", email: "", message: "" });
+      await axios.post(`${API}/contact`, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        subject: formData.subject,
+        message: formData.message,
+      });
+      toast.success(content?.form_success_message || "Nachricht gesendet! Wir melden uns bald bei dir.");
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
     } catch (error) {
       toast.error("Nachricht konnte nicht gesendet werden. Bitte versuche es erneut.");
     } finally {
@@ -38,7 +62,9 @@ const ContactPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const hours = [
+  // Default values
+  const c = content || {};
+  const hours = c.hours || [
     { day: "Montag - Donnerstag", time: "11:00 - 22:00" },
     { day: "Freitag", time: "11:00 - 23:00" },
     { day: "Samstag", time: "12:00 - 23:00" },
@@ -92,7 +118,7 @@ const ContactPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="font-anton text-5xl sm:text-6xl lg:text-7xl tracking-wider"
           >
-            <span className="text-pizza-white">KONTAKTIERE</span>{" "}
+            <span className="text-pizza-white">{c.hero_title || "KONTAKTIERE"}</span>{" "}
             <motion.span
               className="text-pizza-red inline-block"
               animate={{ 
@@ -100,7 +126,7 @@ const ContactPage = () => {
               }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              UNS
+              {c.hero_title_highlight || "UNS"}
             </motion.span>
           </motion.h1>
           <motion.p
@@ -109,7 +135,7 @@ const ContactPage = () => {
             transition={{ delay: 0.2 }}
             className="font-mono text-base sm:text-lg text-neutral-200 mt-4 max-w-xl mx-auto"
           >
-            Fragen, Feedback oder einfach nur Ciao sagen? Wir hören zu.
+            {c.hero_subtitle || "Fragen, Feedback oder einfach nur Ciao sagen? Wir hören zu."}
           </motion.p>
         </div>
       </section>
@@ -151,11 +177,11 @@ const ContactPage = () => {
                   </motion.div>
                   <div>
                     <h3 className="font-anton text-lg tracking-wider text-pizza-white mb-1">
-                      ADRESSE
+                      {c.address_title || "ADRESSE"}
                     </h3>
                     <p className="font-mono text-sm text-neutral-200">
-                      Pizzastraße 123<br />
-                      Little Italy, 10001
+                      {c.address_line1 || "Pizzastraße 123"}<br />
+                      {c.address_line2 || "Little Italy, 10001"}
                     </p>
                   </div>
                 </motion.div>
@@ -177,10 +203,10 @@ const ContactPage = () => {
                   </motion.div>
                   <div>
                     <h3 className="font-anton text-lg tracking-wider text-pizza-white mb-1">
-                      TELEFON
+                      {c.phone_title || "TELEFON"}
                     </h3>
                     <p className="font-mono text-sm text-neutral-200">
-                      +49 (0) 123 456789
+                      {c.phone || "+49 (0) 123 456789"}
                     </p>
                   </div>
                 </motion.div>
@@ -202,10 +228,10 @@ const ContactPage = () => {
                   </motion.div>
                   <div>
                     <h3 className="font-anton text-lg tracking-wider text-pizza-white mb-1">
-                      E-MAIL
+                      {c.email_title || "E-MAIL"}
                     </h3>
                     <p className="font-mono text-sm text-neutral-200">
-                      ciao@littleeatitaly.de
+                      {c.email || "ciao@littleeatitaly.de"}
                     </p>
                   </div>
                 </motion.div>
@@ -226,7 +252,7 @@ const ContactPage = () => {
                   </motion.div>
                   <div>
                     <h3 className="font-anton text-lg tracking-wider text-pizza-white mb-3">
-                      ÖFFNUNGSZEITEN
+                      {c.hours_title || "ÖFFNUNGSZEITEN"}
                     </h3>
                     <div className="space-y-2">
                       {hours.map((item, index) => (
@@ -247,7 +273,7 @@ const ContactPage = () => {
                 </motion.div>
               </div>
 
-              {/* Map Placeholder */}
+              {/* Map */}
               <motion.div
                 className="mt-12 relative overflow-hidden border border-pizza-dark"
                 initial={{ opacity: 0, y: 30 }}
@@ -275,10 +301,11 @@ const ContactPage = () => {
               transition={{ duration: 0.6 }}
             >
               <h2 className="font-anton text-3xl sm:text-4xl tracking-wider text-pizza-white mb-8">
-                SCHREIBE EINE <span className="text-pizza-red">NACHRICHT</span>
+                {c.form_title || "SCHREIBE EINE"} <span className="text-pizza-red">{c.form_title_highlight || "NACHRICHT"}</span>
               </h2>
 
-              <form onSubmit={handleSubmit} className="space-y-6" data-testid="contact-form">
+              <form onSubmit={handleSubmit} className="space-y-5" data-testid="contact-form">
+                {/* Name */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -286,7 +313,7 @@ const ContactPage = () => {
                   transition={{ delay: 0.1 }}
                 >
                   <Label htmlFor="name" className="font-mono text-sm text-neutral-300 mb-2 block">
-                    DEIN NAME
+                    {c.form_name_label || "DEIN NAME"} *
                   </Label>
                   <Input
                     id="name"
@@ -297,18 +324,19 @@ const ContactPage = () => {
                     required
                     data-testid="contact-name-input"
                     className="bg-pizza-dark/50 border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none h-12"
-                    placeholder="Gib deinen Namen ein"
+                    placeholder={c.form_name_placeholder || "Gib deinen Namen ein"}
                   />
                 </motion.div>
 
+                {/* Email */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: 0.2 }}
+                  transition={{ delay: 0.15 }}
                 >
                   <Label htmlFor="email" className="font-mono text-sm text-neutral-300 mb-2 block">
-                    DEINE E-MAIL
+                    {c.form_email_label || "DEINE E-MAIL"} *
                   </Label>
                   <Input
                     id="email"
@@ -319,10 +347,59 @@ const ContactPage = () => {
                     required
                     data-testid="contact-email-input"
                     className="bg-pizza-dark/50 border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none h-12"
-                    placeholder="Gib deine E-Mail ein"
+                    placeholder={c.form_email_placeholder || "Gib deine E-Mail ein"}
                   />
                 </motion.div>
 
+                {/* Phone - Conditional */}
+                {(c.form_phone_enabled !== false) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <Label htmlFor="phone" className="font-mono text-sm text-neutral-300 mb-2 block">
+                      {c.form_phone_label || "DEINE TELEFONNUMMER"}
+                    </Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      data-testid="contact-phone-input"
+                      className="bg-pizza-dark/50 border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none h-12"
+                      placeholder={c.form_phone_placeholder || "Gib deine Telefonnummer ein"}
+                    />
+                  </motion.div>
+                )}
+
+                {/* Subject - Conditional */}
+                {(c.form_subject_enabled !== false) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.25 }}
+                  >
+                    <Label htmlFor="subject" className="font-mono text-sm text-neutral-300 mb-2 block">
+                      {c.form_subject_label || "BETREFF"}
+                    </Label>
+                    <Input
+                      id="subject"
+                      name="subject"
+                      type="text"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      data-testid="contact-subject-input"
+                      className="bg-pizza-dark/50 border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none h-12"
+                      placeholder={c.form_subject_placeholder || "Worum geht es?"}
+                    />
+                  </motion.div>
+                )}
+
+                {/* Message */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -330,7 +407,7 @@ const ContactPage = () => {
                   transition={{ delay: 0.3 }}
                 >
                   <Label htmlFor="message" className="font-mono text-sm text-neutral-300 mb-2 block">
-                    DEINE NACHRICHT
+                    {c.form_message_label || "DEINE NACHRICHT"} *
                   </Label>
                   <Textarea
                     id="message"
@@ -340,15 +417,16 @@ const ContactPage = () => {
                     required
                     data-testid="contact-message-input"
                     className="bg-pizza-dark/50 border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none min-h-[150px] resize-none"
-                    placeholder="Was liegt dir auf dem Herzen?"
+                    placeholder={c.form_message_placeholder || "Was liegt dir auf dem Herzen?"}
                   />
                 </motion.div>
 
+                {/* Submit */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: 0.35 }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -367,7 +445,7 @@ const ContactPage = () => {
                       </motion.span>
                     ) : (
                       <>
-                        NACHRICHT SENDEN
+                        {c.form_submit_text || "NACHRICHT SENDEN"}
                         <Send className="ml-2 w-5 h-5" />
                       </>
                     )}
@@ -375,16 +453,16 @@ const ContactPage = () => {
                 </motion.div>
               </form>
 
-              {/* Additional Info */}
+              {/* Note */}
               <motion.div
-                className="mt-12 p-6 border border-pizza-dark"
+                className="mt-8 p-6 border border-pizza-dark"
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: 0.5 }}
+                transition={{ delay: 0.4 }}
               >
                 <p className="font-mono text-sm text-neutral-300">
-                  <span className="text-pizza-red">*</span> Wir antworten normalerweise innerhalb von 24 Stunden. Für dringende Angelegenheiten ruf uns an oder komm einfach vorbei – die Pizza ist immer heiß!
+                  <span className="text-pizza-red">*</span> {c.form_note || "Wir antworten normalerweise innerhalb von 24 Stunden."}
                 </p>
               </motion.div>
             </motion.div>
