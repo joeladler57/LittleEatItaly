@@ -398,6 +398,179 @@ const AdminPage = () => {
               </div>
             </TabsContent>
 
+            {/* Social Media Section */}
+            <TabsContent value="social" className="space-y-6">
+              <div className="p-6 border border-pizza-dark bg-pizza-dark/20">
+                <h2 className="font-anton text-xl tracking-wider text-pizza-white mb-6 flex items-center gap-2">
+                  <Share2 className="w-5 h-5 text-pizza-red" />SOCIAL MEDIA LINKS
+                </h2>
+                <div className="space-y-4">
+                  {(content.footer?.social_links || [
+                    { id: "instagram", platform: "instagram", url: "", is_active: true },
+                    { id: "facebook", platform: "facebook", url: "", is_active: true },
+                    { id: "tiktok", platform: "tiktok", url: "", is_active: false },
+                  ]).map((link, index) => (
+                    <div key={link.id} className="p-4 border border-pizza-dark bg-pizza-black/50">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-anton text-sm text-pizza-red uppercase flex items-center gap-2">
+                          {link.platform === "instagram" && <Instagram className="w-4 h-4" />}
+                          {link.platform === "facebook" && <Facebook className="w-4 h-4" />}
+                          {link.platform === "tiktok" && <span className="text-xs">TikTok</span>}
+                          {link.platform}
+                        </span>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <span className="font-mono text-xs text-neutral-400">Aktiv</span>
+                          <input type="checkbox" checked={link.is_active}
+                            onChange={(e) => {
+                              const newLinks = [...(content.footer?.social_links || [])];
+                              newLinks[index] = { ...newLinks[index], is_active: e.target.checked };
+                              setContent({ ...content, footer: { ...content.footer, social_links: newLinks } });
+                            }} className="w-4 h-4 accent-pizza-red" />
+                        </label>
+                      </div>
+                      <Input value={link.url}
+                        onChange={(e) => {
+                          const newLinks = [...(content.footer?.social_links || [])];
+                          newLinks[index] = { ...newLinks[index], url: e.target.value };
+                          setContent({ ...content, footer: { ...content.footer, social_links: newLinks } });
+                        }}
+                        placeholder={`https://${link.platform}.com/littleeatitaly`}
+                        className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none text-sm" />
+                    </div>
+                  ))}
+                </div>
+
+                <h2 className="font-anton text-xl tracking-wider text-pizza-white mt-10 mb-6 flex items-center gap-2">
+                  <Instagram className="w-5 h-5 text-pizza-red" />INSTAGRAM FEED
+                </h2>
+                <p className="font-mono text-sm text-neutral-400 mb-4">
+                  Füge Instagram Bilder manuell hinzu, die auf der Startseite angezeigt werden.
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={content.footer?.instagram_feed?.enabled !== false}
+                        onChange={(e) => setContent({ 
+                          ...content, 
+                          footer: { 
+                            ...content.footer, 
+                            instagram_feed: { ...(content.footer?.instagram_feed || {}), enabled: e.target.checked } 
+                          } 
+                        })} className="w-4 h-4 accent-pizza-red" />
+                      <span className="font-mono text-sm text-neutral-300">Instagram Feed auf Startseite anzeigen</span>
+                    </label>
+                  </div>
+                  
+                  <div>
+                    <Label className="font-mono text-sm text-neutral-300 mb-2 block">INSTAGRAM BENUTZERNAME</Label>
+                    <Input value={content.footer?.instagram_feed?.username || ""} 
+                      onChange={(e) => setContent({ 
+                        ...content, 
+                        footer: { 
+                          ...content.footer, 
+                          instagram_feed: { ...(content.footer?.instagram_feed || {}), username: e.target.value } 
+                        } 
+                      })}
+                      placeholder="@littleeatitaly"
+                      className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none" />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="font-mono text-sm text-neutral-300">INSTAGRAM POSTS</Label>
+                      <Button type="button" onClick={() => {
+                        const posts = content.footer?.instagram_feed?.posts || [];
+                        setContent({
+                          ...content,
+                          footer: {
+                            ...content.footer,
+                            instagram_feed: {
+                              ...(content.footer?.instagram_feed || {}),
+                              posts: [...posts, { image_url: "", caption: "", link: "" }]
+                            }
+                          }
+                        });
+                      }} className="bg-pizza-red hover:bg-red-700 text-pizza-white font-mono text-xs rounded-none h-8 px-3">
+                        <Plus className="w-3 h-3 mr-1" />POST HINZUFÜGEN
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {(content.footer?.instagram_feed?.posts || []).map((post, index) => (
+                        <div key={index} className="p-4 border border-pizza-dark bg-pizza-black/50 relative">
+                          <button onClick={() => {
+                            const posts = [...(content.footer?.instagram_feed?.posts || [])];
+                            posts.splice(index, 1);
+                            setContent({
+                              ...content,
+                              footer: {
+                                ...content.footer,
+                                instagram_feed: { ...(content.footer?.instagram_feed || {}), posts }
+                              }
+                            });
+                          }} className="absolute top-2 right-2 text-neutral-400 hover:text-pizza-red">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <div className="space-y-2">
+                            <Input value={post.image_url}
+                              onChange={(e) => {
+                                const posts = [...(content.footer?.instagram_feed?.posts || [])];
+                                posts[index] = { ...posts[index], image_url: e.target.value };
+                                setContent({
+                                  ...content,
+                                  footer: {
+                                    ...content.footer,
+                                    instagram_feed: { ...(content.footer?.instagram_feed || {}), posts }
+                                  }
+                                });
+                              }}
+                              placeholder="Bild URL"
+                              className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none text-sm" />
+                            <Input value={post.caption}
+                              onChange={(e) => {
+                                const posts = [...(content.footer?.instagram_feed?.posts || [])];
+                                posts[index] = { ...posts[index], caption: e.target.value };
+                                setContent({
+                                  ...content,
+                                  footer: {
+                                    ...content.footer,
+                                    instagram_feed: { ...(content.footer?.instagram_feed || {}), posts }
+                                  }
+                                });
+                              }}
+                              placeholder="Beschreibung"
+                              className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none text-sm" />
+                            <Input value={post.link}
+                              onChange={(e) => {
+                                const posts = [...(content.footer?.instagram_feed?.posts || [])];
+                                posts[index] = { ...posts[index], link: e.target.value };
+                                setContent({
+                                  ...content,
+                                  footer: {
+                                    ...content.footer,
+                                    instagram_feed: { ...(content.footer?.instagram_feed || {}), posts }
+                                  }
+                                });
+                              }}
+                              placeholder="Link zum Post (optional)"
+                              className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none text-sm" />
+                            {post.image_url && (
+                              <img src={post.image_url} alt="Preview" className="w-full h-24 object-cover mt-2 border border-pizza-dark" />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                <Button onClick={saveFooterContent} disabled={saving} className="mt-6 bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-widest rounded-none">
+                  <Save className="w-4 h-4 mr-2" />{saving ? "SPEICHERN..." : "SOCIAL MEDIA SPEICHERN"}
+                </Button>
+              </div>
+            </TabsContent>
+
             {/* Footer Section */}
             <TabsContent value="footer" className="space-y-6">
               <div className="p-6 border border-pizza-dark bg-pizza-dark/20">
