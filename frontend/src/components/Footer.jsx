@@ -1,12 +1,47 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, Phone, Mail, Instagram, Facebook, Lock } from "lucide-react";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { API } from "../App";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/yn5dt6ix_l1.png";
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
 
+// TikTok icon component
+const TikTok = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+  </svg>
+);
+
 const Footer = () => {
-  const marqueeText = "AUTHENTISCH NEAPOLITANISCH • STREET VIBES • LITTLE EAT ITALY • HOLZOFEN • HANDGEMACHTER TEIG • ";
+  const [content, setContent] = useState(null);
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const response = await axios.get(`${API}/content`);
+        setContent(response.data);
+      } catch (e) {
+        console.error("Failed to fetch content:", e);
+      }
+    };
+    fetchContent();
+  }, []);
+
+  const footer = content?.footer || {};
+  const marqueeText = footer.marquee_text || "AUTHENTISCH NEAPOLITANISCH • STREET VIBES • LITTLE EAT ITALY • HOLZOFEN • HANDGEMACHTER TEIG • ";
+  const socialLinks = footer.social_links || [];
+
+  const getSocialIcon = (platform) => {
+    switch (platform) {
+      case "instagram": return Instagram;
+      case "facebook": return Facebook;
+      case "tiktok": return TikTok;
+      default: return Instagram;
+    }
+  };
 
   return (
     <footer data-testid="footer" className="bg-pizza-black border-t border-pizza-dark">
