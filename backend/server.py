@@ -262,6 +262,17 @@ Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir
 **Urheberrecht:**
 Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers."""
 
+class SocialLink(BaseModel):
+    id: str
+    platform: str
+    url: str
+    is_active: bool = True
+
+class InstagramFeed(BaseModel):
+    enabled: bool = True
+    username: str = ""
+    posts: List[Dict[str, str]] = []  # Manual posts: {image_url, caption, link}
+
 class FooterContent(BaseModel):
     marquee_text: str = "AUTHENTISCH NEAPOLITANISCH • STREET VIBES • LITTLE EAT ITALY • HOLZOFEN • HANDGEMACHTER TEIG • "
     brand_description: str = "Geboren auf den Straßen von Neapel, aufgewachsen im Herzen der Stadt. Authentische neapolitanische Pizza mit urbanem Twist."
@@ -272,6 +283,12 @@ class FooterContent(BaseModel):
     email: str = "ciao@littleeatitaly.de"
     copyright: str = "© 2024 Little Eat Italy. Alle Rechte vorbehalten."
     made_with: str = "Mit ♥ gemacht"
+    social_links: List[SocialLink] = [
+        SocialLink(id="instagram", platform="instagram", url="https://instagram.com/littleeatitaly", is_active=True),
+        SocialLink(id="facebook", platform="facebook", url="https://facebook.com/littleeatitaly", is_active=True),
+        SocialLink(id="tiktok", platform="tiktok", url="", is_active=False),
+    ]
+    instagram_feed: InstagramFeed = Field(default_factory=InstagramFeed)
 
 class NavContent(BaseModel):
     links: List[Dict[str, str]] = []
