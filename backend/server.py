@@ -413,7 +413,13 @@ async def get_site_content():
 
 @api_router.put("/content")
 async def update_site_content(update: SiteContentUpdate):
-    update_dict = {k: v.model_dump() if v else None for k, v in update.model_dump().items() if v is not None}
+    update_dict = {}
+    for k, v in update.model_dump().items():
+        if v is not None:
+            if hasattr(v, 'model_dump'):
+                update_dict[k] = v.model_dump()
+            else:
+                update_dict[k] = v
     
     if not update_dict:
         raise HTTPException(status_code=400, detail="No content to update")
