@@ -320,6 +320,196 @@ class LittleEatItalyAPITester:
         self.log_result("Update Button Links", success, details)
         return success
 
+    def test_admin_login_correct(self):
+        """Test admin login with correct credentials"""
+        test_data = {
+            "username": "admin",
+            "password": "LittleEatItaly2024!"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/auth/login",
+                json=test_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if 'access_token' in data and data['access_token']:
+                    self.token = data['access_token']
+                    details = f"Login successful, token obtained: {self.token[:20]}..."
+                else:
+                    success = False
+                    details = "Login response missing access_token"
+            else:
+                details = f"Status: {response.status_code}, Response: {response.text[:100]}"
+        except Exception as e:
+            success = False
+            details = f"Exception: {str(e)}"
+        
+        self.log_result("Admin Login (Correct Credentials)", success, details)
+        return success
+
+    def test_admin_login_wrong(self):
+        """Test admin login with wrong credentials"""
+        test_data = {
+            "username": "admin",
+            "password": "wrong_password"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/auth/login",
+                json=test_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            success = response.status_code == 401
+            
+            if success:
+                details = f"Correctly rejected invalid credentials with 401"
+            else:
+                details = f"Expected 401, got {response.status_code}"
+        except Exception as e:
+            success = False
+            details = f"Exception: {str(e)}"
+        
+        self.log_result("Admin Login (Wrong Credentials)", success, details)
+        return success
+
+    def test_verify_token(self):
+        """Test token verification"""
+        if not self.token:
+            self.log_result("Token Verification", False, "No token available")
+            return False
+            
+        try:
+            response = requests.get(
+                f"{self.api_url}/auth/verify",
+                headers={'Authorization': f'Bearer {self.token}'},
+                timeout=10
+            )
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if 'authenticated' in data and data['authenticated']:
+                    details = f"Token verified successfully, user: {data.get('username', 'unknown')}"
+                else:
+                    success = False
+                    details = "Token verification response invalid"
+            else:
+                details = f"Status: {response.status_code}, Response: {response.text[:100]}"
+        except Exception as e:
+            success = False
+            details = f"Exception: {str(e)}"
+        
+        self.log_result("Token Verification", success, details)
+        return success
+
+    def test_change_password(self):
+        """Test password change functionality"""
+        if not self.token:
+            self.log_result("Password Change", False, "No token available")
+            return False
+            
+        # Test changing to new password
+        test_data = {
+            "current_password": "LittleEatItaly2024!",
+            "new_password": "TempTestPassword123!"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/auth/change-password",
+                json=test_data,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {self.token}'
+                },
+                timeout=10
+            )
+            success = response.status_code == 200
+            
+            if success:
+                # Try to change back to original password
+                restore_data = {
+                    "current_password": "TempTestPassword123!",
+                    "new_password": "LittleEatItaly2024!"
+                }
+                
+                restore_response = requests.post(
+                    f"{self.api_url}/auth/change-password",
+                    json=restore_data,
+                    headers={
+                        'Content-Type': 'application/json',
+                        'Authorization': f'Bearer {self.token}'
+                    },
+                    timeout=10
+                )
+                
+                if restore_response.status_code == 200:
+                    details = f"Password change successful and restored"
+                else:
+                    details = f"Password changed but failed to restore: {restore_response.status_code}"
+            else:
+                details = f"Status: {response.status_code}, Response: {response.text[:100]}"
+        except Exception as e:
+            success = False
+            details = f"Exception: {str(e)}"
+        
+        self.log_result("Password Change", success, details)
+        return success
+
+    def test_protected_content_update(self):
+        """Test updating content requires authentication"""
+        if not self.token:
+            self.log_result("Protected Content Update", False, "No token available")
+            return False
+            
+        test_footer = {
+            "marquee_text": "TEST MARQUEE • ADMIN TESTING • ",
+            "brand_description": "Test brand description for admin testing.",
+            "nav_title": "NAVIGATION",
+            "contact_title": "HIER FINDEST DU UNS",
+            "address": "Test Address 123, Test City, 12345",
+            "phone": "+49 123 456789",
+            "email": "test@example.com",
+            "copyright": "© 2024 Test Restaurant. All rights reserved.",
+            "made_with": "Mit ♥ gemacht"
+        }
+        
+        try:
+            response = requests.put(
+                f"{self.api_url}/content/footer",
+                json=test_footer,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {self.token}'
+                },
+                timeout=10
+            )
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if 'message' in data:
+                    details = f"Footer content updated successfully with authentication"
+                else:
+                    success = False
+                    details = "Unexpected response format"
+            else:
+                details = f"Status: {response.status_code}, Response: {response.text[:100]}"
+        except Exception as e:
+            success = False
+            details = f"Exception: {str(e)}"
+        
+        self.log_result("Protected Content Update (Footer)", success, details)
+        return success
+
     def run_all_tests(self):
         """Run all backend API tests"""
         print(f"🍕 Starting Little Eat Italy API Tests")
