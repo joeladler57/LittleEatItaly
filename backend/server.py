@@ -12,6 +12,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import jwt
 import bcrypt
+import httpx
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -20,6 +21,10 @@ load_dotenv(ROOT_DIR / '.env')
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
+
+# GlobalFood API Configuration
+GLOBALFOOD_API_URL = "https://pos.globalfoodsoft.com/pos/menu"
+GLOBALFOOD_API_KEY = os.environ.get('GLOBALFOOD_API_KEY', 'pQ5d8UmzbClR90Y1DR')
 
 # Create the main app
 app = FastAPI()
