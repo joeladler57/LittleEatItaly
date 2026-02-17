@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { API } from "../App";
-import { Flame, Leaf, WheatOff, AlertCircle } from "lucide-react";
+import { Flame, Leaf, WheatOff, AlertCircle, ShoppingBag } from "lucide-react";
 
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
 
