@@ -709,6 +709,7 @@ This is a test impressum content for automated testing purposes."""
         self.test_verify_token()
         self.test_change_password()
         self.test_protected_content_update()
+        self.test_update_impressum_content()
         
         # Print summary
         print("\n" + "=" * 60)
