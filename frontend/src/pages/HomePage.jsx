@@ -65,6 +65,12 @@ const HomePage = () => {
     { icon: "map-pin", title: "IMPORTIERT", description: "San Marzano Tomaten & italienischer Mozzarella" },
   ];
 
+  // Get Instagram feed data
+  const instagramFeed = content?.footer?.instagram_feed || { enabled: false, posts: [] };
+  const instagramEnabled = instagramFeed.enabled !== false;
+  const instagramPosts = instagramFeed.posts || [];
+  const instagramUsername = instagramFeed.username || "";
+
   return (
     <div data-testid="home-page">
       {/* Hero Section */}
