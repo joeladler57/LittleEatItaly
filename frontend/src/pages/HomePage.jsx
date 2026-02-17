@@ -6,23 +6,23 @@ import { API } from "../App";
 import DripBorder from "../components/DripBorder";
 import MenuCard from "../components/MenuCard";
 import { Button } from "../components/ui/button";
-import { ChevronRight, Flame, Clock, MapPin } from "lucide-react";
+import { ChevronRight, Flame, Clock, MapPin, Utensils, Bike, ShoppingBag, CalendarDays, ExternalLink } from "lucide-react";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/yn5dt6ix_l1.png";
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
 
-// Drip animation variants
-const dripVariants = {
-  hidden: { y: -100, opacity: 0 },
-  visible: (i) => ({
-    y: 0,
-    opacity: 1,
-    transition: {
-      delay: i * 0.1,
-      duration: 0.8,
-      ease: [0.6, 0.01, -0.05, 0.95],
-    },
-  }),
+// Default Maradona graffiti background
+const DEFAULT_HERO_BG = "https://images.unsplash.com/photo-1760001484733-61cd5917f5c3?q=85&w=1920&auto=format&fit=crop";
+
+// Icon mapping for buttons
+const iconMap = {
+  utensils: Utensils,
+  bike: Bike,
+  "shopping-bag": ShoppingBag,
+  calendar: CalendarDays,
+  flame: Flame,
+  clock: Clock,
+  "map-pin": MapPin,
 };
 
 const floatAnimation = {
@@ -36,31 +36,52 @@ const floatAnimation = {
 
 const HomePage = () => {
   const [featuredItems, setFeaturedItems] = useState([]);
+  const [content, setContent] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchFeatured = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`${API}/menu/featured`);
-        setFeaturedItems(response.data);
+        const [featuredRes, contentRes] = await Promise.all([
+          axios.get(`${API}/menu/featured`),
+          axios.get(`${API}/content`)
+        ]);
+        setFeaturedItems(featuredRes.data);
+        setContent(contentRes.data);
       } catch (e) {
-        console.error("Failed to fetch featured items:", e);
+        console.error("Failed to fetch data:", e);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchFeatured();
+    fetchData();
   }, []);
+
+  // Get hero content with defaults
+  const hero = content?.hero || {};
+  const heroBackground = hero.background_image || DEFAULT_HERO_BG;
+  const heroSubtitle = hero.subtitle || "Authentische neapolitanische Pizza mit urbaner Seele. Holzofenperfektion aus den Straßen von Neapel.";
+  const heroButtons = hero.buttons || [];
+  
+  // Get features content with defaults
+  const features = content?.features?.items || [
+    { icon: "flame", title: "HOLZOFEN", description: "480°C Ofen für die perfekte, gefleckte Kruste" },
+    { icon: "clock", title: "48 STD. TEIG", description: "Langsam fermentiert für authentische neapolitanische Textur" },
+    { icon: "map-pin", title: "IMPORTIERT", description: "San Marzano Tomaten & italienischer Mozzarella" },
+  ];
 
   return (
     <div data-testid="home-page">
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
+        {/* Background Image - Maradona Graffiti */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1601913463731-cfba9fd31ed3?q=85&w=1920&auto=format&fit=crop')`,
+            backgroundImage: `url('${heroBackground}')`,
           }}
         >
-          <div className="absolute inset-0 bg-pizza-black/80" />
+          <div className="absolute inset-0 bg-pizza-black/75" />
         </div>
 
         {/* Animated Graffiti Background Text */}
@@ -112,20 +133,57 @@ const HomePage = () => {
             transition={{ delay: 0.6, duration: 0.6 }}
             className="font-mono text-base sm:text-lg text-neutral-200 mt-6 max-w-xl mx-auto"
           >
-            Authentische neapolitanische Pizza mit urbaner Seele. Holzofenperfektion aus den Straßen von Neapel.
+            {heroSubtitle}
           </motion.p>
 
+          {/* Action Buttons - Delivery Services */}
+          {heroButtons.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.5 }}
+              className="mt-10 flex flex-wrap gap-3 justify-center"
+            >
+              {heroButtons.filter(btn => btn.is_active).map((button, index) => {
+                const IconComponent = iconMap[button.icon] || ExternalLink;
+                return (
+                  <motion.a
+                    key={button.id}
+                    href={button.url}
+                    target={button.url.startsWith('http') ? '_blank' : '_self'}
+                    rel="noopener noreferrer"
+                    data-testid={`action-btn-${button.id}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 + index * 0.1 }}
+                    whileHover={{ scale: 1.05, skewX: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`inline-flex items-center gap-2 px-6 py-4 font-anton text-sm tracking-widest rounded-none transition-all duration-300 ${
+                      button.id === 'reservation' 
+                        ? 'bg-transparent border-2 border-pizza-white text-pizza-white hover:bg-pizza-white hover:text-pizza-black'
+                        : 'bg-pizza-red hover:bg-red-700 text-pizza-white border-2 border-pizza-red'
+                    }`}
+                  >
+                    <IconComponent className="w-5 h-5" />
+                    {button.label}
+                  </motion.a>
+                );
+              })}
+            </motion.div>
+          )}
+
+          {/* Navigation Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
-            className="mt-10 flex flex-col sm:flex-row gap-4 justify-center"
+            transition={{ delay: 1.2, duration: 0.5 }}
+            className="mt-8 flex flex-col sm:flex-row gap-4 justify-center"
           >
             <Link to="/menu">
               <motion.div whileHover={{ scale: 1.05, skewX: -3 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   data-testid="view-menu-btn"
-                  className="bg-pizza-red hover:bg-red-700 text-pizza-white font-anton text-lg tracking-widest px-8 py-6 rounded-none"
+                  className="bg-transparent border-2 border-pizza-red text-pizza-red hover:bg-pizza-red hover:text-pizza-white font-anton text-lg tracking-widest px-8 py-6 rounded-none"
                 >
                   SPEISEKARTE
                   <ChevronRight className="ml-2" />
@@ -137,7 +195,7 @@ const HomePage = () => {
                 <Button
                   data-testid="find-us-btn"
                   variant="outline"
-                  className="border-2 border-pizza-white text-pizza-white hover:bg-pizza-white hover:text-pizza-black font-anton text-lg tracking-widest px-8 py-6 rounded-none"
+                  className="border-2 border-pizza-white/50 text-pizza-white/80 hover:bg-pizza-white hover:text-pizza-black font-anton text-lg tracking-widest px-8 py-6 rounded-none"
                 >
                   FINDE UNS
                 </Button>
@@ -168,60 +226,45 @@ const HomePage = () => {
       <section className="py-24 bg-pizza-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: Flame,
-                title: "HOLZOFEN",
-                description: "480°C Ofen für die perfekte, gefleckte Kruste",
-              },
-              {
-                icon: Clock,
-                title: "48 STD. TEIG",
-                description: "Langsam fermentiert für authentische neapolitanische Textur",
-              },
-              {
-                icon: MapPin,
-                title: "IMPORTIERT",
-                description: "San Marzano Tomaten & italienischer Mozzarella",
-              },
-            ].map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 50, rotate: -5 }}
-                whileInView={{ opacity: 1, y: 0, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.2, duration: 0.6 }}
-                whileHover={{ y: -10, scale: 1.02 }}
-                className="text-center p-8 border border-pizza-dark hover:border-pizza-red transition-all duration-300 group relative overflow-hidden"
-              >
-                {/* Drip decoration on hover */}
+            {features.map((feature, index) => {
+              const IconComponent = iconMap[feature.icon] || Flame;
+              return (
                 <motion.div
-                  className="absolute top-0 left-1/2 w-1 bg-pizza-red"
-                  initial={{ height: 0 }}
-                  whileHover={{ height: "30px" }}
-                  transition={{ duration: 0.3 }}
-                />
-                <motion.div
-                  whileHover={{ scale: 1.2, rotate: 360 }}
-                  transition={{ duration: 0.5 }}
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 50, rotate: -5 }}
+                  whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.2, duration: 0.6 }}
+                  whileHover={{ y: -10, scale: 1.02 }}
+                  className="text-center p-8 border border-pizza-dark hover:border-pizza-red transition-all duration-300 group relative overflow-hidden"
                 >
-                  <feature.icon className="w-12 h-12 text-pizza-red mx-auto mb-4" />
+                  <motion.div
+                    className="absolute top-0 left-1/2 w-1 bg-pizza-red"
+                    initial={{ height: 0 }}
+                    whileHover={{ height: "30px" }}
+                    transition={{ duration: 0.3 }}
+                  />
+                  <motion.div
+                    whileHover={{ scale: 1.2, rotate: 360 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <IconComponent className="w-12 h-12 text-pizza-red mx-auto mb-4" />
+                  </motion.div>
+                  <h3 className="font-anton text-2xl tracking-wider text-pizza-white mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="font-mono text-sm text-neutral-300">
+                    {feature.description}
+                  </p>
                 </motion.div>
-                <h3 className="font-anton text-2xl tracking-wider text-pizza-white mb-2">
-                  {feature.title}
-                </h3>
-                <p className="font-mono text-sm text-neutral-300">
-                  {feature.description}
-                </p>
-              </motion.div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* Featured Menu Section */}
       <section className="py-24 bg-pizza-dark/30 relative overflow-hidden">
-        {/* Background drip decoration */}
         <div className="absolute top-0 left-10 w-2 h-32 bg-pizza-red/20 rounded-b-full" />
         <div className="absolute top-0 right-20 w-3 h-48 bg-pizza-white/10 rounded-b-full" />
         <div className="absolute top-0 left-1/3 w-1 h-24 bg-pizza-red/30 rounded-b-full" />
@@ -295,7 +338,6 @@ const HomePage = () => {
           <div className="absolute inset-0 bg-pizza-black/90" />
         </div>
 
-        {/* Animated drips */}
         <motion.div
           className="absolute top-0 left-1/4 w-3 bg-pizza-red rounded-b-full"
           initial={{ height: 0 }}
