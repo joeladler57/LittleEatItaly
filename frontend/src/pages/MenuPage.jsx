@@ -6,12 +6,14 @@ import MenuCard from "../components/MenuCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 
 const categories = [
-  { id: "all", name: "ALL" },
-  { id: "classic", name: "CLASSIC" },
-  { id: "special", name: "SPECIAL" },
-  { id: "vegetarian", name: "VEGETARIAN" },
+  { id: "all", name: "ALLE" },
+  { id: "classic", name: "KLASSISCH" },
+  { id: "special", name: "SPEZIAL" },
+  { id: "vegetarian", name: "VEGETARISCH" },
   { id: "dessert", name: "DESSERT" },
 ];
+
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/yn5dt6ix_l1.png";
 
 const MenuPage = () => {
   const [menuItems, setMenuItems] = useState([]);
@@ -50,35 +52,67 @@ const MenuPage = () => {
           <div className="absolute inset-0 bg-pizza-black/85" />
         </div>
 
+        {/* Drip decorations */}
+        <motion.div
+          className="absolute top-0 left-20 w-2 bg-pizza-red rounded-b-full"
+          initial={{ height: 0 }}
+          animate={{ height: 80 }}
+          transition={{ duration: 1, delay: 0.2 }}
+        />
+        <motion.div
+          className="absolute top-0 right-32 w-3 bg-pizza-white/30 rounded-b-full"
+          initial={{ height: 0 }}
+          animate={{ height: 120 }}
+          transition={{ duration: 1, delay: 0.4 }}
+        />
+
         {/* Background Graffiti */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <span className="absolute top-10 -right-20 font-anton text-[150px] text-pizza-red/[0.05] rotate-[15deg]">
-            MENU
-          </span>
+          <motion.span
+            initial={{ opacity: 0, rotate: 20 }}
+            animate={{ opacity: 0.05, rotate: 15 }}
+            transition={{ duration: 1 }}
+            className="absolute top-10 -right-20 font-anton text-[150px] text-pizza-red"
+          >
+            MENÜ
+          </motion.span>
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6 }}
             className="font-anton text-5xl sm:text-6xl lg:text-7xl tracking-wider"
           >
-            <span className="text-pizza-white">OUR</span>{" "}
-            <span className="text-pizza-red">MENU</span>
+            <span className="text-pizza-white">UNSERE</span>{" "}
+            <motion.span
+              className="text-pizza-red inline-block"
+              animate={{ 
+                textShadow: ["0 0 0px #FF1F1F", "0 0 15px #FF1F1F", "0 0 0px #FF1F1F"],
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              SPEISEKARTE
+            </motion.span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="font-mono text-base sm:text-lg text-pizza-muted mt-4 max-w-xl mx-auto"
+            transition={{ delay: 0.3 }}
+            className="font-mono text-base sm:text-lg text-neutral-200 mt-4 max-w-xl mx-auto"
           >
-            From classic Neapolitan traditions to our signature urban creations
+            Von klassischen neapolitanischen Traditionen bis zu unseren einzigartigen urbanen Kreationen
           </motion.p>
         </div>
       </section>
 
       {/* Menu Content */}
-      <section className="py-16 bg-pizza-black">
+      <section className="py-16 bg-pizza-black relative">
+        {/* Background drips */}
+        <div className="absolute top-0 left-10 w-1 h-20 bg-pizza-red/20 rounded-b-full" />
+        <div className="absolute top-0 right-1/4 w-2 h-32 bg-pizza-white/10 rounded-b-full" />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Category Tabs */}
           <Tabs
@@ -88,19 +122,27 @@ const MenuPage = () => {
             className="w-full"
           >
             <TabsList className="flex flex-wrap justify-center gap-2 mb-12 bg-transparent">
-              {categories.map((category) => (
-                <TabsTrigger
+              {categories.map((category, index) => (
+                <motion.div
                   key={category.id}
-                  value={category.id}
-                  data-testid={`category-tab-${category.id}`}
-                  className={`font-anton text-sm sm:text-base tracking-widest px-4 sm:px-6 py-3 rounded-none border-2 transition-all duration-300 ${
-                    activeCategory === category.id
-                      ? "bg-pizza-red border-pizza-red text-pizza-white"
-                      : "bg-transparent border-pizza-dark text-pizza-muted hover:border-pizza-red hover:text-pizza-white"
-                  }`}
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  {category.name}
-                </TabsTrigger>
+                  <TabsTrigger
+                    value={category.id}
+                    data-testid={`category-tab-${category.id}`}
+                    className={`font-anton text-sm sm:text-base tracking-widest px-4 sm:px-6 py-3 rounded-none border-2 transition-all duration-300 ${
+                      activeCategory === category.id
+                        ? "bg-pizza-red border-pizza-red text-pizza-white"
+                        : "bg-transparent border-pizza-dark text-neutral-300 hover:border-pizza-red hover:text-pizza-white"
+                    }`}
+                  >
+                    {category.name}
+                  </TabsTrigger>
+                </motion.div>
               ))}
             </TabsList>
 
@@ -115,14 +157,14 @@ const MenuPage = () => {
                 </div>
               ) : filteredItems.length === 0 ? (
                 <div className="text-center py-20">
-                  <p className="font-mono text-pizza-muted">No items found in this category.</p>
+                  <p className="font-mono text-neutral-300">Keine Artikel in dieser Kategorie gefunden.</p>
                 </div>
               ) : (
                 <motion.div
                   key={activeCategory}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
                   className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
                 >
                   {filteredItems.map((item, index) => (
@@ -136,18 +178,28 @@ const MenuPage = () => {
       </section>
 
       {/* Bottom CTA */}
-      <section className="py-16 bg-pizza-dark/30">
+      <section className="py-16 bg-pizza-dark/30 relative overflow-hidden">
+        {/* Drip decoration */}
+        <motion.div
+          className="absolute top-0 left-1/2 w-2 bg-pizza-red rounded-b-full"
+          initial={{ height: 0 }}
+          whileInView={{ height: 60 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        />
+
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
           >
             <h2 className="font-anton text-3xl sm:text-4xl tracking-wider text-pizza-white mb-4">
-              CAN'T DECIDE<span className="text-pizza-red">?</span>
+              KANNST DICH NICHT ENTSCHEIDEN<span className="text-pizza-red">?</span>
             </h2>
-            <p className="font-mono text-base text-pizza-muted">
-              Our staff favorites include the Margherita for purists, Diavola for heat seekers, and Funghi Porcini for the adventurous.
+            <p className="font-mono text-base text-neutral-300">
+              Unsere Favoriten sind die Margherita für Puristen, Diavola für Schärfe-Fans und Funghi Porcini für Abenteurer.
             </p>
           </motion.div>
         </div>
