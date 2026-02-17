@@ -11,7 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { toast } from "sonner";
 import { 
   LogOut, Save, Image, Link as LinkIcon, Type, 
-  Phone, Mail, Clock, MapPin, Settings, Lock, FileText, MessageSquare
+  Phone, Mail, Clock, MapPin, Settings, Lock, FileText, MessageSquare,
+  Instagram, Facebook, Share2, Plus, Trash2
 } from "lucide-react";
 
 const AdminPage = () => {
