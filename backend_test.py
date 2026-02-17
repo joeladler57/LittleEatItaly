@@ -538,6 +538,17 @@ class LittleEatItalyAPITester:
         self.test_update_hero_content()
         self.test_update_button_links()
         
+        # Test admin authentication
+        print("\n" + "=" * 60)
+        print(f"🔐 ADMIN AUTHENTICATION TESTS")
+        print("=" * 60)
+        
+        self.test_admin_login_wrong()  # Test wrong credentials first
+        self.test_admin_login_correct()  # Then correct login
+        self.test_verify_token()
+        self.test_change_password()
+        self.test_protected_content_update()
+        
         # Print summary
         print("\n" + "=" * 60)
         print(f"🎯 TEST SUMMARY")
