@@ -189,7 +189,7 @@ const MenuPage = () => {
         </div>
       </section>
 
-      {/* Contact Info */}
+      {/* Order CTA */}
       <section className="py-16 bg-pizza-dark/30">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
@@ -198,17 +198,23 @@ const MenuPage = () => {
             viewport={{ once: true }}
           >
             <h2 className="font-anton text-3xl sm:text-4xl tracking-wider text-pizza-white mb-4">
-              BESTELLUNGEN<span className="text-pizza-red">?</span>
+              HUNGRIG<span className="text-pizza-red">?</span>
             </h2>
-            <p className="font-mono text-base text-neutral-300 mb-2">
-              Für Bestellungen und Anfragen kontaktiere uns unter:
+            <p className="font-mono text-base text-neutral-300 mb-6">
+              Bestelle jetzt und hol deine Pizza frisch bei uns ab!
             </p>
-            <a 
-              href="mailto:bestellung@little-eat-italy.de" 
-              className="font-mono text-pizza-red hover:underline text-lg"
+            <motion.a
+              href="https://www.foodbooking.com/api/fb/_q_y4z_v"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="menu-order-btn"
+              whileHover={{ scale: 1.05, skewX: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center gap-3 px-8 py-5 bg-pizza-red hover:bg-red-700 text-pizza-white font-anton text-xl tracking-widest transition-all duration-300"
             >
-              bestellung@little-eat-italy.de
-            </a>
+              <ShoppingBag className="w-6 h-6" />
+              BESTELLEN ZUM ABHOLEN
+            </motion.a>
           </motion.div>
         </div>
       </section>
