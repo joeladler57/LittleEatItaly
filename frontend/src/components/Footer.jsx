@@ -150,26 +150,26 @@ const Footer = () => {
           {/* Contact Info */}
           <div>
             <h4 className="font-anton text-xl tracking-wider text-pizza-red mb-6">
-              HIER FINDEST DU UNS
+              {footer.contact_title || "HIER FINDEST DU UNS"}
             </h4>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin size={18} className="text-pizza-red mt-1 flex-shrink-0" />
                 <span className="font-mono text-sm text-neutral-300">
-                  Pizzastraße 123, Little Italy, 10001
+                  {footer.address || "Europastrasse 8, 57072 Siegen"}
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={18} className="text-pizza-red flex-shrink-0" />
-                <span className="font-mono text-sm text-neutral-300">
-                  +49 (0) 123 456789
-                </span>
+                <a href={`tel:${(footer.phone || "0271 31924461").replace(/\s/g, '')}`} className="font-mono text-sm text-neutral-300 hover:text-pizza-red transition-colors">
+                  {footer.phone || "0271 31924461"}
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={18} className="text-pizza-red flex-shrink-0" />
-                <span className="font-mono text-sm text-neutral-300">
-                  ciao@littleeatitaly.de
-                </span>
+                <a href={`mailto:${footer.email || "bestellung@little-eat-italy.de"}`} className="font-mono text-sm text-neutral-300 hover:text-pizza-red transition-colors">
+                  {footer.email || "bestellung@little-eat-italy.de"}
+                </a>
               </li>
             </ul>
           </div>
