@@ -4,8 +4,7 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { API } from "../App";
 import DripBorder from "../components/DripBorder";
-import { Button } from "../components/ui/button";
-import { ChevronRight, Flame, Clock, MapPin, Utensils, Bike, ShoppingBag, CalendarDays, ExternalLink } from "lucide-react";
+import { Flame, Clock, MapPin, Utensils, Bike, ShoppingBag, CalendarDays, ExternalLink } from "lucide-react";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/yn5dt6ix_l1.png";
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
