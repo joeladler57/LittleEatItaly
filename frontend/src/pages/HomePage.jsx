@@ -283,19 +283,20 @@ const HomePage = () => {
             <p className="font-mono text-base sm:text-lg text-neutral-200 mb-8">
               Besuche uns und schmecke den Unterschied. Frische Zutaten, traditionelle Rezepte, urbane Vibes.
             </p>
-            <Link to="/contact">
-              <motion.div 
-                whileHover={{ scale: 1.05, skewX: -3 }} 
-                whileTap={{ scale: 0.95 }}
+            <motion.a
+              href="https://www.foodbooking.com/api/res/_q_y4z_v"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05, skewX: -3 }} 
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button
+                data-testid="visit-us-btn"
+                className="bg-pizza-red hover:bg-red-700 text-pizza-white font-anton text-xl tracking-widest px-10 py-7 rounded-none"
               >
-                <Button
-                  data-testid="visit-us-btn"
-                  className="bg-pizza-red hover:bg-red-700 text-pizza-white font-anton text-xl tracking-widest px-10 py-7 rounded-none"
-                >
-                  BESUCHE UNS HEUTE
-                </Button>
-              </motion.div>
-            </Link>
+                BESUCHE UNS HEUTE
+              </Button>
+            </motion.a>
           </motion.div>
         </div>
       </section>
