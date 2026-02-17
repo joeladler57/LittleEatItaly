@@ -196,10 +196,62 @@ class ContactPageContent(BaseModel):
     form_name_placeholder: str = "Gib deinen Namen ein"
     form_email_label: str = "DEINE E-MAIL"
     form_email_placeholder: str = "Gib deine E-Mail ein"
+    form_phone_label: str = "DEINE TELEFONNUMMER"
+    form_phone_placeholder: str = "Gib deine Telefonnummer ein"
+    form_phone_enabled: bool = True
+    form_subject_label: str = "BETREFF"
+    form_subject_placeholder: str = "Worum geht es?"
+    form_subject_enabled: bool = True
     form_message_label: str = "DEINE NACHRICHT"
     form_message_placeholder: str = "Was liegt dir auf dem Herzen?"
     form_submit_text: str = "NACHRICHT SENDEN"
+    form_success_message: str = "Nachricht gesendet! Wir melden uns bald bei dir."
     form_note: str = "Wir antworten normalerweise innerhalb von 24 Stunden. Für dringende Angelegenheiten ruf uns an oder komm einfach vorbei – die Pizza ist immer heiß!"
+
+class ImpressumContent(BaseModel):
+    title: str = "IMPRESSUM"
+    content: str = """**Angaben gemäß § 5 TMG:**
+
+Little Eat Italy GmbH
+Pizzastraße 123
+10001 Little Italy
+Deutschland
+
+**Vertreten durch:**
+Marco Rossi (Geschäftsführer)
+
+**Kontakt:**
+Telefon: +49 (0) 123 456789
+E-Mail: ciao@littleeatitaly.de
+
+**Registereintrag:**
+Eingetragen im Handelsregister.
+Registergericht: Amtsgericht Musterstadt
+Registernummer: HRB 12345
+
+**Umsatzsteuer-ID:**
+Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:
+DE 123456789
+
+**Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:**
+Marco Rossi
+Pizzastraße 123
+10001 Little Italy
+
+**Streitschlichtung:**
+Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: https://ec.europa.eu/consumers/odr/
+Unsere E-Mail-Adresse finden Sie oben im Impressum.
+
+Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
+
+**Haftung für Inhalte:**
+Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
+
+**Haftung für Links:**
+Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.
+
+**Urheberrecht:**
+Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers."""
 
 class FooterContent(BaseModel):
     marquee_text: str = "AUTHENTISCH NEAPOLITANISCH • STREET VIBES • LITTLE EAT ITALY • HOLZOFEN • HANDGEMACHTER TEIG • "
