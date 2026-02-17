@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { API } from "../App";
 import DripBorder from "../components/DripBorder";
+import InstagramFeed from "../components/InstagramFeed";
 import { Button } from "../components/ui/button";
 import { Flame, Clock, MapPin, Utensils, Bike, ShoppingBag, CalendarDays, ExternalLink } from "lucide-react";
 
