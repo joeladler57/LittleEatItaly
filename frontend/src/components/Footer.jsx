@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, Phone, Mail, Instagram, Facebook } from "lucide-react";
+import { MapPin, Phone, Mail, Instagram, Facebook, Lock } from "lucide-react";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/yn5dt6ix_l1.png";
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
@@ -124,9 +124,19 @@ const Footer = () => {
           <p className="font-mono text-xs text-neutral-400">
             © 2024 Little Eat Italy. Alle Rechte vorbehalten.
           </p>
-          <p className="font-mono text-xs text-neutral-400">
-            Mit <span className="text-pizza-red">♥</span> gemacht
-          </p>
+          <div className="flex items-center gap-4">
+            <Link
+              to="/admin"
+              data-testid="admin-login-link"
+              className="flex items-center gap-1 font-mono text-xs text-neutral-500 hover:text-pizza-red transition-colors"
+            >
+              <Lock className="w-3 h-3" />
+              Admin
+            </Link>
+            <p className="font-mono text-xs text-neutral-400">
+              Mit <span className="text-pizza-red">♥</span> gemacht
+            </p>
+          </div>
         </div>
       </div>
     </footer>
