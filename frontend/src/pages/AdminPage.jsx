@@ -236,6 +236,7 @@ const AdminPage = () => {
                 { id: "hero", label: "STARTSEITE", icon: Image },
                 { id: "contact", label: "KONTAKT", icon: Phone },
                 { id: "impressum", label: "IMPRESSUM", icon: FileText },
+                { id: "social", label: "SOCIAL MEDIA", icon: Share2 },
                 { id: "footer", label: "FOOTER", icon: Type },
                 { id: "settings", label: "EINSTELLUNGEN", icon: Settings },
               ].map((tab) => (
