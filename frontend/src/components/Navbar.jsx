@@ -4,11 +4,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
 const navLinks = [
-  { name: "HOME", path: "/" },
-  { name: "MENU", path: "/menu" },
-  { name: "ABOUT", path: "/about" },
-  { name: "CONTACT", path: "/contact" },
+  { name: "START", path: "/" },
+  { name: "SPEISEKARTE", path: "/menu" },
+  { name: "ÜBER UNS", path: "/about" },
+  { name: "KONTAKT", path: "/contact" },
 ];
+
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/yn5dt6ix_l1.png";
+const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,15 +40,20 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center group" data-testid="logo-link">
-            <motion.div
+          <Link to="/" className="flex items-center gap-3 group" data-testid="logo-link">
+            <motion.img
+              src={CHEF_ICON}
+              alt="Little Eat Italy"
+              className="h-12 w-auto"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            />
+            <motion.img
+              src={LOGO_URL}
+              alt="Little Eat Italy"
+              className="h-10 w-auto hidden sm:block"
               whileHover={{ scale: 1.05 }}
-              className="font-anton text-2xl sm:text-3xl tracking-wider"
-            >
-              <span className="text-pizza-white">LITTLE</span>
-              <span className="text-pizza-red">EAT</span>
-              <span className="text-pizza-white">ITALY</span>
-            </motion.div>
+            />
           </Link>
 
           {/* Desktop Navigation */}

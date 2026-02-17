@@ -2,8 +2,11 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, Phone, Mail, Instagram, Facebook } from "lucide-react";
 
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/yn5dt6ix_l1.png";
+const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
+
 const Footer = () => {
-  const marqueeText = "AUTHENTIC NAPOLETAN • STREET VIBES • LITTLE EAT ITALY • WOOD FIRED • HANDMADE DOUGH • ";
+  const marqueeText = "AUTHENTISCH NEAPOLITANISCH • STREET VIBES • LITTLE EAT ITALY • HOLZOFEN • HANDGEMACHTER TEIG • ";
 
   return (
     <footer data-testid="footer" className="bg-pizza-black border-t border-pizza-dark">
@@ -26,51 +29,60 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {/* Brand */}
           <div>
-            <Link to="/" className="inline-block">
-              <h3 className="font-anton text-3xl tracking-wider mb-4">
-                <span className="text-pizza-white">LITTLE</span>
-                <span className="text-pizza-red">EAT</span>
-                <span className="text-pizza-white">ITALY</span>
-              </h3>
+            <Link to="/" className="inline-flex items-center gap-3 mb-4">
+              <motion.img
+                src={CHEF_ICON}
+                alt="Little Eat Italy"
+                className="h-14 w-auto"
+                whileHover={{ rotate: 10 }}
+              />
+              <motion.img
+                src={LOGO_URL}
+                alt="Little Eat Italy"
+                className="h-12 w-auto"
+                whileHover={{ scale: 1.05 }}
+              />
             </Link>
-            <p className="font-mono text-sm text-pizza-muted leading-relaxed">
-              Born in the streets of Naples, raised in the heart of the city.
-              Authentic Neapolitan pizza with an urban twist.
+            <p className="font-mono text-sm text-neutral-300 leading-relaxed">
+              Geboren auf den Straßen von Neapel, aufgewachsen im Herzen der Stadt.
+              Authentische neapolitanische Pizza mit urbanem Twist.
             </p>
             <div className="flex space-x-4 mt-6">
-              <a
+              <motion.a
                 href="#"
                 data-testid="social-instagram"
                 className="p-2 border border-pizza-dark hover:border-pizza-red hover:text-pizza-red transition-colors"
+                whileHover={{ scale: 1.2, rotate: 5 }}
               >
                 <Instagram size={20} />
-              </a>
-              <a
+              </motion.a>
+              <motion.a
                 href="#"
                 data-testid="social-facebook"
                 className="p-2 border border-pizza-dark hover:border-pizza-red hover:text-pizza-red transition-colors"
+                whileHover={{ scale: 1.2, rotate: -5 }}
               >
                 <Facebook size={20} />
-              </a>
+              </motion.a>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
             <h4 className="font-anton text-xl tracking-wider text-pizza-red mb-6">
-              NAVIGATE
+              NAVIGATION
             </h4>
             <ul className="space-y-3">
               {[
-                { name: "Home", path: "/" },
-                { name: "Menu", path: "/menu" },
-                { name: "About Us", path: "/about" },
-                { name: "Contact", path: "/contact" },
+                { name: "Start", path: "/" },
+                { name: "Speisekarte", path: "/menu" },
+                { name: "Über Uns", path: "/about" },
+                { name: "Kontakt", path: "/contact" },
               ].map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="font-mono text-sm text-pizza-muted hover:text-pizza-red transition-colors"
+                    className="font-mono text-sm text-neutral-300 hover:text-pizza-red transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -82,25 +94,25 @@ const Footer = () => {
           {/* Contact Info */}
           <div>
             <h4 className="font-anton text-xl tracking-wider text-pizza-red mb-6">
-              FIND US
+              HIER FINDEST DU UNS
             </h4>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin size={18} className="text-pizza-red mt-1 flex-shrink-0" />
-                <span className="font-mono text-sm text-pizza-muted">
-                  123 Pizza Street, Little Italy, NY 10001
+                <span className="font-mono text-sm text-neutral-300">
+                  Pizzastraße 123, Little Italy, 10001
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={18} className="text-pizza-red flex-shrink-0" />
-                <span className="font-mono text-sm text-pizza-muted">
-                  +1 (555) 123-4567
+                <span className="font-mono text-sm text-neutral-300">
+                  +49 (0) 123 456789
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={18} className="text-pizza-red flex-shrink-0" />
-                <span className="font-mono text-sm text-pizza-muted">
-                  ciao@littleeatitaly.com
+                <span className="font-mono text-sm text-neutral-300">
+                  ciao@littleeatitaly.de
                 </span>
               </li>
             </ul>
@@ -109,11 +121,11 @@ const Footer = () => {
 
         {/* Bottom */}
         <div className="mt-16 pt-8 border-t border-pizza-dark flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="font-mono text-xs text-pizza-muted">
-            © 2024 Little Eat Italy. All rights reserved.
+          <p className="font-mono text-xs text-neutral-400">
+            © 2024 Little Eat Italy. Alle Rechte vorbehalten.
           </p>
-          <p className="font-mono text-xs text-pizza-muted">
-            Made with <span className="text-pizza-red">♥</span> in NYC
+          <p className="font-mono text-xs text-neutral-400">
+            Mit <span className="text-pizza-red">♥</span> gemacht
           </p>
         </div>
       </div>
