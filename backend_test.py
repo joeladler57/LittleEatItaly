@@ -690,10 +690,12 @@ This is a test impressum content for automated testing purposes."""
         
         # Test contact endpoints
         self.test_contact_form_submission()
+        self.test_contact_form_minimal()
         self.test_get_contact_messages()
         
         # Test CMS content endpoints
         self.test_get_content()
+        self.test_get_impressum()
         self.test_update_hero_content()
         self.test_update_button_links()
         
