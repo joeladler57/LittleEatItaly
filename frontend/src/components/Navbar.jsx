@@ -5,9 +5,9 @@ import { Menu, X } from "lucide-react";
 
 const navLinks = [
   { name: "START", path: "/" },
-  { name: "SPEISEKARTE", path: "/menu" },
   { name: "ÜBER UNS", path: "/about" },
   { name: "KONTAKT", path: "/contact" },
+  { name: "IMPRESSUM", path: "/impressum" },
 ];
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/yn5dt6ix_l1.png";

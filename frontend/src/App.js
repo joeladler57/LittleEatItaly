@@ -12,9 +12,9 @@ import NoiseOverlay from "./components/NoiseOverlay";
 
 // Pages
 import HomePage from "./pages/HomePage";
-import MenuPage from "./pages/MenuPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
+import ImpressumPage from "./pages/ImpressumPage";
 import AdminPage from "./pages/AdminPage";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -42,9 +42,9 @@ const AnimatedRoutes = () => {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageWrapper><HomePage /></PageWrapper>} />
-        <Route path="/menu" element={<PageWrapper><MenuPage /></PageWrapper>} />
         <Route path="/about" element={<PageWrapper><AboutPage /></PageWrapper>} />
         <Route path="/contact" element={<PageWrapper><ContactPage /></PageWrapper>} />
+        <Route path="/impressum" element={<PageWrapper><ImpressumPage /></PageWrapper>} />
         <Route path="/admin" element={<PageWrapper><AdminPage /></PageWrapper>} />
       </Routes>
     </AnimatePresence>
