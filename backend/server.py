@@ -271,18 +271,18 @@ class SiteContent(BaseModel):
     id: str = "site_content"
     hero: HeroContent = Field(default_factory=HeroContent)
     features: FeaturesContent = Field(default_factory=FeaturesContent)
-    menu_page: MenuPageContent = Field(default_factory=MenuPageContent)
     about_page: AboutPageContent = Field(default_factory=AboutPageContent)
     contact_page: ContactPageContent = Field(default_factory=ContactPageContent)
+    impressum: ImpressumContent = Field(default_factory=ImpressumContent)
     footer: FooterContent = Field(default_factory=FooterContent)
     nav: NavContent = Field(default_factory=NavContent)
 
 class SiteContentUpdate(BaseModel):
     hero: Optional[HeroContent] = None
     features: Optional[FeaturesContent] = None
-    menu_page: Optional[MenuPageContent] = None
     about_page: Optional[AboutPageContent] = None
     contact_page: Optional[ContactPageContent] = None
+    impressum: Optional[ImpressumContent] = None
     footer: Optional[FooterContent] = None
     nav: Optional[NavContent] = None
 
