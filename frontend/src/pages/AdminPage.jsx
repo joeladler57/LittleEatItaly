@@ -223,10 +223,16 @@ const AdminPage = () => {
             </h1>
             <p className="font-mono text-sm text-neutral-400 mt-1">Verwalte alle Inhalte deiner Webseite</p>
           </div>
-          <Button onClick={handleLogout} data-testid="admin-logout-btn"
-            className="bg-transparent border border-pizza-dark hover:border-pizza-red text-neutral-300 hover:text-pizza-red font-mono rounded-none">
-            <LogOut className="w-4 h-4 mr-2" />Ausloggen
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate("/admin/shop")} 
+              className="bg-pizza-red hover:bg-red-700 text-pizza-white font-mono rounded-none">
+              🍕 Shop Verwaltung
+            </Button>
+            <Button onClick={handleLogout} data-testid="admin-logout-btn"
+              className="bg-transparent border border-pizza-dark hover:border-pizza-red text-neutral-300 hover:text-pizza-red font-mono rounded-none">
+              <LogOut className="w-4 h-4 mr-2" />Ausloggen
+            </Button>
+          </div>
         </div>
 
         {content && (
