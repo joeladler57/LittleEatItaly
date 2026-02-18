@@ -346,12 +346,30 @@ const StaffPage = () => {
             }`}
           >
             <CalendarDays className="w-4 h-4 mr-2" />
-            RESERVIERUNGEN
+            RESERV.
             {pendingReservations.length > 0 && (
               <span className="ml-2 bg-white text-blue-600 text-xs px-2 py-0.5 rounded-full">
                 {pendingReservations.length}
               </span>
             )}
+          </Button>
+          <Button
+            onClick={() => setActiveTab("today")}
+            className={`flex-1 rounded-none font-anton ${
+              activeTab === "today" ? 'bg-green-600 text-white' : 'bg-pizza-dark text-neutral-400'
+            }`}
+          >
+            <Clock className="w-4 h-4 mr-2" />
+            HEUTE
+            {(() => {
+              const today = new Date().toISOString().split('T')[0];
+              const todayCount = reservations.filter(r => r.date === today && r.status === "confirmed").length;
+              return todayCount > 0 ? (
+                <span className="ml-2 bg-white text-green-600 text-xs px-2 py-0.5 rounded-full">
+                  {todayCount}
+                </span>
+              ) : null;
+            })()}
           </Button>
         </div>
 
