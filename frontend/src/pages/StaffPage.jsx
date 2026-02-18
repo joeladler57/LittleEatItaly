@@ -929,7 +929,7 @@ const TodayReservations = ({ reservations, onUpdate }) => {
   );
 };
 
-// Individual Row for Today's Reservations - Mobile-First Design
+// Individual Row for Today's Reservations - Ultra Simple Mobile Design
 const TodayReservationRow = ({ reservation, index }) => {
   const isEven = index % 2 === 0;
   
@@ -939,80 +939,45 @@ const TodayReservationRow = ({ reservation, index }) => {
   const resTime = new Date();
   resTime.setHours(parseInt(hours), parseInt(minutes), 0);
   const isPast = now > resTime;
-  const isSoon = !isPast && (resTime - now) < 30 * 60 * 1000; // Within 30 minutes
-
-  const bgColor = isPast 
-    ? 'bg-neutral-900/50' 
-    : isSoon 
-      ? 'bg-yellow-500/15' 
-      : isEven 
-        ? 'bg-neutral-900' 
-        : 'bg-neutral-850';
-
-  const borderColor = isPast 
-    ? 'border-l-neutral-700' 
-    : isSoon 
-      ? 'border-l-yellow-400' 
-      : 'border-l-green-500';
+  const isSoon = !isPast && (resTime - now) < 30 * 60 * 1000;
 
   return (
     <div 
-      className={`${bgColor} ${borderColor} border-l-4 ${isPast ? 'opacity-50' : ''}`}
+      className={`px-4 py-3 ${isEven ? 'bg-neutral-900' : 'bg-neutral-800'} ${isPast ? 'opacity-50' : ''}`}
       data-testid={`today-reservation-${reservation.id}`}
     >
-      {/* Mobile: Stack vertically, Desktop: Single row */}
-      <div className="p-3">
-        {/* Row 1: Time prominently displayed */}
-        <div className="flex items-center justify-between mb-2 sm:mb-0">
-          <div className="flex items-center gap-3">
-            {/* Large, prominent time display */}
-            <div className={`px-2 py-1 ${
-              isPast ? 'bg-neutral-800' : isSoon ? 'bg-yellow-500/30' : 'bg-green-500/20'
-            }`}>
-              <span className={`font-anton text-xl ${
-                isPast ? 'text-neutral-500' : isSoon ? 'text-yellow-300' : 'text-green-400'
-              }`}>
-                {reservation.time}
-              </span>
-            </div>
-            
-            {/* Soon indicator badge */}
-            {isSoon && !isPast && (
-              <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 animate-pulse">
-                BALD
-              </span>
-            )}
-          </div>
-          
-          {/* Guest count - always visible on right */}
-          <div className={`flex items-center gap-1 px-2 py-1 ${
-            isPast ? 'bg-neutral-800' : 'bg-green-500/20'
-          }`}>
-            <User className={`w-4 h-4 ${isPast ? 'text-neutral-600' : 'text-green-400'}`} />
-            <span className={`font-anton text-xl ${isPast ? 'text-neutral-600' : 'text-green-400'}`}>
-              {reservation.guests}
-            </span>
-          </div>
+      {/* Simple grid layout: TIME on left, GUESTS on right */}
+      <div className="grid grid-cols-[auto_1fr_auto] gap-3 items-center">
+        {/* TIME - Large and prominent */}
+        <div className={`font-anton text-2xl min-w-[70px] ${
+          isPast ? 'text-neutral-500' : isSoon ? 'text-yellow-400' : 'text-green-400'
+        }`}>
+          {reservation.time}
         </div>
         
-        {/* Row 2: Name */}
-        <div className="mt-1">
-          <span className={`font-mono text-sm ${
-            isPast ? 'text-neutral-500' : isSoon ? 'text-yellow-100' : 'text-white'
-          }`}>
-            {reservation.customer_name}
+        {/* NAME */}
+        <div className={`font-mono text-sm truncate ${
+          isPast ? 'text-neutral-500' : 'text-white'
+        }`}>
+          {reservation.customer_name}
+          {isSoon && <span className="ml-2 text-yellow-400 text-xs font-bold">BALD!</span>}
+        </div>
+        
+        {/* GUESTS */}
+        <div className="flex items-center gap-1">
+          <User className={`w-4 h-4 ${isPast ? 'text-neutral-600' : 'text-green-400'}`} />
+          <span className={`font-anton text-xl ${isPast ? 'text-neutral-600' : 'text-green-400'}`}>
+            {reservation.guests}
           </span>
         </div>
-        
-        {/* Row 3: Notes if present */}
-        {reservation.notes && (
-          <p className={`font-mono text-xs mt-2 ${
-            isPast ? 'text-neutral-600' : 'text-yellow-500'
-          }`}>
-            📝 {reservation.notes}
-          </p>
-        )}
       </div>
+      
+      {/* Notes below if present */}
+      {reservation.notes && (
+        <p className="font-mono text-xs text-yellow-500 mt-2 pl-[82px]">
+          📝 {reservation.notes}
+        </p>
+      )}
     </div>
   );
 };
