@@ -304,8 +304,8 @@ const OrderPage = () => {
       ) : (
         <div className="max-w-7xl mx-auto px-4 mt-8">
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Menu Section */}
-            <div className={`flex-1 ${step !== "menu" ? "hidden lg:block" : ""}`}>
+            {/* Menu Section - hidden on mobile during checkout */}
+            <div className={`flex-1 ${step === "checkout" ? "hidden lg:block" : ""}`}>
               {/* Category Tabs */}
               <div className="flex overflow-x-auto gap-2 pb-4 mb-6 scrollbar-hide">
                 {menu.categories?.filter(c => c.available !== false).map((cat) => (
