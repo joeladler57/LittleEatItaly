@@ -249,6 +249,7 @@ const OrderPage = () => {
         customer_email: customerInfo.email,
         customer_phone: customerInfo.phone,
         pickup_time: customerInfo.pickupTime === "ASAP" ? "So schnell wie möglich" : `${customerInfo.pickupTime} Uhr`,
+        payment_method: customerInfo.paymentMethod === "cash" ? "Barzahlung" : "Kartenzahlung",
         notes: customerInfo.notes
       });
       
