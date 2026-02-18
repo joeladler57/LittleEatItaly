@@ -136,6 +136,14 @@ PUT  /api/shop/reservations/{id}/status # Status ändern (Admin)
 # Settings
 GET  /api/shop/settings                # Einstellungen abrufen
 PUT  /api/shop/settings                # Einstellungen ändern (Admin)
+
+# Staff / Personal
+POST /api/staff/login                  # PIN-Login für Mitarbeiter
+GET  /api/staff/verify                 # Token verifizieren
+GET  /api/staff/orders                 # Bestellungen für Personal
+PUT  /api/staff/orders/{id}/status     # Bestellung Status ändern
+GET  /api/staff/reservations           # Reservierungen für Personal
+PUT  /api/staff/reservations/{id}/status # Reservierung Status ändern
 ```
 
 ### E-Mail Konfiguration
@@ -155,14 +163,27 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 2. 🟢 Impressum mit echten Firmendaten ergänzen (über Admin)
 3. 🟢 Weitere Menü-Artikel hinzufügen (über Shop Admin)
 
+## Mitarbeiter-App einrichten
+**So richtest du die Personal-App für Mitarbeiter ein:**
+1. Gehe zu `/admin/shop` → EINSTELLUNGEN
+2. Setze den gewünschten 4-stelligen PIN unter "PERSONAL-PIN"
+3. Speichere die Einstellungen
+4. Teile deinen Mitarbeitern die URL `/personal` und den PIN mit
+
+**Für Mitarbeiter:**
+1. Öffne `/personal` auf dem Tablet/Handy
+2. Gib den PIN ein (z.B. 1234)
+3. Aktiviere Sound und Push für Benachrichtigungen
+4. Die App aktualisiert automatisch alle 4 Sekunden
+
 ## PWA Installation & Push-Benachrichtigungen
 **So installierst du die App auf deinem Handy:**
-1. Öffne `/admin/shop` im Browser auf deinem Handy
+1. Öffne `/admin/shop` oder `/personal` im Browser
 2. Klicke auf "INSTALLIEREN" im Banner oder im Menü
 3. Die App erscheint auf deinem Startbildschirm
 
 **So aktivierst du Push-Benachrichtigungen:**
-1. Logge dich als Admin ein auf `/admin/shop`
+1. Logge dich ein (Admin oder Personal)
 2. Klicke auf das Glocken-Icon (🔔) in der Header-Leiste
 3. Erlaube Benachrichtigungen wenn gefragt
 4. Du erhältst jetzt Benachrichtigungen auch bei geschlossenem Browser!
