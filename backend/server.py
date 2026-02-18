@@ -767,6 +767,14 @@ async def create_order(order_data: OrderCreate):
     # Send confirmation email (non-blocking)
     asyncio.create_task(send_order_confirmation_email(order_dict, settings))
     
+    # Send push notification to admin devices
+    asyncio.create_task(send_push_notification(
+        title="🍕 Neue Bestellung!",
+        body=f"#{order_number} • {order_data.customer_name} • {total:.2f}€",
+        url="/admin/shop",
+        tag=f"order-{order_number}"
+    ))
+    
     return {
         "message": "Bestellung erfolgreich aufgegeben!",
         "order_number": order_number,
