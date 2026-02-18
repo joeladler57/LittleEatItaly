@@ -150,6 +150,136 @@ class ContactMessageCreate(BaseModel):
     subject: Optional[str] = None
     message: str
 
+# ============ SHOP MENU MODELS ============
+
+class ShopMenuOption(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    price: float = 0.0
+
+class ShopMenuOptionGroup(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    required: bool = False
+    multiple: bool = False
+    options: List[ShopMenuOption] = []
+
+class ShopMenuSize(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    price: float
+    default: bool = False
+
+class ShopMenuItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str = ""
+    price: float
+    image_url: str = ""
+    tags: List[str] = []  # VEGETARIAN, VEGAN, HOT, GLUTEN_FREE
+    sizes: List[ShopMenuSize] = []
+    groups: List[ShopMenuOptionGroup] = []
+    available: bool = True
+    sort_order: int = 0
+
+class ShopMenuCategory(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str = ""
+    items: List[ShopMenuItem] = []
+    sort_order: int = 0
+    available: bool = True
+
+class ShopMenu(BaseModel):
+    id: str = "shop_menu"
+    categories: List[ShopMenuCategory] = []
+    currency: str = "EUR"
+
+# ============ ORDER MODELS ============
+
+class OrderItem(BaseModel):
+    item_id: str
+    item_name: str
+    quantity: int
+    size: Optional[str] = None
+    size_name: Optional[str] = None
+    options: List[Dict[str, str]] = []  # [{group_name, option_name, price}]
+    unit_price: float
+    total_price: float
+    notes: str = ""
+
+class OrderCreate(BaseModel):
+    items: List[OrderItem]
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: str
+    pickup_time: str  # ISO format or "ASAP"
+    notes: str = ""
+
+class Order(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    order_number: int = 0
+    items: List[OrderItem]
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: str
+    pickup_time: str
+    notes: str = ""
+    subtotal: float = 0.0
+    total: float = 0.0
+    status: str = "pending"  # pending, confirmed, preparing, ready, completed, cancelled
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# ============ RESERVATION MODELS ============
+
+class ReservationCreate(BaseModel):
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: str
+    date: str  # YYYY-MM-DD
+    time: str  # HH:MM
+    guests: int
+    notes: str = ""
+
+class Reservation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    reservation_number: int = 0
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: str
+    date: str
+    time: str
+    guests: int
+    notes: str = ""
+    status: str = "pending"  # pending, confirmed, cancelled, completed
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# ============ SHOP SETTINGS MODEL ============
+
+class ShopSettings(BaseModel):
+    id: str = "shop_settings"
+    pickup_enabled: bool = True
+    reservation_enabled: bool = True
+    min_pickup_time_minutes: int = 30  # Minimum lead time
+    max_pickup_days_ahead: int = 7
+    max_reservation_days_ahead: int = 30
+    opening_hours: Dict[str, Dict[str, str]] = {
+        "monday": {"open": "12:00", "close": "22:00"},
+        "tuesday": {"open": "12:00", "close": "22:00"},
+        "wednesday": {"open": "12:00", "close": "22:00"},
+        "thursday": {"open": "12:00", "close": "22:00"},
+        "friday": {"open": "12:00", "close": "00:00"},
+        "saturday": {"open": "12:00", "close": "00:00"},
+        "sunday": {"open": "16:00", "close": "22:00"},
+    }
+    closed_days: List[str] = []  # List of dates YYYY-MM-DD
+    restaurant_name: str = "Little Eat Italy"
+    restaurant_address: str = "Europastrasse 8, 57072 Siegen"
+    restaurant_phone: str = "0271 31924461"
+    restaurant_email: str = "bestellung@little-eat-italy.de"
+
 # ============ CMS CONTENT MODELS ============
 
 class ActionButton(BaseModel):
