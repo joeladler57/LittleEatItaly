@@ -5,7 +5,26 @@
 - **Username**: admin
 - **Password**: LittleEatItaly2024! (ändern nach erstem Login!)
 
+## Personal/Mitarbeiter Access
+- **URL**: /personal
+- **PIN**: 1234 (Standard, änderbar in Admin → Einstellungen)
+
 ## What's Been Implemented
+
+### Februar 2026 - Personal-App / Mitarbeiter-Login (Getestet ✅)
+- ✅ **Separates Login für Mitarbeiter**:
+  - 4-stelliger PIN-Code (konfigurierbar im Admin-Bereich)
+  - Eigene URL `/personal` ohne Website-Navigation
+  - 12-Stunden Token-Gültigkeit
+- ✅ **Mitarbeiter-Dashboard**:
+  - LIVE-Indikator mit 4-Sekunden-Polling
+  - Sound-/Push-Benachrichtigungen
+  - Filter: Neu, Zubereitung, Bereit, Alle
+  - Bestellungen annehmen/ablehnen mit Zubereitungszeit für ASAP
+  - Reservierungen bestätigen/stornieren
+- ✅ **Wie GloriaFood-App**:
+  - Mobile-optimiert für Tablets/Smartphones
+  - Kein Zugriff auf Menü oder Einstellungen (nur Bestellungen/Reservierungen)
 
 ### Februar 2026 - Web Push Notifications (Getestet ✅)
 - ✅ **Push-Benachrichtigungen bei geschlossenem Browser**:
