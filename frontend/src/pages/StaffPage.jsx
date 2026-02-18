@@ -866,22 +866,22 @@ const TodayReservations = ({ reservations, onUpdate }) => {
       ) : (
         <div>
           {/* Table Header */}
-          <div className="flex items-center gap-3 px-3 py-2 bg-neutral-800 border-b border-neutral-700">
-            <div className="flex-shrink-0 w-16">
-              <p className="font-mono text-xs text-neutral-500 uppercase">Zeit</p>
-            </div>
-            <div className="flex-1">
+          <div className="flex items-center justify-between px-4 py-2 bg-neutral-800 border-b border-neutral-700">
+            <div className="flex items-center gap-4">
+              <div className="w-20 text-center">
+                <p className="font-mono text-xs text-neutral-500 uppercase">Zeit</p>
+              </div>
               <p className="font-mono text-xs text-neutral-500 uppercase">Name</p>
             </div>
-            <div className="flex-shrink-0">
-              <p className="font-mono text-xs text-neutral-500 uppercase">Pers.</p>
-            </div>
+            <p className="font-mono text-xs text-neutral-500 uppercase">Pers.</p>
           </div>
 
           {/* Reservation Rows */}
-          {todayReservations.map((res, index) => (
-            <TodayReservationRow key={res.id} reservation={res} index={index} />
-          ))}
+          <div className="divide-y divide-neutral-800">
+            {todayReservations.map((res, index) => (
+              <TodayReservationRow key={res.id} reservation={res} index={index} />
+            ))}
+          </div>
 
           {/* Summary */}
           <div className="flex items-center justify-between px-4 py-4 bg-green-600 mt-2">
