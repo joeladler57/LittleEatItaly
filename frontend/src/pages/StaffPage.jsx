@@ -364,56 +364,68 @@ const StaffPage = () => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="max-w-4xl mx-auto px-4 py-3">
-        <div className="flex gap-2 mb-4">
-          <Button
-            onClick={() => setActiveTab("orders")}
-            className={`flex-1 rounded-none font-anton ${
-              activeTab === "orders" ? 'bg-pizza-red text-white' : 'bg-pizza-dark text-neutral-400'
-            }`}
-          >
-            <ShoppingBag className="w-4 h-4 mr-2" />
-            BESTELLUNGEN
-            {orders.filter(o => o.status === "pending").length > 0 && (
-              <span className="ml-2 bg-white text-pizza-red text-xs px-2 py-0.5 rounded-full">
-                {orders.filter(o => o.status === "pending").length}
-              </span>
-            )}
-          </Button>
-          <Button
-            onClick={() => setActiveTab("reservations")}
-            className={`flex-1 rounded-none font-anton ${
-              activeTab === "reservations" ? 'bg-blue-600 text-white' : 'bg-pizza-dark text-neutral-400'
-            }`}
-          >
-            <CalendarDays className="w-4 h-4 mr-2" />
-            RESERV.
-            {pendingReservations.length > 0 && (
-              <span className="ml-2 bg-white text-blue-600 text-xs px-2 py-0.5 rounded-full">
-                {pendingReservations.length}
-              </span>
-            )}
-          </Button>
-          <Button
-            onClick={() => setActiveTab("today")}
-            className={`flex-1 rounded-none font-anton ${
-              activeTab === "today" ? 'bg-green-600 text-white' : 'bg-pizza-dark text-neutral-400'
-            }`}
-          >
-            <Clock className="w-4 h-4 mr-2" />
-            HEUTE
-            {(() => {
-              const today = new Date().toISOString().split('T')[0];
-              const todayCount = reservations.filter(r => r.date === today && r.status === "confirmed").length;
-              return todayCount > 0 ? (
-                <span className="ml-2 bg-white text-green-600 text-xs px-2 py-0.5 rounded-full">
-                  {todayCount}
+      {/* Tabs - Horizontal Scrolling Bar */}
+      <div className="sticky top-[52px] z-40 bg-pizza-black border-b border-pizza-dark">
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="flex min-w-max">
+            <button
+              onClick={() => setActiveTab("orders")}
+              className={`flex items-center gap-2 px-6 py-4 font-anton text-sm whitespace-nowrap border-b-2 transition-all ${
+                activeTab === "orders" 
+                  ? 'bg-pizza-red/10 text-white border-pizza-red' 
+                  : 'text-neutral-400 border-transparent hover:text-white'
+              }`}
+            >
+              <ShoppingBag className="w-5 h-5" />
+              BESTELLUNGEN
+              {orders.filter(o => o.status === "pending").length > 0 && (
+                <span className="bg-pizza-red text-white text-xs px-2 py-0.5 rounded-full">
+                  {orders.filter(o => o.status === "pending").length}
                 </span>
-              ) : null;
-            })()}
-          </Button>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("reservations")}
+              className={`flex items-center gap-2 px-6 py-4 font-anton text-sm whitespace-nowrap border-b-2 transition-all ${
+                activeTab === "reservations" 
+                  ? 'bg-blue-600/10 text-white border-blue-500' 
+                  : 'text-neutral-400 border-transparent hover:text-white'
+              }`}
+            >
+              <CalendarDays className="w-5 h-5" />
+              RESERVIERUNGEN
+              {pendingReservations.length > 0 && (
+                <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  {pendingReservations.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("today")}
+              className={`flex items-center gap-2 px-6 py-4 font-anton text-sm whitespace-nowrap border-b-2 transition-all ${
+                activeTab === "today" 
+                  ? 'bg-green-600/10 text-white border-green-500' 
+                  : 'text-neutral-400 border-transparent hover:text-white'
+              }`}
+            >
+              <Clock className="w-5 h-5" />
+              HEUTE
+              {(() => {
+                const today = new Date().toISOString().split('T')[0];
+                const todayCount = reservations.filter(r => r.date === today && r.status === "confirmed").length;
+                return todayCount > 0 ? (
+                  <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    {todayCount}
+                  </span>
+                ) : null;
+              })()}
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className="max-w-4xl mx-auto px-4 py-3">
 
         {/* Orders Tab */}
         {activeTab === "orders" && (
