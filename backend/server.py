@@ -1010,6 +1010,14 @@ async def create_reservation(reservation_data: ReservationCreate):
     # Send confirmation email (non-blocking)
     asyncio.create_task(send_reservation_confirmation_email(reservation_dict, settings, confirmed=False))
     
+    # Send push notification to admin devices
+    asyncio.create_task(send_push_notification(
+        title="📅 Neue Reservierung!",
+        body=f"#{reservation_number} • {reservation_data.customer_name} • {reservation_data.date} {reservation_data.time} Uhr • {reservation_data.guests} Pers.",
+        url="/admin/shop",
+        tag=f"reservation-{reservation_number}"
+    ))
+    
     return {
         "message": "Reservierung erfolgreich aufgegeben! Du erhältst eine E-Mail wenn sie bestätigt wird.",
         "reservation_number": reservation_number,
