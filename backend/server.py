@@ -214,6 +214,7 @@ class OrderCreate(BaseModel):
     customer_email: EmailStr
     customer_phone: str
     pickup_time: str  # ISO format or "ASAP"
+    payment_method: str = "Barzahlung"  # Barzahlung or Kartenzahlung
     notes: str = ""
 
 class Order(BaseModel):
@@ -224,6 +225,7 @@ class Order(BaseModel):
     customer_email: EmailStr
     customer_phone: str
     pickup_time: str
+    payment_method: str = "Barzahlung"
     notes: str = ""
     subtotal: float = 0.0
     total: float = 0.0
