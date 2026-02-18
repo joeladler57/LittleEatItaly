@@ -909,21 +909,8 @@ const TodayReservations = ({ reservations, onUpdate }) => {
         </div>
       ) : (
         <div>
-          {/* Table Header */}
-          <div className="flex items-center gap-3 px-3 py-2 bg-neutral-800">
-            <div className="w-16 text-center flex-shrink-0">
-              <p className="font-mono text-xs text-neutral-400 uppercase">Zeit</p>
-            </div>
-            <div className="flex-1">
-              <p className="font-mono text-xs text-neutral-400 uppercase">Name</p>
-            </div>
-            <div className="flex-shrink-0 w-12 text-center">
-              <p className="font-mono text-xs text-neutral-400 uppercase">Pers.</p>
-            </div>
-          </div>
-
-          {/* Reservation Rows */}
-          <div className="divide-y divide-neutral-700">
+          {/* Reservation Rows - Mobile-friendly card layout */}
+          <div className="space-y-1">
             {todayReservations.map((res, index) => (
               <TodayReservationRow key={res.id} reservation={res} index={index} />
             ))}
