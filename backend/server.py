@@ -187,6 +187,7 @@ class ShopMenuCategory(BaseModel):
     name: str
     description: str = ""
     items: List[ShopMenuItem] = []
+    addon_group_ids: List[str] = []  # IDs of global addon groups assigned to this category
     sort_order: int = 0
     available: bool = True
 
