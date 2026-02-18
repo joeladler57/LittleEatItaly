@@ -508,6 +508,7 @@ const ShopAdminPage = () => {
               { id: "orders", label: "BESTELLUNGEN", icon: ShoppingBag, count: orders.filter(o => o.status === "pending").length },
               { id: "reservations", label: "RESERVIERUNGEN", icon: CalendarDays, count: reservations.filter(r => r.status === "pending").length },
               { id: "menu", label: "MENÜ", icon: UtensilsCrossed },
+              { id: "printer", label: "DRUCKER", icon: Printer },
               { id: "settings", label: "EINSTELLUNGEN", icon: Settings },
             ].map((tab) => (
               <TabsTrigger
@@ -539,6 +540,11 @@ const ShopAdminPage = () => {
           {/* Menu Tab */}
           <TabsContent value="menu">
             <MenuSection menu={menu} onUpdate={fetchAllData} />
+          </TabsContent>
+
+          {/* Printer Tab */}
+          <TabsContent value="printer">
+            <PrinterSection settings={settings} onUpdate={fetchAllData} />
           </TabsContent>
 
           {/* Settings Tab */}
