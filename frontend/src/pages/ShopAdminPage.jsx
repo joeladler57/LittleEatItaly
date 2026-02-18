@@ -1011,8 +1011,243 @@ const MenuSection = ({ menu, onUpdate }) => {
   );
 };
 
+// Category Editor Modal
+const CategoryEditor = ({ category, addonGroups, onSave, onClose }) => {
+  const [formData, setFormData] = useState({
+    name: category.name || "",
+    description: category.description || "",
+    addon_group_ids: category.addon_group_ids || [],
+    available: category.available !== false
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await onSave(category.id, formData);
+    setSaving(false);
+  };
+
+  const toggleAddonGroup = (groupId) => {
+    const newIds = formData.addon_group_ids.includes(groupId)
+      ? formData.addon_group_ids.filter(id => id !== groupId)
+      : [...formData.addon_group_ids, groupId];
+    setFormData({ ...formData, addon_group_ids: newIds });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+      <div className="w-full max-w-xl bg-pizza-dark border border-pizza-dark">
+        <div className="p-6 border-b border-pizza-black flex justify-between items-center">
+          <h2 className="font-anton text-xl text-pizza-white">KATEGORIE BEARBEITEN</h2>
+          <button onClick={onClose} className="text-neutral-400 hover:text-pizza-white">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div>
+            <Label className="font-mono text-sm text-neutral-400">Name *</Label>
+            <Input
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+            />
+          </div>
+
+          <div>
+            <Label className="font-mono text-sm text-neutral-400">Beschreibung</Label>
+            <Input
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+            />
+          </div>
+
+          {/* Addon Groups Assignment */}
+          {addonGroups.length > 0 && (
+            <div>
+              <Label className="font-mono text-sm text-yellow-500 mb-2 block">Add-on Gruppen zuordnen</Label>
+              <p className="font-mono text-xs text-neutral-500 mb-2">
+                Wähle welche Add-on Gruppen für alle Artikel dieser Kategorie verfügbar sein sollen.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {addonGroups.map(group => (
+                  <button
+                    key={group.id}
+                    onClick={() => toggleAddonGroup(group.id)}
+                    className={`px-3 py-2 font-mono text-sm border transition-all ${
+                      formData.addon_group_ids.includes(group.id)
+                        ? "border-yellow-500 bg-yellow-500/20 text-yellow-400"
+                        : "border-pizza-dark text-neutral-400 hover:border-neutral-600"
+                    }`}
+                  >
+                    {group.name}
+                    {formData.addon_group_ids.includes(group.id) && <Check className="w-4 h-4 inline ml-2" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.available}
+              onChange={e => setFormData({ ...formData, available: e.target.checked })}
+              className="w-4 h-4 accent-pizza-red"
+            />
+            <span className="font-mono text-sm text-neutral-300">Kategorie sichtbar</span>
+          </label>
+        </div>
+
+        <div className="p-6 border-t border-pizza-black flex gap-2">
+          <Button onClick={onClose} variant="outline" className="flex-1 border-pizza-dark text-pizza-white rounded-none">
+            Abbrechen
+          </Button>
+          <Button onClick={handleSave} disabled={saving} className="flex-1 bg-pizza-red hover:bg-red-700 text-pizza-white font-anton rounded-none">
+            {saving ? "Speichern..." : "Speichern"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Addon Group Editor Modal
+const AddonGroupEditor = ({ group, onSave, onClose }) => {
+  const [formData, setFormData] = useState({
+    name: group.name || "",
+    required: group.required || false,
+    multiple: group.multiple || false,
+    options: group.options || []
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await onSave(group.id, formData);
+    setSaving(false);
+  };
+
+  const addOption = () => {
+    setFormData({
+      ...formData,
+      options: [...formData.options, { id: `opt_${Date.now()}`, name: "", price: 0 }]
+    });
+  };
+
+  const updateOption = (index, updates) => {
+    const newOptions = [...formData.options];
+    newOptions[index] = { ...newOptions[index], ...updates };
+    setFormData({ ...formData, options: newOptions });
+  };
+
+  const removeOption = (index) => {
+    setFormData({ ...formData, options: formData.options.filter((_, i) => i !== index) });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+      <div className="w-full max-w-xl bg-pizza-dark border border-yellow-600 max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-pizza-black flex justify-between items-center">
+          <h2 className="font-anton text-xl text-yellow-500">ADD-ON GRUPPE BEARBEITEN</h2>
+          <button onClick={onClose} className="text-neutral-400 hover:text-pizza-white">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div>
+            <Label className="font-mono text-sm text-neutral-400">Gruppenname *</Label>
+            <Input
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              placeholder="z.B. Dressing, Extras, Beilagen"
+              className="bg-pizza-black border-pizza-dark focus:border-yellow-500 text-pizza-white rounded-none mt-1"
+            />
+          </div>
+
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.required}
+                onChange={e => setFormData({ ...formData, required: e.target.checked })}
+                className="w-4 h-4 accent-yellow-500"
+              />
+              <span className="font-mono text-sm text-neutral-300">Pflichtauswahl</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.multiple}
+                onChange={e => setFormData({ ...formData, multiple: e.target.checked })}
+                className="w-4 h-4 accent-yellow-500"
+              />
+              <span className="font-mono text-sm text-neutral-300">Mehrfachauswahl</span>
+            </label>
+          </div>
+
+          {/* Options */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="font-mono text-sm text-neutral-400">Optionen</Label>
+              <Button onClick={addOption} size="sm" className="bg-yellow-600 hover:bg-yellow-700 text-white font-mono rounded-none h-7 text-xs">
+                <Plus className="w-3 h-3 mr-1" /> Option
+              </Button>
+            </div>
+            
+            {formData.options.length === 0 ? (
+              <p className="font-mono text-sm text-neutral-500 text-center py-4 bg-pizza-black/50">
+                Keine Optionen. Füge Optionen hinzu (z.B. "Joghurt-Dressing", "Balsamico").
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {formData.options.map((option, index) => (
+                  <div key={option.id} className="flex items-center gap-2">
+                    <Input
+                      value={option.name}
+                      onChange={e => updateOption(index, { name: e.target.value })}
+                      placeholder="Name (z.B. Joghurt)"
+                      className="flex-1 bg-pizza-black border-pizza-dark focus:border-yellow-500 text-pizza-white rounded-none"
+                    />
+                    <div className="flex items-center gap-1">
+                      <span className="font-mono text-xs text-neutral-500">+</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={option.price}
+                        onChange={e => updateOption(index, { price: parseFloat(e.target.value) || 0 })}
+                        placeholder="0.00"
+                        className="w-20 bg-pizza-black border-pizza-dark focus:border-yellow-500 text-pizza-white rounded-none text-right"
+                      />
+                      <span className="font-mono text-xs text-neutral-500">€</span>
+                    </div>
+                    <Button onClick={() => removeOption(index)} size="sm" variant="outline" className="border-red-500 text-red-500 rounded-none h-10 w-10 p-0">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-pizza-black flex gap-2">
+          <Button onClick={onClose} variant="outline" className="flex-1 border-pizza-dark text-pizza-white rounded-none">
+            Abbrechen
+          </Button>
+          <Button onClick={handleSave} disabled={saving} className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-anton rounded-none">
+            {saving ? "Speichern..." : "Speichern"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Item Editor Modal
-const ItemEditor = ({ categoryId, item, onSave, onClose }) => {
+const ItemEditor = ({ categoryId, item, addonGroups, categoryAddonGroupIds, onSave, onClose }) => {
   const [formData, setFormData] = useState({
     name: item.name || "",
     description: item.description || "",
