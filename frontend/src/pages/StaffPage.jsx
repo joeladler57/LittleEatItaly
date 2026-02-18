@@ -553,32 +553,35 @@ const OrderCard = ({ order, onUpdate }) => {
             exit={{ height: 0 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 border-t border-pizza-black pt-3">
+            <div className="px-4 pb-4 border-t border-neutral-700 pt-3 bg-neutral-800/50">
               {/* Items */}
-              <div className="bg-pizza-black/50 p-3 mb-3">
+              <div className="bg-black/30 p-3 mb-3 border border-neutral-700">
+                <p className="font-mono text-xs text-neutral-500 mb-2 uppercase">Bestellte Artikel</p>
                 {order.items?.map((item, i) => (
-                  <div key={i} className="flex justify-between py-1">
-                    <span className="font-mono text-sm text-pizza-white">
-                      {item.quantity}x {item.item_name}
-                      {item.size_name && <span className="text-neutral-500"> ({item.size_name})</span>}
+                  <div key={i} className="flex justify-between py-2 border-b border-neutral-700/50 last:border-0">
+                    <span className="font-mono text-sm text-white">
+                      <span className="text-yellow-400 font-bold">{item.quantity}x</span> {item.item_name}
+                      {item.size_name && <span className="text-neutral-400"> ({item.size_name})</span>}
                     </span>
-                    <span className="font-mono text-sm text-neutral-400">{formatPrice(item.total_price)}</span>
+                    <span className="font-mono text-sm text-green-400 font-medium">{formatPrice(item.total_price)}</span>
                   </div>
                 ))}
                 {order.notes && (
-                  <p className="font-mono text-xs text-yellow-500 mt-2 pt-2 border-t border-pizza-dark">
-                    📝 {order.notes}
-                  </p>
+                  <div className="mt-3 pt-3 border-t border-yellow-500/30 bg-yellow-500/10 p-2 -mx-3 -mb-3">
+                    <p className="font-mono text-sm text-yellow-400">
+                      📝 <span className="font-bold">Hinweis:</span> {order.notes}
+                    </p>
+                  </div>
                 )}
               </div>
 
               {/* Customer Info */}
-              <div className="flex flex-wrap gap-3 mb-3 text-neutral-400">
-                <span className="font-mono text-xs flex items-center gap-1">
-                  <Phone className="w-3 h-3" /> {order.customer_phone}
+              <div className="flex flex-wrap gap-4 mb-4 p-3 bg-black/20 border border-neutral-700">
+                <span className="font-mono text-sm flex items-center gap-2 text-white">
+                  <Phone className="w-4 h-4 text-blue-400" /> {order.customer_phone}
                 </span>
-                <span className="font-mono text-xs flex items-center gap-1">
-                  <Mail className="w-3 h-3" /> {order.customer_email}
+                <span className="font-mono text-sm flex items-center gap-2 text-neutral-300">
+                  <Mail className="w-4 h-4 text-blue-400" /> {order.customer_email}
                 </span>
               </div>
 
@@ -589,17 +592,16 @@ const OrderCard = ({ order, onUpdate }) => {
                     <Button
                       onClick={handleConfirm}
                       disabled={updating}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-mono rounded-none"
+                      className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold text-base py-3 rounded-none shadow-lg"
                     >
-                      <Check className="w-4 h-4 mr-1" /> ANNEHMEN
+                      <Check className="w-5 h-5 mr-2" /> ANNEHMEN
                     </Button>
                     <Button
                       onClick={() => updateStatus("cancelled")}
                       disabled={updating}
-                      variant="outline"
-                      className="border-red-500 text-red-500 hover:bg-red-500/10 font-mono rounded-none"
+                      className="bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-none"
                     >
-                      <X className="w-4 h-4 mr-1" /> ABLEHNEN
+                      <X className="w-5 h-5" />
                     </Button>
                   </>
                 )}
