@@ -7,68 +7,83 @@
 
 ## What's Been Implemented
 
-### Dezember 2025
-- ✅ **GlobalFood Menü-Integration**: Dynamische Speisekarte von GlobalFood API
-- ✅ **Bestellen zum Abholen**: Link zu https://www.foodbooking.com/api/fb/_q_y4z_v
-- ✅ **Tischreservierung**: Link zu https://www.foodbooking.com/api/res/_q_y4z_v
-- ✅ **Echte Uber Eats Link**: https://www.ubereats.com/de/store/little-eat-italy-pizza-napoletana-e-bar/...
-- ✅ **Echte Lieferando Link**: https://order-now-toolkit.takeaway.com/widgets/button?restId=13007961
-- ✅ **Social Media Links editierbar**: Instagram, Facebook, TikTok im Admin Dashboard
-- ✅ **Instagram Feed Slider**: Drippy Design mit manuellen Posts auf der Startseite
+### Dezember 2025 - Bestell- & Reservierungssystem
+- ✅ **Online Bestellsystem** (`/bestellen`): Warenkorb, Kategorien, Artikelauswahl, Checkout
+- ✅ **Reservierungssystem** (`/reservieren`): Datums-/Zeitauswahl, Personenanzahl
+- ✅ **Shop Admin** (`/admin/shop`): Bestellungen, Reservierungen, Menü-Verwaltung
+- ✅ **Nur Abholung & Barzahlung**: Wie gewünscht
+- ✅ **E-Mail-Bestätigung**: Bereit (benötigt Resend API-Key)
+
+### Frühere Updates
+- ✅ **GlobalFood Menü-Integration**: Dynamische Speisekarte
+- ✅ **Echte Links**: Uber Eats, Lieferando, Abholen, Reservierung
+- ✅ **Social Media Links editierbar**: Instagram, Facebook, TikTok
 
 ### Pages
-- ✅ **Startseite**: Hero mit Maradona Graffiti, 4 Action-Buttons, Features, Instagram Feed
-- ✅ **Menü**: GlobalFood API Integration mit Kategorien (Vorspeisen, Pizza, Pasta, Insalata)
-- ✅ **Über Uns**: Geschichte, Philosophie, Stats
-- ✅ **Kontakt**: Erweitertes Formular + Kontaktinfos
-- ✅ **Impressum**: Deutsche Rechtsstandards (§5 TMG, etc.)
+- ✅ **Startseite**: Hero mit Maradona Graffiti, 4 Action-Buttons
+- ✅ **Menü** (`/menu`): GlobalFood API
+- ✅ **Online Bestellen** (`/bestellen`): Eigenes Bestellsystem
+- ✅ **Reservieren** (`/reservieren`): Tischreservierung
+- ✅ **Über Uns**: Geschichte, Philosophie
+- ✅ **Kontakt**: Formular + Infos
+- ✅ **Impressum**: Rechtliche Infos
 
 ### Homepage Action Buttons
 | Button | URL |
 |--------|-----|
-| UBER EATS | https://www.ubereats.com/de/store/little-eat-italy-pizza-napoletana-e-bar/... |
+| UBER EATS | https://www.ubereats.com/de/store/little-eat-italy... |
 | LIEFERANDO | https://order-now-toolkit.takeaway.com/widgets/button?restId=13007961 |
-| BESTELLEN ZUM ABHOLEN | https://www.foodbooking.com/api/fb/_q_y4z_v |
-| TISCHRESERVIERUNG | https://www.foodbooking.com/api/res/_q_y4z_v |
+| BESTELLEN ZUM ABHOLEN | /bestellen (internes System) |
+| TISCHRESERVIERUNG | /reservieren (internes System) |
 
-### Admin Dashboard Tabs
-1. **STARTSEITE**: Hintergrundbild, Untertitel, 4 Action-Buttons (URLs)
-2. **KONTAKT**: Adresse, Telefon, E-Mail, Öffnungszeiten, Formular-Einstellungen
-3. **IMPRESSUM**: Titel + Markdown-Inhalt vollständig editierbar
-4. **SOCIAL MEDIA**: Instagram/Facebook/TikTok Links + Instagram Feed Posts verwalten
-5. **FOOTER**: Lauftext, Beschreibung, Copyright
-6. **EINSTELLUNGEN**: Passwort ändern
+### Admin Dashboard
+**Webseiten-Verwaltung** (`/admin`):
+- STARTSEITE, KONTAKT, IMPRESSUM, SOCIAL MEDIA, FOOTER, EINSTELLUNGEN
+
+**Shop-Verwaltung** (`/admin/shop`):
+- BESTELLUNGEN: Status verwalten (Neu → Bestätigt → Zubereitung → Abholbereit → Abgeschlossen)
+- RESERVIERUNGEN: Bestätigen/Stornieren mit E-Mail-Benachrichtigung
+- MENÜ: Kategorien und Artikel pflegen
+- EINSTELLUNGEN: Vorlaufzeit, Restaurant-Infos
 
 ### API Endpoints
 ```bash
-# Content
-GET  /api/content              # Alle Inhalte
-PUT  /api/content/hero         # Hero-Bereich
-PUT  /api/content/buttons      # Action-Buttons aktualisieren
-PUT  /api/content/contact      # Kontaktseite
-PUT  /api/content/impressum    # Impressum (Markdown)
-PUT  /api/content/footer       # Footer + Social Media + Instagram Feed
+# Shop Menu
+GET  /api/shop/menu                    # Menü abrufen
+PUT  /api/shop/menu                    # Menü aktualisieren (Admin)
 
-# GlobalFood Menu
-GET  /api/globalfood/menu      # Menü von GlobalFood API
+# Orders
+POST /api/shop/orders                  # Bestellung aufgeben
+GET  /api/shop/orders                  # Alle Bestellungen (Admin)
+PUT  /api/shop/orders/{id}/status      # Status ändern (Admin)
 
-# Auth
-POST /api/auth/login           # Admin Login
-GET  /api/auth/verify          # Token prüfen
-POST /api/auth/change-password # Passwort ändern
+# Reservations
+POST /api/shop/reservations            # Reservierung anfragen
+GET  /api/shop/reservations            # Alle Reservierungen (Admin)
+PUT  /api/shop/reservations/{id}/status # Status ändern (Admin)
 
-# Kontakt
-POST /api/contact              # Nachricht senden
-GET  /api/contact              # Alle Nachrichten
+# Settings
+GET  /api/shop/settings                # Einstellungen abrufen
+PUT  /api/shop/settings                # Einstellungen ändern (Admin)
+```
+
+### E-Mail Konfiguration
+Für E-Mail-Bestätigungen Resend API-Key in `/app/backend/.env` eintragen:
+```
+RESEND_API_KEY=re_xxxxxxxxxxxx
+SENDER_EMAIL=bestellung@little-eat-italy.de
 ```
 
 ### 3rd Party Integrations
 - **GlobalFood API**: Restaurant Key `pQ5d8UmzbClR90Y1DR`
-- **FoodBooking**: Abholen und Reservierung Links
-- **Uber Eats**: Direkter Store Link
-- **Lieferando**: Widget Button Link
+- **Resend**: E-Mail-Versand (API-Key benötigt)
 
 ## Next Tasks
-1. E-Mail-Benachrichtigung bei neuen Kontaktanfragen
-2. Bildergalerie hinzufügen
-3. Echte Instagram Bilder im Admin hinzufügen
+1. 🟡 Resend API-Key für E-Mail-Bestätigungen einrichten
+2. 🟢 Impressum mit echten Firmendaten (über Admin)
+3. 🟢 Weitere Menü-Artikel hinzufügen (über Shop Admin)
+
+## Backlog
+- Mehrsprachigkeit (DE/EN)
+- Push-Benachrichtigungen für neue Bestellungen
+- Statistiken/Dashboard für Bestellungen
