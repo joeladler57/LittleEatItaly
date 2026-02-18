@@ -16,6 +16,8 @@ const ReservationPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [result, setResult] = useState(null);
+  const [availableDates, setAvailableDates] = useState([]);
+  const [availableTimes, setAvailableTimes] = useState([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -29,14 +31,27 @@ const ReservationPage = () => {
 
   useEffect(() => {
     fetchSettings();
-    // Set default date to tomorrow
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setFormData(prev => ({
-      ...prev,
-      date: tomorrow.toISOString().split('T')[0]
-    }));
   }, []);
+
+  useEffect(() => {
+    if (settings) {
+      const dates = generateAvailableDates();
+      setAvailableDates(dates);
+      if (dates.length > 0 && !formData.date) {
+        setFormData(prev => ({ ...prev, date: dates[0].value }));
+      }
+    }
+  }, [settings]);
+
+  useEffect(() => {
+    if (formData.date && settings) {
+      const times = generateAvailableTimes(formData.date);
+      setAvailableTimes(times);
+      if (times.length > 0 && !formData.time) {
+        setFormData(prev => ({ ...prev, time: times[0].value }));
+      }
+    }
+  }, [formData.date, settings]);
 
   const fetchSettings = async () => {
     try {
@@ -44,23 +59,34 @@ const ReservationPage = () => {
       setSettings(response.data);
     } catch (e) {
       console.error("Failed to fetch settings:", e);
+      toast.error("Fehler beim Laden der Einstellungen");
     } finally {
       setLoading(false);
     }
   };
 
-  const getAvailableDates = () => {
+  const generateAvailableDates = () => {
+    if (!settings) return [];
+    
     const dates = [];
-    const maxDays = settings?.max_reservation_days_ahead || 30;
+    const maxDays = settings.max_reservation_days_ahead || 30;
     const today = new Date();
+    const closedDays = settings.closed_days || [];
     
     for (let i = 1; i <= maxDays; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() + i);
       const dateStr = date.toISOString().split('T')[0];
       
-      // Check if date is in closed_days
-      if (!settings?.closed_days?.includes(dateStr)) {
+      // Check if date is a closed day
+      if (closedDays.includes(dateStr)) continue;
+      
+      // Check if day of week has opening hours
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayName = dayNames[date.getDay()];
+      const hours = settings.opening_hours?.[dayName];
+      
+      if (hours?.open && hours?.close) {
         dates.push({
           value: dateStr,
           label: date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -71,10 +97,10 @@ const ReservationPage = () => {
     return dates;
   };
 
-  const getAvailableTimes = () => {
-    if (!formData.date || !settings?.opening_hours) return [];
+  const generateAvailableTimes = (dateStr) => {
+    if (!dateStr || !settings?.opening_hours) return [];
     
-    const date = new Date(formData.date);
+    const date = new Date(dateStr);
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const dayName = dayNames[date.getDay()];
     const hours = settings.opening_hours[dayName];
@@ -83,15 +109,22 @@ const ReservationPage = () => {
     
     const times = [];
     const [openHour, openMin] = hours.open.split(':').map(Number);
-    const [closeHour, closeMin] = hours.close.split(':').map(Number);
+    let [closeHour, closeMin] = hours.close.split(':').map(Number);
+    
+    // Handle closing after midnight (e.g., 00:00 means midnight)
+    if (closeHour === 0 && closeMin === 0) {
+      closeHour = 24;
+    } else if (closeHour < openHour) {
+      closeHour += 24;
+    }
     
     let currentHour = openHour;
     let currentMin = openMin;
     
-    // Handle closing after midnight
-    const effectiveCloseHour = closeHour < openHour ? closeHour + 24 : closeHour;
+    // Stop 1 hour before closing for reservations
+    const lastReservationHour = closeHour - 1;
     
-    while (currentHour < effectiveCloseHour || (currentHour === effectiveCloseHour && currentMin < closeMin)) {
+    while (currentHour < lastReservationHour || (currentHour === lastReservationHour && currentMin <= closeMin)) {
       const displayHour = currentHour >= 24 ? currentHour - 24 : currentHour;
       const timeStr = `${displayHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`;
       times.push({
@@ -107,6 +140,11 @@ const ReservationPage = () => {
     }
     
     return times;
+  };
+
+  const handleDateChange = (e) => {
+    const newDate = e.target.value;
+    setFormData({ ...formData, date: newDate, time: "" });
   };
 
   const handleSubmit = async (e) => {
@@ -251,52 +289,60 @@ const ReservationPage = () => {
           {/* Date & Time */}
           <div className="grid sm:grid-cols-2 gap-4 mb-6">
             <div>
-              <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2">
+              <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2 mb-2">
                 <CalendarDays className="w-4 h-4 text-pizza-red" />
                 Datum *
               </Label>
               <select
                 value={formData.date}
-                onChange={e => setFormData({ ...formData, date: e.target.value, time: "" })}
-                className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 mt-1 font-mono"
+                onChange={handleDateChange}
+                className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 font-mono appearance-none cursor-pointer"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23999'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
               >
-                <option value="">Datum wählen</option>
-                {getAvailableDates().map(date => (
-                  <option key={date.value} value={date.value}>{date.label}</option>
-                ))}
+                {availableDates.length === 0 ? (
+                  <option value="">Keine Termine verfügbar</option>
+                ) : (
+                  availableDates.map(date => (
+                    <option key={date.value} value={date.value}>{date.label}</option>
+                  ))
+                )}
               </select>
             </div>
             
             <div>
-              <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2">
+              <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2 mb-2">
                 <Clock className="w-4 h-4 text-pizza-red" />
                 Uhrzeit *
               </Label>
               <select
                 value={formData.time}
                 onChange={e => setFormData({ ...formData, time: e.target.value })}
-                disabled={!formData.date}
-                className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 mt-1 font-mono disabled:opacity-50"
+                disabled={!formData.date || availableTimes.length === 0}
+                className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 font-mono disabled:opacity-50 appearance-none cursor-pointer"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23999'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
               >
-                <option value="">Uhrzeit wählen</option>
-                {getAvailableTimes().map(time => (
-                  <option key={time.value} value={time.value}>{time.label}</option>
-                ))}
+                {availableTimes.length === 0 ? (
+                  <option value="">Keine Zeiten verfügbar</option>
+                ) : (
+                  availableTimes.map(time => (
+                    <option key={time.value} value={time.value}>{time.label}</option>
+                  ))
+                )}
               </select>
             </div>
           </div>
 
           {/* Guests */}
           <div className="mb-6">
-            <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2">
+            <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2 mb-2">
               <Users className="w-4 h-4 text-pizza-red" />
               Anzahl Personen *
             </Label>
-            <div className="flex items-center gap-4 mt-2">
+            <div className="flex items-center gap-4">
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, guests: Math.max(1, formData.guests - 1) })}
-                className="w-12 h-12 border border-pizza-dark hover:border-pizza-red text-pizza-white font-anton text-xl"
+                className="w-12 h-12 border border-pizza-dark hover:border-pizza-red text-pizza-white font-anton text-xl transition-colors"
               >
                 -
               </button>
@@ -304,7 +350,7 @@ const ReservationPage = () => {
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, guests: Math.min(20, formData.guests + 1) })}
-                className="w-12 h-12 border border-pizza-dark hover:border-pizza-red text-pizza-white font-anton text-xl"
+                className="w-12 h-12 border border-pizza-dark hover:border-pizza-red text-pizza-white font-anton text-xl transition-colors"
               >
                 +
               </button>
@@ -314,7 +360,7 @@ const ReservationPage = () => {
           {/* Contact Info */}
           <div className="space-y-4 mb-6">
             <div>
-              <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2">
+              <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2 mb-2">
                 <User className="w-4 h-4 text-pizza-red" />
                 Name *
               </Label>
@@ -322,12 +368,12 @@ const ReservationPage = () => {
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Dein Name"
-                className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+                className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none"
               />
             </div>
             
             <div>
-              <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2">
+              <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2 mb-2">
                 <Mail className="w-4 h-4 text-pizza-red" />
                 E-Mail *
               </Label>
@@ -336,12 +382,12 @@ const ReservationPage = () => {
                 value={formData.email}
                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                 placeholder="deine@email.de"
-                className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+                className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none"
               />
             </div>
             
             <div>
-              <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2">
+              <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2 mb-2">
                 <Phone className="w-4 h-4 text-pizza-red" />
                 Telefon *
               </Label>
@@ -350,12 +396,12 @@ const ReservationPage = () => {
                 value={formData.phone}
                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="0123 456789"
-                className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+                className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none"
               />
             </div>
             
             <div>
-              <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2">
+              <Label className="font-mono text-sm text-neutral-400 flex items-center gap-2 mb-2">
                 <MessageSquare className="w-4 h-4 text-pizza-red" />
                 Anmerkungen
               </Label>
@@ -364,7 +410,7 @@ const ReservationPage = () => {
                 onChange={e => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Besondere Wünsche, Allergien, Anlass..."
                 rows={3}
-                className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 mt-1 font-mono resize-none"
+                className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 font-mono resize-none"
               />
             </div>
           </div>
@@ -372,8 +418,8 @@ const ReservationPage = () => {
           {/* Submit */}
           <Button
             type="submit"
-            disabled={submitting}
-            className="w-full bg-pizza-red hover:bg-red-700 text-pizza-white font-anton text-lg tracking-wider py-6 rounded-none"
+            disabled={submitting || !formData.date || !formData.time}
+            className="w-full bg-pizza-red hover:bg-red-700 text-pizza-white font-anton text-lg tracking-wider py-6 rounded-none disabled:opacity-50"
           >
             {submitting ? "WIRD GESENDET..." : "RESERVIERUNG ANFRAGEN"}
           </Button>
