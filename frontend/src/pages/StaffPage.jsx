@@ -953,35 +953,35 @@ const TodayReservationRow = ({ reservation, index }) => {
   const isSoon = !isPast && (resTime - now) < 30 * 60 * 1000; // Within 30 minutes
 
   return (
-    <div className={`px-3 py-3 ${
+    <div className={`px-2 py-3 ${
       isEven ? 'bg-neutral-900' : 'bg-neutral-800'
-    } ${isPast ? 'opacity-40' : ''} ${isSoon ? 'border-l-4 border-yellow-400' : ''}`}>
-      <div className="flex items-center gap-3">
-        {/* Time Badge - always visible */}
-        <div className={`w-16 text-center py-2 flex-shrink-0 ${
+    } ${isPast ? 'opacity-40' : ''} ${isSoon ? 'bg-yellow-500/20 border-l-4 border-yellow-400' : ''}`}>
+      <div className="flex items-center">
+        {/* Time Badge */}
+        <div className={`w-14 text-center py-1.5 flex-shrink-0 mr-3 ${
           isPast ? 'bg-neutral-700' : isSoon ? 'bg-yellow-500' : 'bg-green-600'
         }`}>
-          <span className={`font-anton text-lg ${isPast ? 'text-neutral-400' : isSoon ? 'text-black' : 'text-white'}`}>
+          <span className={`font-anton text-base ${isPast ? 'text-neutral-400' : isSoon ? 'text-black font-bold' : 'text-white'}`}>
             {reservation.time}
           </span>
         </div>
         
-        {/* Name - flexible */}
-        <div className="flex-1 min-w-0">
-          <p className={`font-mono text-sm font-medium truncate ${isPast ? 'text-neutral-500' : 'text-white'}`}>
+        {/* Name */}
+        <div className="flex-1 min-w-0 mr-2">
+          <p className={`font-mono text-sm truncate ${isPast ? 'text-neutral-500' : isSoon ? 'text-yellow-100 font-bold' : 'text-white'}`}>
             {reservation.customer_name}
           </p>
           {reservation.notes && (
-            <p className="font-mono text-xs text-yellow-400 truncate mt-0.5">
+            <p className="font-mono text-xs text-yellow-400 truncate">
               📝 {reservation.notes}
             </p>
           )}
         </div>
 
-        {/* Persons - always visible */}
+        {/* Persons */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <User className={`w-4 h-4 ${isPast ? 'text-neutral-600' : 'text-green-400'}`} />
-          <span className={`font-anton text-2xl ${isPast ? 'text-neutral-600' : 'text-green-400'}`}>
+          <span className={`font-anton text-xl ${isPast ? 'text-neutral-600' : 'text-green-400'}`}>
             {reservation.guests}
           </span>
         </div>
