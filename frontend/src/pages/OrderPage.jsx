@@ -346,9 +346,10 @@ const OrderPage = () => {
               )}
             </div>
 
-            {/* Cart Sidebar */}
+            {/* Cart Sidebar - always visible when checkout, or when cart has items on desktop */}
             <div className={`lg:w-96 ${step === "menu" && cart.length === 0 ? "hidden lg:block" : ""}`}>
-              <div className="bg-pizza-dark border border-pizza-dark sticky top-24">
+              {/* Cart Summary - hide on mobile during checkout to save space */}
+              <div className={`bg-pizza-dark border border-pizza-dark ${step === "checkout" ? "lg:sticky lg:top-24" : "sticky top-24"}`}>
                 <div className="p-4 border-b border-pizza-black">
                   <h2 className="font-anton text-xl text-pizza-white flex items-center gap-2">
                     <ShoppingBag className="w-5 h-5 text-pizza-red" />
