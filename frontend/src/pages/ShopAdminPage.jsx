@@ -1396,6 +1396,26 @@ const ItemEditor = ({ categoryId, item, addonGroups, categoryAddonGroupIds, onSa
             </div>
           </div>
 
+          {/* Assigned Addon Groups Info */}
+          {categoryAddonGroupIds && categoryAddonGroupIds.length > 0 && addonGroups && (
+            <div className="p-3 bg-yellow-900/20 border border-yellow-600/50">
+              <Label className="font-mono text-sm text-yellow-500 mb-2 block">Add-ons für diesen Artikel (via Kategorie)</Label>
+              <div className="flex flex-wrap gap-2">
+                {categoryAddonGroupIds.map(groupId => {
+                  const group = addonGroups.find(g => g.id === groupId);
+                  return group ? (
+                    <span key={groupId} className="text-xs font-mono bg-yellow-600/20 text-yellow-400 px-2 py-1">
+                      {group.name}: {group.options?.map(o => o.name).join(", ") || "Keine Optionen"}
+                    </span>
+                  ) : null;
+                })}
+              </div>
+              <p className="font-mono text-xs text-neutral-500 mt-2">
+                Add-ons werden über die Kategorie zugeordnet. Bearbeite die Kategorie um Add-ons zu ändern.
+              </p>
+            </div>
+          )}
+
           {/* Available */}
           <label className="flex items-center gap-2 cursor-pointer">
             <input
