@@ -817,6 +817,17 @@ const OrderCard = ({ order, onUpdate, shopSettings, printOrder, isPrinting }) =>
                     <Check className="w-5 h-5 mr-2" /> ABGEHOLT
                   </Button>
                 )}
+                {/* Manual Print Button - always visible when printer is enabled */}
+                {shopSettings?.printer_enabled && order.status !== "pending" && (
+                  <Button
+                    onClick={handleManualPrint}
+                    disabled={isPrinting}
+                    className="bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-3 rounded-none"
+                    title="Bon drucken"
+                  >
+                    <Printer className="w-5 h-5" />
+                  </Button>
+                )}
               </div>
             </div>
           </motion.div>
