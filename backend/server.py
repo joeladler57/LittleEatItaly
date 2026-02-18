@@ -765,6 +765,46 @@ async def update_staff_reservation_status(reservation_id: str, status: str, role
     
     return {"message": f"Status updated to {status}"}
 
+class StaffReservationCreate(BaseModel):
+    """Model for staff-created phone reservations"""
+    customer_name: str
+    customer_phone: str
+    date: str  # YYYY-MM-DD
+    time: str  # HH:MM
+    guests: int
+    notes: Optional[str] = None
+
+@api_router.post("/staff/reservations")
+async def create_staff_reservation(reservation_data: StaffReservationCreate, role: str = Depends(verify_staff_token)):
+    """Create a reservation via staff (phone booking) - auto-confirmed"""
+    # Get next reservation number
+    reservation_number = await get_next_reservation_number()
+    
+    # Create reservation with status "confirmed" (phone bookings are pre-confirmed)
+    reservation = Reservation(
+        reservation_number=reservation_number,
+        customer_name=reservation_data.customer_name,
+        customer_email="",  # Phone bookings may not have email
+        customer_phone=reservation_data.customer_phone,
+        date=reservation_data.date,
+        time=reservation_data.time,
+        guests=reservation_data.guests,
+        notes=f"[Telefonisch] {reservation_data.notes}" if reservation_data.notes else "[Telefonisch]",
+        status="confirmed"  # Auto-confirmed for phone bookings
+    )
+    
+    reservation_dict = reservation.model_dump()
+    reservation_dict["created_at"] = reservation_dict["created_at"].isoformat()
+    reservation_dict["updated_at"] = reservation_dict["updated_at"].isoformat()
+    
+    await db.reservations.insert_one(reservation_dict)
+    
+    return {
+        "message": "Telefonische Reservierung eingetragen!",
+        "reservation_number": reservation_number,
+        "reservation_id": reservation.id
+    }
+
 # ============ ORDER ENDPOINTS ============
 
 async def get_next_order_number():
