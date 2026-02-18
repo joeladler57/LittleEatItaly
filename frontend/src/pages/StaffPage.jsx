@@ -244,8 +244,32 @@ const StaffPage = () => {
 
   return (
     <div className="min-h-screen bg-pizza-black" onClick={enableAudio}>
+      {/* Alarm Banner - Shows when there are pending items */}
+      {isAlarmActive && (
+        <div className="fixed top-0 left-0 right-0 z-[100] bg-red-600 animate-pulse">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <BellRing className="w-6 h-6 text-white animate-bounce" />
+              <div>
+                <p className="font-anton text-white text-lg">NEUE BESTELLUNG / RESERVIERUNG!</p>
+                <p className="font-mono text-xs text-red-100">Bitte annehmen oder ablehnen</p>
+              </div>
+            </div>
+            <Button
+              onClick={() => {
+                stopLoopingSound();
+                setIsAlarmActive(false);
+              }}
+              className="bg-white text-red-600 hover:bg-red-100 font-anton rounded-none"
+            >
+              <VolumeX className="w-4 h-4 mr-2" /> STUMM
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="bg-pizza-dark border-b border-pizza-black sticky top-0 z-50">
+      <div className={`bg-pizza-dark border-b border-pizza-black sticky ${isAlarmActive ? 'top-16' : 'top-0'} z-50 transition-all`}>
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
