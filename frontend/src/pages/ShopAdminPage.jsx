@@ -285,6 +285,49 @@ const ShopAdminPage = () => {
           )}
         </AnimatePresence>
 
+        {/* Push Notification Banner */}
+        <AnimatePresence>
+          {showPushBanner && isPushSupported && !isPushSubscribed && pushPermission !== 'denied' && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-4 bg-gradient-to-r from-blue-600 to-blue-800 p-4 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <Bell className="w-6 h-6 text-white" />
+                <div>
+                  <p className="font-anton text-white">PUSH-BENACHRICHTIGUNGEN</p>
+                  <p className="font-mono text-xs text-white/80">Erhalte Benachrichtigungen auch wenn der Browser geschlossen ist!</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={async () => {
+                    try {
+                      await subscribeToPush('Admin Gerät');
+                      toast.success('Push-Benachrichtigungen aktiviert!');
+                      setShowPushBanner(false);
+                    } catch (e) {
+                      toast.error(e.message || 'Fehler beim Aktivieren');
+                    }
+                  }}
+                  disabled={isPushLoading}
+                  className="bg-white text-blue-600 hover:bg-white/90 font-anton rounded-none"
+                >
+                  <Bell className="w-4 h-4 mr-2" /> {isPushLoading ? '...' : 'AKTIVIEREN'}
+                </Button>
+                <button
+                  onClick={() => setShowPushBanner(false)}
+                  className="text-white/80 hover:text-white p-2"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
@@ -300,6 +343,13 @@ const ShopAdminPage = () => {
                 </span>
                 <span className="font-mono text-xs text-green-400">LIVE</span>
               </div>
+              {/* Push Status */}
+              {isPushSubscribed && (
+                <div className="flex items-center gap-2 bg-blue-500/20 px-3 py-1 border border-blue-500/30">
+                  <Bell className="w-3 h-3 text-blue-400" />
+                  <span className="font-mono text-xs text-blue-400">PUSH</span>
+                </div>
+              )}
               {newNotifications > 0 && (
                 <motion.div
                   initial={{ scale: 0 }}
