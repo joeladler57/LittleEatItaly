@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
@@ -11,10 +11,14 @@ import { toast } from "sonner";
 import {
   ShoppingBag, CalendarDays, UtensilsCrossed, Settings, LogOut,
   Check, X, Clock, Phone, User, Mail, ChevronDown, ChevronUp,
-  Plus, Trash2, Edit2, GripVertical, Save, RefreshCw
+  Plus, Trash2, Edit2, GripVertical, Save, RefreshCw, Download,
+  Volume2, VolumeX, Bell, BellRing, Smartphone
 } from "lucide-react";
+import { useNotificationSound } from "../hooks/useNotificationSound";
+import { usePWA, registerServiceWorker } from "../hooks/usePWA";
 
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
+const POLLING_INTERVAL = 4000; // 4 seconds - very fast polling
 
 const ShopAdminPage = () => {
   const navigate = useNavigate();
@@ -28,6 +32,30 @@ const ShopAdminPage = () => {
   const [menu, setMenu] = useState({ categories: [], currency: "EUR" });
   const [settings, setSettings] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // PWA and notification states
+  const { playSound, enableAudio } = useNotificationSound();
+  const { isInstallable, isInstalled, installApp } = usePWA();
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [lastOrderCount, setLastOrderCount] = useState(0);
+  const [lastReservationCount, setLastReservationCount] = useState(0);
+  const [newNotifications, setNewNotifications] = useState(0);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const pollingRef = useRef(null);
+  const isFirstLoad = useRef(true);
+
+  // Register service worker on mount
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
+
+  // Show install banner after 5 seconds if installable
+  useEffect(() => {
+    if (isInstallable && !isInstalled) {
+      const timer = setTimeout(() => setShowInstallBanner(true), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isInstallable, isInstalled]);
 
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
@@ -52,6 +80,92 @@ const ShopAdminPage = () => {
     }
   };
 
+  // Polling function for orders and reservations only
+  const pollNewData = useCallback(async () => {
+    const token = localStorage.getItem("admin_token");
+    if (!token) return;
+
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const [ordersRes, reservationsRes] = await Promise.all([
+        axios.get(`${API}/shop/orders`, { headers }),
+        axios.get(`${API}/shop/reservations`, { headers })
+      ]);
+
+      const newOrders = ordersRes.data;
+      const newReservations = reservationsRes.data;
+
+      // Count pending items
+      const pendingOrders = newOrders.filter(o => o.status === "pending").length;
+      const pendingReservations = newReservations.filter(r => r.status === "pending").length;
+
+      // Check for new items (only after first load)
+      if (!isFirstLoad.current) {
+        const hasNewOrders = pendingOrders > lastOrderCount;
+        const hasNewReservations = pendingReservations > lastReservationCount;
+
+        if (hasNewOrders || hasNewReservations) {
+          // Play notification sound
+          if (soundEnabled) {
+            playSound();
+          }
+
+          // Show toast notification
+          if (hasNewOrders) {
+            const diff = pendingOrders - lastOrderCount;
+            toast.success(`🍕 ${diff} neue Bestellung${diff > 1 ? 'en' : ''}!`, {
+              duration: 5000,
+              icon: <BellRing className="w-5 h-5 text-pizza-red animate-bounce" />
+            });
+          }
+          if (hasNewReservations) {
+            const diff = pendingReservations - lastReservationCount;
+            toast.success(`📅 ${diff} neue Reservierung${diff > 1 ? 'en' : ''}!`, {
+              duration: 5000,
+              icon: <BellRing className="w-5 h-5 text-blue-500 animate-bounce" />
+            });
+          }
+
+          // Update notification counter
+          setNewNotifications(prev => prev + (hasNewOrders ? 1 : 0) + (hasNewReservations ? 1 : 0));
+
+          // Vibrate if supported (for mobile PWA)
+          if ('vibrate' in navigator) {
+            navigator.vibrate([200, 100, 200]);
+          }
+        }
+      } else {
+        isFirstLoad.current = false;
+      }
+
+      // Update state
+      setOrders(newOrders);
+      setReservations(newReservations);
+      setLastOrderCount(pendingOrders);
+      setLastReservationCount(pendingReservations);
+
+    } catch (e) {
+      console.error("Polling failed:", e);
+    }
+  }, [lastOrderCount, lastReservationCount, soundEnabled, playSound]);
+
+  // Start polling when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Initial poll
+      pollNewData();
+      
+      // Set up interval
+      pollingRef.current = setInterval(pollNewData, POLLING_INTERVAL);
+
+      return () => {
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current);
+        }
+      };
+    }
+  }, [isAuthenticated, pollNewData]);
+
   const fetchAllData = async () => {
     const token = localStorage.getItem("admin_token");
     const headers = { Authorization: `Bearer ${token}` };
@@ -68,6 +182,10 @@ const ShopAdminPage = () => {
       setReservations(reservationsRes.data);
       setMenu(menuRes.data);
       setSettings(settingsRes.data);
+
+      // Set initial counts
+      setLastOrderCount(ordersRes.data.filter(o => o.status === "pending").length);
+      setLastReservationCount(reservationsRes.data.filter(r => r.status === "pending").length);
     } catch (e) {
       console.error("Failed to fetch data:", e);
       toast.error("Fehler beim Laden der Daten");
@@ -75,9 +193,18 @@ const ShopAdminPage = () => {
   };
 
   const handleLogout = () => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+    }
     localStorage.removeItem("admin_token");
     navigate("/admin");
   };
+
+  // Enable audio on first user interaction
+  const handleUserInteraction = useCallback(() => {
+    enableAudio();
+    setNewNotifications(0);
+  }, [enableAudio]);
 
   if (isLoading) {
     return (
