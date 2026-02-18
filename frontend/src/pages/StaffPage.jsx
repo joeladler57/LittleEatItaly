@@ -827,4 +827,130 @@ const ReservationCard = ({ reservation, onUpdate }) => {
   );
 };
 
+// Today's Reservations Component - Simple List View
+const TodayReservations = ({ reservations, onUpdate }) => {
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Filter today's confirmed reservations and sort by time
+  const todayReservations = reservations
+    .filter(r => r.date === today && r.status === "confirmed")
+    .sort((a, b) => a.time.localeCompare(b.time));
+
+  const formatDate = () => {
+    const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+    return new Date().toLocaleDateString('de-DE', options);
+  };
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="bg-green-600 p-4 mb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-anton text-2xl text-white">HEUTE</h2>
+            <p className="font-mono text-sm text-green-100">{formatDate()}</p>
+          </div>
+          <div className="text-right">
+            <p className="font-anton text-4xl text-white">{todayReservations.length}</p>
+            <p className="font-mono text-xs text-green-100">Reservierungen</p>
+          </div>
+        </div>
+      </div>
+
+      {todayReservations.length === 0 ? (
+        <div className="text-center py-16 bg-neutral-900">
+          <CalendarDays className="w-16 h-16 text-neutral-700 mx-auto mb-4" />
+          <p className="font-anton text-xl text-neutral-500">Keine Reservierungen für heute</p>
+          <p className="font-mono text-sm text-neutral-600 mt-2">Bestätigte Reservierungen erscheinen hier</p>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {/* Table Header */}
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-neutral-800 border-b border-neutral-700">
+            <div className="col-span-3">
+              <p className="font-mono text-xs text-neutral-500 uppercase">Uhrzeit</p>
+            </div>
+            <div className="col-span-6">
+              <p className="font-mono text-xs text-neutral-500 uppercase">Name</p>
+            </div>
+            <div className="col-span-3 text-right">
+              <p className="font-mono text-xs text-neutral-500 uppercase">Personen</p>
+            </div>
+          </div>
+
+          {/* Reservation Rows */}
+          {todayReservations.map((res, index) => (
+            <TodayReservationRow key={res.id} reservation={res} index={index} />
+          ))}
+
+          {/* Summary */}
+          <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-neutral-800 border-t-2 border-green-500 mt-2">
+            <div className="col-span-9">
+              <p className="font-anton text-lg text-white">GESAMT</p>
+            </div>
+            <div className="col-span-3 text-right">
+              <p className="font-anton text-2xl text-green-400">
+                {todayReservations.reduce((sum, r) => sum + r.guests, 0)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Individual Row for Today's Reservations
+const TodayReservationRow = ({ reservation, index }) => {
+  const isEven = index % 2 === 0;
+  
+  // Check if reservation time has passed
+  const now = new Date();
+  const [hours, minutes] = reservation.time.split(':');
+  const resTime = new Date();
+  resTime.setHours(parseInt(hours), parseInt(minutes), 0);
+  const isPast = now > resTime;
+  const isSoon = !isPast && (resTime - now) < 30 * 60 * 1000; // Within 30 minutes
+
+  return (
+    <div className={`grid grid-cols-12 gap-2 px-4 py-4 items-center transition-colors ${
+      isEven ? 'bg-neutral-900' : 'bg-neutral-900/50'
+    } ${isPast ? 'opacity-50' : ''} ${isSoon ? 'border-l-4 border-yellow-500' : ''}`}>
+      {/* Time */}
+      <div className="col-span-3">
+        <div className={`inline-flex items-center gap-2 px-3 py-2 ${
+          isPast ? 'bg-neutral-700' : isSoon ? 'bg-yellow-500' : 'bg-green-600'
+        }`}>
+          <Clock className={`w-4 h-4 ${isPast ? 'text-neutral-400' : isSoon ? 'text-black' : 'text-white'}`} />
+          <span className={`font-anton text-xl ${isPast ? 'text-neutral-400' : isSoon ? 'text-black' : 'text-white'}`}>
+            {reservation.time}
+          </span>
+        </div>
+      </div>
+
+      {/* Name */}
+      <div className="col-span-6">
+        <p className={`font-mono text-lg ${isPast ? 'text-neutral-500' : 'text-white'}`}>
+          {reservation.customer_name}
+        </p>
+        {reservation.notes && (
+          <p className="font-mono text-xs text-yellow-500 mt-1 truncate">
+            📝 {reservation.notes}
+          </p>
+        )}
+      </div>
+
+      {/* Guests */}
+      <div className="col-span-3 text-right">
+        <div className="inline-flex items-center gap-2">
+          <User className={`w-5 h-5 ${isPast ? 'text-neutral-500' : 'text-green-400'}`} />
+          <span className={`font-anton text-3xl ${isPast ? 'text-neutral-500' : 'text-green-400'}`}>
+            {reservation.guests}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default StaffPage;
