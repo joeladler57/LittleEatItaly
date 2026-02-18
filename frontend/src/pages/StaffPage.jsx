@@ -23,6 +23,7 @@ const StaffPage = () => {
   const [pinError, setPinError] = useState("");
   const [activeTab, setActiveTab] = useState("orders");
   const [orderFilter, setOrderFilter] = useState("pending"); // pending, preparing, ready, all
+  const [showPhoneReservation, setShowPhoneReservation] = useState(false);
 
   // Data states
   const [orders, setOrders] = useState([]);
