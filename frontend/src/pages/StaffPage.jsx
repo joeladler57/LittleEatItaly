@@ -343,6 +343,15 @@ const StaffPage = () => {
                 </Button>
               )}
               <Button
+                onClick={() => setShowPhoneReservation(true)}
+                variant="ghost"
+                size="sm"
+                className="text-green-400 rounded-none"
+                title="Telefonische Reservierung"
+              >
+                <Plus className="w-5 h-5" />
+              </Button>
+              <Button
                 onClick={handleLogout}
                 variant="ghost"
                 size="sm"
@@ -354,6 +363,17 @@ const StaffPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Phone Reservation Modal */}
+      {showPhoneReservation && (
+        <PhoneReservationModal 
+          onClose={() => setShowPhoneReservation(false)} 
+          onSuccess={() => {
+            setShowPhoneReservation(false);
+            fetchData();
+          }}
+        />
+      )}
 
       {/* Stats Bar */}
       <div className="bg-pizza-black border-b border-pizza-dark">
