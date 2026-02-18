@@ -520,7 +520,456 @@ async def change_admin_password(data: ChangePassword, username: str = Depends(ve
     
     return {"message": "Password changed successfully"}
 
-# Menu endpoints
+# ============ SHOP MENU ENDPOINTS ============
+
+@api_router.get("/shop/menu")
+async def get_shop_menu():
+    """Get the shop menu for ordering"""
+    menu = await db.shop_menu.find_one({"id": "shop_menu"}, {"_id": 0})
+    if not menu:
+        # Return empty menu structure
+        return {"id": "shop_menu", "categories": [], "currency": "EUR"}
+    return menu
+
+@api_router.put("/shop/menu")
+async def update_shop_menu(menu: ShopMenu, username: str = Depends(verify_token)):
+    """Update the entire shop menu (admin only)"""
+    menu_dict = menu.model_dump()
+    await db.shop_menu.update_one(
+        {"id": "shop_menu"},
+        {"$set": menu_dict},
+        upsert=True
+    )
+    return {"message": "Menu updated successfully"}
+
+@api_router.post("/shop/menu/category")
+async def add_menu_category(category: ShopMenuCategory, username: str = Depends(verify_token)):
+    """Add a new category to the menu"""
+    menu = await db.shop_menu.find_one({"id": "shop_menu"}, {"_id": 0})
+    if not menu:
+        menu = {"id": "shop_menu", "categories": [], "currency": "EUR"}
+    
+    category_dict = category.model_dump()
+    menu["categories"].append(category_dict)
+    
+    await db.shop_menu.update_one(
+        {"id": "shop_menu"},
+        {"$set": menu},
+        upsert=True
+    )
+    return {"message": "Category added", "category": category_dict}
+
+@api_router.put("/shop/menu/category/{category_id}")
+async def update_menu_category(category_id: str, category: ShopMenuCategory, username: str = Depends(verify_token)):
+    """Update a category"""
+    menu = await db.shop_menu.find_one({"id": "shop_menu"}, {"_id": 0})
+    if not menu:
+        raise HTTPException(status_code=404, detail="Menu not found")
+    
+    for i, cat in enumerate(menu["categories"]):
+        if cat["id"] == category_id:
+            menu["categories"][i] = category.model_dump()
+            menu["categories"][i]["id"] = category_id
+            break
+    else:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    await db.shop_menu.update_one({"id": "shop_menu"}, {"$set": menu})
+    return {"message": "Category updated"}
+
+@api_router.delete("/shop/menu/category/{category_id}")
+async def delete_menu_category(category_id: str, username: str = Depends(verify_token)):
+    """Delete a category"""
+    await db.shop_menu.update_one(
+        {"id": "shop_menu"},
+        {"$pull": {"categories": {"id": category_id}}}
+    )
+    return {"message": "Category deleted"}
+
+# ============ SHOP SETTINGS ENDPOINTS ============
+
+@api_router.get("/shop/settings")
+async def get_shop_settings():
+    """Get shop settings"""
+    settings = await db.shop_settings.find_one({"id": "shop_settings"}, {"_id": 0})
+    if not settings:
+        default_settings = ShopSettings().model_dump()
+        await db.shop_settings.insert_one(default_settings)
+        return default_settings
+    return settings
+
+@api_router.put("/shop/settings")
+async def update_shop_settings(settings: ShopSettings, username: str = Depends(verify_token)):
+    """Update shop settings (admin only)"""
+    settings_dict = settings.model_dump()
+    await db.shop_settings.update_one(
+        {"id": "shop_settings"},
+        {"$set": settings_dict},
+        upsert=True
+    )
+    return {"message": "Settings updated"}
+
+# ============ ORDER ENDPOINTS ============
+
+async def get_next_order_number():
+    """Get the next order number"""
+    counter = await db.counters.find_one_and_update(
+        {"id": "order_number"},
+        {"$inc": {"value": 1}},
+        upsert=True,
+        return_document=True
+    )
+    return counter.get("value", 1)
+
+async def send_order_confirmation_email(order: dict, settings: dict):
+    """Send order confirmation email"""
+    if not RESEND_API_KEY:
+        logger.warning("Resend API key not configured, skipping email")
+        return
+    
+    items_html = ""
+    for item in order["items"]:
+        options_str = ""
+        if item.get("options"):
+            options_str = "<br><small>" + ", ".join([f"{o['option_name']}" for o in item["options"]]) + "</small>"
+        items_html += f"""
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                {item['quantity']}x {item['item_name']}
+                {f"<br><small>{item['size_name']}</small>" if item.get('size_name') else ""}
+                {options_str}
+            </td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">
+                {item['total_price']:.2f} €
+            </td>
+        </tr>
+        """
+    
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #1a1a1a; color: #fff; padding: 20px;">
+        <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #FF1F1F;">
+            <h1 style="color: #FF1F1F; margin: 0;">Little Eat Italy</h1>
+            <p style="color: #999; margin: 5px 0;">Bestellbestätigung</p>
+        </div>
+        
+        <div style="padding: 20px 0;">
+            <h2 style="color: #FF1F1F;">Bestellung #{order['order_number']}</h2>
+            <p>Hallo {order['customer_name']},</p>
+            <p>vielen Dank für deine Bestellung! Hier sind die Details:</p>
+            
+            <div style="background: #262626; padding: 15px; margin: 15px 0; border-left: 3px solid #FF1F1F;">
+                <strong>Abholzeit:</strong> {order['pickup_time']}<br>
+                <strong>Zahlungsart:</strong> Barzahlung bei Abholung
+            </div>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <thead>
+                    <tr style="background: #FF1F1F; color: #fff;">
+                        <th style="padding: 10px; text-align: left;">Artikel</th>
+                        <th style="padding: 10px; text-align: right;">Preis</th>
+                    </tr>
+                </thead>
+                <tbody style="background: #262626;">
+                    {items_html}
+                </tbody>
+                <tfoot>
+                    <tr style="background: #333;">
+                        <td style="padding: 15px; font-weight: bold;">Gesamt</td>
+                        <td style="padding: 15px; text-align: right; font-weight: bold; color: #FF1F1F; font-size: 18px;">
+                            {order['total']:.2f} €
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            {f"<p><strong>Anmerkungen:</strong> {order['notes']}</p>" if order.get('notes') else ""}
+            
+            <div style="background: #262626; padding: 15px; margin: 20px 0;">
+                <h3 style="color: #FF1F1F; margin-top: 0;">Abholadresse</h3>
+                <p style="margin: 0;">
+                    {settings.get('restaurant_name', 'Little Eat Italy')}<br>
+                    {settings.get('restaurant_address', 'Europastrasse 8, 57072 Siegen')}<br>
+                    Tel: {settings.get('restaurant_phone', '0271 31924461')}
+                </p>
+            </div>
+            
+            <p style="color: #999; font-size: 12px;">
+                Bei Fragen zu deiner Bestellung erreichst du uns unter {settings.get('restaurant_phone', '0271 31924461')}.
+            </p>
+        </div>
+        
+        <div style="text-align: center; padding: 20px 0; border-top: 1px solid #333; color: #666; font-size: 12px;">
+            © 2024 Little Eat Italy. Alle Rechte vorbehalten.
+        </div>
+    </div>
+    """
+    
+    try:
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [order["customer_email"]],
+            "subject": f"Bestellbestätigung #{order['order_number']} - Little Eat Italy",
+            "html": html_content
+        }
+        await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Order confirmation email sent to {order['customer_email']}")
+    except Exception as e:
+        logger.error(f"Failed to send order email: {str(e)}")
+
+@api_router.post("/shop/orders")
+async def create_order(order_data: OrderCreate):
+    """Create a new order"""
+    # Get settings
+    settings = await db.shop_settings.find_one({"id": "shop_settings"}, {"_id": 0})
+    if not settings:
+        settings = ShopSettings().model_dump()
+    
+    if not settings.get("pickup_enabled", True):
+        raise HTTPException(status_code=400, detail="Bestellungen sind derzeit nicht möglich")
+    
+    # Calculate totals
+    subtotal = sum(item.total_price for item in order_data.items)
+    total = subtotal
+    
+    # Get next order number
+    order_number = await get_next_order_number()
+    
+    # Create order
+    order = Order(
+        order_number=order_number,
+        items=[item.model_dump() for item in order_data.items],
+        customer_name=order_data.customer_name,
+        customer_email=order_data.customer_email,
+        customer_phone=order_data.customer_phone,
+        pickup_time=order_data.pickup_time,
+        notes=order_data.notes,
+        subtotal=subtotal,
+        total=total,
+        status="pending"
+    )
+    
+    order_dict = order.model_dump()
+    order_dict["created_at"] = order_dict["created_at"].isoformat()
+    order_dict["updated_at"] = order_dict["updated_at"].isoformat()
+    
+    await db.orders.insert_one(order_dict)
+    
+    # Send confirmation email (non-blocking)
+    asyncio.create_task(send_order_confirmation_email(order_dict, settings))
+    
+    return {
+        "message": "Bestellung erfolgreich aufgegeben!",
+        "order_number": order_number,
+        "order_id": order.id
+    }
+
+@api_router.get("/shop/orders")
+async def get_orders(status: Optional[str] = None, username: str = Depends(verify_token)):
+    """Get all orders (admin only)"""
+    query = {}
+    if status:
+        query["status"] = status
+    
+    orders = await db.orders.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return orders
+
+@api_router.get("/shop/orders/{order_id}")
+async def get_order(order_id: str, username: str = Depends(verify_token)):
+    """Get a specific order (admin only)"""
+    order = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
+
+@api_router.put("/shop/orders/{order_id}/status")
+async def update_order_status(order_id: str, status: str, username: str = Depends(verify_token)):
+    """Update order status (admin only)"""
+    valid_statuses = ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"]
+    if status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+    
+    result = await db.orders.update_one(
+        {"id": order_id},
+        {"$set": {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    return {"message": f"Order status updated to {status}"}
+
+# ============ RESERVATION ENDPOINTS ============
+
+async def get_next_reservation_number():
+    """Get the next reservation number"""
+    counter = await db.counters.find_one_and_update(
+        {"id": "reservation_number"},
+        {"$inc": {"value": 1}},
+        upsert=True,
+        return_document=True
+    )
+    return counter.get("value", 1)
+
+async def send_reservation_confirmation_email(reservation: dict, settings: dict, confirmed: bool = False):
+    """Send reservation confirmation email"""
+    if not RESEND_API_KEY:
+        logger.warning("Resend API key not configured, skipping email")
+        return
+    
+    status_text = "bestätigt" if confirmed else "eingegangen und wird geprüft"
+    status_color = "#28a745" if confirmed else "#ffc107"
+    
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #1a1a1a; color: #fff; padding: 20px;">
+        <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #FF1F1F;">
+            <h1 style="color: #FF1F1F; margin: 0;">Little Eat Italy</h1>
+            <p style="color: #999; margin: 5px 0;">Reservierungsbestätigung</p>
+        </div>
+        
+        <div style="padding: 20px 0;">
+            <h2 style="color: #FF1F1F;">Reservierung #{reservation['reservation_number']}</h2>
+            <p>Hallo {reservation['customer_name']},</p>
+            <p>deine Reservierung ist {status_text}.</p>
+            
+            <div style="background: #262626; padding: 20px; margin: 20px 0; border-left: 3px solid {status_color};">
+                <table style="width: 100%;">
+                    <tr>
+                        <td style="padding: 5px 0; color: #999;">Datum:</td>
+                        <td style="padding: 5px 0; font-weight: bold;">{reservation['date']}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0; color: #999;">Uhrzeit:</td>
+                        <td style="padding: 5px 0; font-weight: bold;">{reservation['time']} Uhr</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0; color: #999;">Personen:</td>
+                        <td style="padding: 5px 0; font-weight: bold;">{reservation['guests']}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            {f"<p><strong>Anmerkungen:</strong> {reservation['notes']}</p>" if reservation.get('notes') else ""}
+            
+            <div style="background: #262626; padding: 15px; margin: 20px 0;">
+                <h3 style="color: #FF1F1F; margin-top: 0;">Restaurant</h3>
+                <p style="margin: 0;">
+                    {settings.get('restaurant_name', 'Little Eat Italy')}<br>
+                    {settings.get('restaurant_address', 'Europastrasse 8, 57072 Siegen')}<br>
+                    Tel: {settings.get('restaurant_phone', '0271 31924461')}
+                </p>
+            </div>
+            
+            <p style="color: #999; font-size: 12px;">
+                Bei Änderungen oder Stornierung bitte unter {settings.get('restaurant_phone', '0271 31924461')} anrufen.
+            </p>
+        </div>
+        
+        <div style="text-align: center; padding: 20px 0; border-top: 1px solid #333; color: #666; font-size: 12px;">
+            © 2024 Little Eat Italy. Alle Rechte vorbehalten.
+        </div>
+    </div>
+    """
+    
+    try:
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [reservation["customer_email"]],
+            "subject": f"Reservierung #{reservation['reservation_number']} {'bestätigt' if confirmed else 'eingegangen'} - Little Eat Italy",
+            "html": html_content
+        }
+        await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Reservation email sent to {reservation['customer_email']}")
+    except Exception as e:
+        logger.error(f"Failed to send reservation email: {str(e)}")
+
+@api_router.post("/shop/reservations")
+async def create_reservation(reservation_data: ReservationCreate):
+    """Create a new reservation"""
+    # Get settings
+    settings = await db.shop_settings.find_one({"id": "shop_settings"}, {"_id": 0})
+    if not settings:
+        settings = ShopSettings().model_dump()
+    
+    if not settings.get("reservation_enabled", True):
+        raise HTTPException(status_code=400, detail="Reservierungen sind derzeit nicht möglich")
+    
+    # Get next reservation number
+    reservation_number = await get_next_reservation_number()
+    
+    # Create reservation
+    reservation = Reservation(
+        reservation_number=reservation_number,
+        customer_name=reservation_data.customer_name,
+        customer_email=reservation_data.customer_email,
+        customer_phone=reservation_data.customer_phone,
+        date=reservation_data.date,
+        time=reservation_data.time,
+        guests=reservation_data.guests,
+        notes=reservation_data.notes,
+        status="pending"
+    )
+    
+    reservation_dict = reservation.model_dump()
+    reservation_dict["created_at"] = reservation_dict["created_at"].isoformat()
+    reservation_dict["updated_at"] = reservation_dict["updated_at"].isoformat()
+    
+    await db.reservations.insert_one(reservation_dict)
+    
+    # Send confirmation email (non-blocking)
+    asyncio.create_task(send_reservation_confirmation_email(reservation_dict, settings, confirmed=False))
+    
+    return {
+        "message": "Reservierung erfolgreich aufgegeben! Du erhältst eine E-Mail wenn sie bestätigt wird.",
+        "reservation_number": reservation_number,
+        "reservation_id": reservation.id
+    }
+
+@api_router.get("/shop/reservations")
+async def get_reservations(status: Optional[str] = None, date: Optional[str] = None, username: str = Depends(verify_token)):
+    """Get all reservations (admin only)"""
+    query = {}
+    if status:
+        query["status"] = status
+    if date:
+        query["date"] = date
+    
+    reservations = await db.reservations.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return reservations
+
+@api_router.get("/shop/reservations/{reservation_id}")
+async def get_reservation(reservation_id: str, username: str = Depends(verify_token)):
+    """Get a specific reservation (admin only)"""
+    reservation = await db.reservations.find_one({"id": reservation_id}, {"_id": 0})
+    if not reservation:
+        raise HTTPException(status_code=404, detail="Reservation not found")
+    return reservation
+
+@api_router.put("/shop/reservations/{reservation_id}/status")
+async def update_reservation_status(reservation_id: str, status: str, username: str = Depends(verify_token)):
+    """Update reservation status (admin only)"""
+    valid_statuses = ["pending", "confirmed", "cancelled", "completed"]
+    if status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+    
+    reservation = await db.reservations.find_one({"id": reservation_id}, {"_id": 0})
+    if not reservation:
+        raise HTTPException(status_code=404, detail="Reservation not found")
+    
+    result = await db.reservations.update_one(
+        {"id": reservation_id},
+        {"$set": {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    # Send confirmation email if status changed to confirmed
+    if status == "confirmed":
+        settings = await db.shop_settings.find_one({"id": "shop_settings"}, {"_id": 0})
+        if not settings:
+            settings = ShopSettings().model_dump()
+        asyncio.create_task(send_reservation_confirmation_email(reservation, settings, confirmed=True))
+    
+    return {"message": f"Reservation status updated to {status}"}
+
+# Menu endpoints (old - keeping for compatibility)
 @api_router.get("/menu", response_model=List[MenuItem])
 async def get_menu():
     items = await db.menu_items.find({}, {"_id": 0}).to_list(100)
