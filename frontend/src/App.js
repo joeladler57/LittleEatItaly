@@ -20,6 +20,7 @@ import AdminPage from "./pages/AdminPage";
 import OrderPage from "./pages/OrderPage";
 import ReservationPage from "./pages/ReservationPage";
 import ShopAdminPage from "./pages/ShopAdminPage";
+import StaffPage from "./pages/StaffPage";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
