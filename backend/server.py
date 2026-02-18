@@ -872,6 +872,65 @@ async def send_order_confirmation_email(order: dict, settings: dict):
     except Exception as e:
         logger.error(f"Failed to send order email: {str(e)}")
 
+async def send_order_status_email(order: dict, settings: dict, status: str, pickup_time: str = None):
+    """Send order status update email"""
+    if not RESEND_API_KEY:
+        logger.warning("Resend API key not configured, skipping email")
+        return
+    
+    status_messages = {
+        "confirmed": "Deine Bestellung wurde bestätigt!",
+        "preparing": "Deine Bestellung wird zubereitet!",
+        "ready": "Deine Bestellung ist fertig zur Abholung!",
+        "cancelled": "Deine Bestellung wurde leider storniert."
+    }
+    
+    pickup_info = ""
+    if pickup_time:
+        pickup_info = f"<p style='font-size: 18px; color: #FF1F1F;'><strong>Abholzeit: {pickup_time} Uhr</strong></p>"
+    elif order.get("confirmed_pickup_time"):
+        pickup_info = f"<p style='font-size: 18px; color: #FF1F1F;'><strong>Abholzeit: {order['confirmed_pickup_time']} Uhr</strong></p>"
+    
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #1a1a1a; color: #fff; padding: 20px;">
+        <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #FF1F1F;">
+            <h1 style="color: #FF1F1F; margin: 0;">Little Eat Italy</h1>
+        </div>
+        
+        <div style="padding: 30px 0; text-align: center;">
+            <h2 style="color: #fff; margin-bottom: 10px;">Bestellung #{order['order_number']}</h2>
+            <p style="font-size: 20px; color: #22c55e;">{status_messages.get(status, 'Status aktualisiert')}</p>
+            {pickup_info}
+        </div>
+        
+        <div style="background: #262626; padding: 15px; margin: 15px 0;">
+            <p><strong>Name:</strong> {order['customer_name']}</p>
+            <p><strong>Gesamtbetrag:</strong> {order['total']:.2f} €</p>
+        </div>
+        
+        <div style="padding: 20px 0;">
+            <p>Bei Fragen erreichst du uns unter:</p>
+            <p>📞 {settings.get('restaurant_phone', '0271 31924461')}</p>
+        </div>
+        
+        <div style="text-align: center; padding: 20px 0; border-top: 1px solid #333; color: #666; font-size: 12px;">
+            © 2024 Little Eat Italy
+        </div>
+    </div>
+    """
+    
+    try:
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [order["customer_email"]],
+            "subject": f"Bestellung #{order['order_number']} - {status_messages.get(status, 'Update')}",
+            "html": html_content
+        }
+        await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Order status email sent to {order['customer_email']}")
+    except Exception as e:
+        logger.error(f"Failed to send order status email: {str(e)}")
+
 @api_router.post("/shop/orders")
 async def create_order(order_data: OrderCreate):
     """Create a new order"""
