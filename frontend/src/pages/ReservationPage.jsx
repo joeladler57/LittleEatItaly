@@ -357,27 +357,14 @@ const ReservationPage = () => {
                 <CalendarDays className="w-4 h-4 text-pizza-red" />
                 Datum *
               </Label>
-              <div className="relative">
-                <select
-                  value={formData.date}
-                  onChange={handleDateChange}
-                  className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 font-mono appearance-none cursor-pointer pr-10"
-                  style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
-                >
-                  {availableDates.length === 0 ? (
-                    <option value="">Keine Termine verfügbar</option>
-                  ) : (
-                    availableDates.map(date => (
-                      <option key={date.value} value={date.value}>{date.label}</option>
-                    ))
-                  )}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
+              <CustomDropdown
+                value={formData.date}
+                onChange={(val) => {
+                  setFormData({ ...formData, date: val, time: "" });
+                }}
+                options={availableDates}
+                placeholder="Datum wählen..."
+              />
             </div>
             
             <div>
@@ -385,28 +372,13 @@ const ReservationPage = () => {
                 <Clock className="w-4 h-4 text-pizza-red" />
                 Uhrzeit *
               </Label>
-              <div className="relative">
-                <select
-                  value={formData.time}
-                  onChange={e => setFormData({ ...formData, time: e.target.value })}
-                  disabled={!formData.date || availableTimes.length === 0}
-                  className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 font-mono disabled:opacity-50 appearance-none cursor-pointer pr-10"
-                  style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
-                >
-                  {availableTimes.length === 0 ? (
-                    <option value="">Keine Zeiten verfügbar</option>
-                  ) : (
-                    availableTimes.map(time => (
-                      <option key={time.value} value={time.value}>{time.label}</option>
-                    ))
-                  )}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
+              <CustomDropdown
+                value={formData.time}
+                onChange={(val) => setFormData({ ...formData, time: val })}
+                options={availableTimes}
+                placeholder="Uhrzeit wählen..."
+                disabled={!formData.date || availableTimes.length === 0}
+              />
             </div>
           </div>
 
