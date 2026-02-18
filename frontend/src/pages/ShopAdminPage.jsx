@@ -578,7 +578,11 @@ const MenuSection = ({ menu, onUpdate }) => {
   const [editingItem, setEditingItem] = useState(null);
   const [newCategory, setNewCategory] = useState({ name: "", description: "" });
   const [showAddCategory, setShowAddCategory] = useState(false);
+  const [showAddonGroups, setShowAddonGroups] = useState(false);
+  const [editingAddonGroup, setEditingAddonGroup] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const addonGroups = menu.addon_groups || [];
 
   const saveMenu = async (updatedMenu) => {
     setSaving(true);
@@ -604,6 +608,7 @@ const MenuSection = ({ menu, onUpdate }) => {
       name: newCategory.name,
       description: newCategory.description,
       items: [],
+      addon_group_ids: [],
       sort_order: menu.categories?.length || 0,
       available: true
     };
@@ -627,6 +632,17 @@ const MenuSection = ({ menu, onUpdate }) => {
     };
     
     await saveMenu(updatedMenu);
+  };
+
+  const updateCategory = async (categoryId, updates) => {
+    const updatedMenu = {
+      ...menu,
+      categories: menu.categories.map(cat => 
+        cat.id === categoryId ? { ...cat, ...updates } : cat
+      )
+    };
+    await saveMenu(updatedMenu);
+    setEditingCategory(null);
   };
 
   const addItem = async (categoryId) => {
@@ -691,12 +707,66 @@ const MenuSection = ({ menu, onUpdate }) => {
     await saveMenu(updatedMenu);
   };
 
+  // Addon Group Functions
+  const addAddonGroup = async () => {
+    const newGroup = {
+      id: `addon_${Date.now()}`,
+      name: "Neue Add-on Gruppe",
+      required: false,
+      multiple: false,
+      options: []
+    };
+    
+    const updatedMenu = {
+      ...menu,
+      addon_groups: [...addonGroups, newGroup]
+    };
+    
+    await saveMenu(updatedMenu);
+    setEditingAddonGroup(newGroup);
+  };
+
+  const updateAddonGroup = async (groupId, updates) => {
+    const updatedMenu = {
+      ...menu,
+      addon_groups: addonGroups.map(g => g.id === groupId ? { ...g, ...updates } : g)
+    };
+    await saveMenu(updatedMenu);
+    setEditingAddonGroup(null);
+  };
+
+  const deleteAddonGroup = async (groupId) => {
+    if (!confirm("Add-on Gruppe löschen?")) return;
+    
+    const updatedMenu = {
+      ...menu,
+      addon_groups: addonGroups.filter(g => g.id !== groupId),
+      // Remove from all categories
+      categories: menu.categories.map(cat => ({
+        ...cat,
+        addon_group_ids: (cat.addon_group_ids || []).filter(id => id !== groupId)
+      }))
+    };
+    
+    await saveMenu(updatedMenu);
+  };
+
   const formatPrice = (price) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(price);
 
   return (
     <div className="space-y-6">
-      {/* Add Category Button */}
-      <div className="flex justify-end">
+      {/* Top Buttons */}
+      <div className="flex flex-wrap gap-2 justify-end">
+        <Button
+          onClick={() => setShowAddonGroups(!showAddonGroups)}
+          variant={showAddonGroups ? "default" : "outline"}
+          className={showAddonGroups 
+            ? "bg-yellow-600 hover:bg-yellow-700 text-pizza-white font-anton rounded-none"
+            : "border-yellow-600 text-yellow-500 hover:bg-yellow-600/10 font-anton rounded-none"
+          }
+        >
+          <Settings className="w-4 h-4 mr-2" /> ADD-ONS VERWALTEN
+        </Button>
         <Button
           onClick={() => setShowAddCategory(true)}
           className="bg-pizza-red hover:bg-red-700 text-pizza-white font-anton rounded-none"
@@ -704,6 +774,57 @@ const MenuSection = ({ menu, onUpdate }) => {
           <Plus className="w-4 h-4 mr-2" /> KATEGORIE HINZUFÜGEN
         </Button>
       </div>
+
+      {/* Addon Groups Management */}
+      {showAddonGroups && (
+        <div className="bg-yellow-900/20 border border-yellow-600 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-anton text-lg text-yellow-500">ADD-ON GRUPPEN (GLOBAL)</h3>
+            <Button onClick={addAddonGroup} size="sm" className="bg-yellow-600 hover:bg-yellow-700 text-white font-mono rounded-none">
+              <Plus className="w-4 h-4 mr-1" /> Neue Gruppe
+            </Button>
+          </div>
+          <p className="font-mono text-xs text-neutral-400 mb-4">
+            Erstelle Add-on Gruppen (z.B. "Dressing", "Extras") und ordne sie dann den Kategorien zu.
+          </p>
+          
+          {addonGroups.length === 0 ? (
+            <p className="font-mono text-sm text-neutral-500 text-center py-4">Keine Add-on Gruppen vorhanden</p>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {addonGroups.map(group => (
+                <div key={group.id} className="bg-pizza-dark p-3 border border-pizza-dark">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-anton text-pizza-white">{group.name}</span>
+                    <div className="flex gap-1">
+                      <Button onClick={() => setEditingAddonGroup(group)} size="sm" variant="outline" className="border-pizza-dark text-pizza-white rounded-none h-7 w-7 p-0">
+                        <Edit2 className="w-3 h-3" />
+                      </Button>
+                      <Button onClick={() => deleteAddonGroup(group.id)} size="sm" variant="outline" className="border-red-500 text-red-500 rounded-none h-7 w-7 p-0">
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {group.options?.map(opt => (
+                      <span key={opt.id} className="text-xs font-mono bg-pizza-black px-2 py-1 text-neutral-400">
+                        {opt.name} {opt.price > 0 && `+${formatPrice(opt.price)}`}
+                      </span>
+                    ))}
+                    {(!group.options || group.options.length === 0) && (
+                      <span className="text-xs font-mono text-neutral-500">Keine Optionen</span>
+                    )}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    {group.required && <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5">Pflicht</span>}
+                    {group.multiple && <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5">Mehrfach</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Add Category Form */}
       {showAddCategory && (
@@ -715,7 +836,7 @@ const MenuSection = ({ menu, onUpdate }) => {
               <Input
                 value={newCategory.name}
                 onChange={e => setNewCategory({ ...newCategory, name: e.target.value })}
-                placeholder="z.B. Pizza"
+                placeholder="z.B. Pizza, Salate"
                 className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
               />
             </div>
@@ -751,28 +872,56 @@ const MenuSection = ({ menu, onUpdate }) => {
         menu.categories.map((category) => (
           <div key={category.id} className="bg-pizza-dark border border-pizza-dark">
             {/* Category Header */}
-            <div className="p-4 border-b border-pizza-black flex items-center justify-between">
-              <div>
-                <h3 className="font-anton text-xl text-pizza-white">{category.name}</h3>
-                {category.description && <p className="font-mono text-sm text-neutral-400">{category.description}</p>}
+            <div className="p-4 border-b border-pizza-black">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h3 className="font-anton text-xl text-pizza-white">{category.name}</h3>
+                  {category.description && <p className="font-mono text-sm text-neutral-400">{category.description}</p>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => addItem(category.id)}
+                    size="sm"
+                    className="bg-pizza-red hover:bg-red-700 text-pizza-white font-mono rounded-none h-8"
+                  >
+                    <Plus className="w-4 h-4 mr-1" /> Artikel
+                  </Button>
+                  <Button
+                    onClick={() => setEditingCategory(category)}
+                    size="sm"
+                    variant="outline"
+                    className="border-pizza-dark text-pizza-white hover:bg-pizza-dark rounded-none h-8"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={() => deleteCategory(category.id)}
+                    size="sm"
+                    variant="outline"
+                    className="border-red-500 text-red-500 hover:bg-red-500/10 rounded-none h-8"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => addItem(category.id)}
-                  size="sm"
-                  className="bg-pizza-red hover:bg-red-700 text-pizza-white font-mono rounded-none h-8"
-                >
-                  <Plus className="w-4 h-4 mr-1" /> Artikel
-                </Button>
-                <Button
-                  onClick={() => deleteCategory(category.id)}
-                  size="sm"
-                  variant="outline"
-                  className="border-red-500 text-red-500 hover:bg-red-500/10 rounded-none h-8"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
+              
+              {/* Assigned Addon Groups */}
+              {(category.addon_group_ids?.length > 0 || addonGroups.length > 0) && (
+                <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-pizza-black/50">
+                  <span className="font-mono text-xs text-yellow-500">Add-ons:</span>
+                  {category.addon_group_ids?.map(groupId => {
+                    const group = addonGroups.find(g => g.id === groupId);
+                    return group ? (
+                      <span key={groupId} className="text-xs font-mono bg-yellow-600/20 text-yellow-400 px-2 py-1">
+                        {group.name}
+                      </span>
+                    ) : null;
+                  })}
+                  {(!category.addon_group_ids || category.addon_group_ids.length === 0) && (
+                    <span className="text-xs font-mono text-neutral-500">Keine zugeordnet</span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Items */}
@@ -792,7 +941,7 @@ const MenuSection = ({ menu, onUpdate }) => {
                         )}
                         <div>
                           <p className="font-mono text-pizza-white">{item.name}</p>
-                          <p className="font-mono text-xs text-neutral-500">{item.description?.substring(0, 50)}...</p>
+                          <p className="font-mono text-xs text-neutral-500">{item.description?.substring(0, 50)}{item.description?.length > 50 ? "..." : ""}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -833,8 +982,29 @@ const MenuSection = ({ menu, onUpdate }) => {
         <ItemEditor
           categoryId={editingItem.categoryId}
           item={editingItem.item}
+          addonGroups={addonGroups}
+          categoryAddonGroupIds={menu.categories.find(c => c.id === editingItem.categoryId)?.addon_group_ids || []}
           onSave={updateItem}
           onClose={() => setEditingItem(null)}
+        />
+      )}
+
+      {/* Edit Category Modal */}
+      {editingCategory && (
+        <CategoryEditor
+          category={editingCategory}
+          addonGroups={addonGroups}
+          onSave={updateCategory}
+          onClose={() => setEditingCategory(null)}
+        />
+      )}
+
+      {/* Edit Addon Group Modal */}
+      {editingAddonGroup && (
+        <AddonGroupEditor
+          group={editingAddonGroup}
+          onSave={updateAddonGroup}
+          onClose={() => setEditingAddonGroup(null)}
         />
       )}
     </div>
