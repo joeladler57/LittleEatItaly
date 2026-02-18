@@ -426,7 +426,10 @@ const OrderPage = () => {
           className="fixed bottom-0 left-0 right-0 p-4 bg-pizza-black border-t border-pizza-dark lg:hidden"
         >
           <Button
-            onClick={() => setStep("checkout")}
+            onClick={() => {
+              setStep("checkout");
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             className="w-full bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-wider py-6 rounded-none"
           >
             WARENKORB ({cart.length}) • {formatPrice(getCartTotal())}
