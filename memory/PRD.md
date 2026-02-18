@@ -7,6 +7,23 @@
 
 ## What's Been Implemented
 
+### Februar 2026 - PWA Restaurant Admin App (Getestet ✅)
+- ✅ **Progressive Web App (PWA)**: 
+  - Installierbar auf Mobilgeräten (Android/iOS)
+  - Offline-fähig durch Service Worker
+  - App-Icons in allen Größen (72px - 512px)
+  - Start-URL: `/admin/shop`
+- ✅ **Echtzeit-Benachrichtigungen**:
+  - Automatisches Polling alle 4 Sekunden
+  - Audio-Benachrichtigung bei neuen Bestellungen/Reservierungen
+  - Visueller LIVE-Indikator (grün pulsierend)
+  - Sound-Toggle zum Ein-/Ausschalten
+  - Vibration auf Mobilgeräten
+- ✅ **Mobile-optimierte Verwaltung**:
+  - Responsive Layout für alle Bildschirmgrößen
+  - PWA Install-Banner für einfache Installation
+  - Stat-Karten pulsieren bei neuen Eingängen
+
 ### Februar 2026 - Bestell- & Reservierungssystem V2 (Getestet ✅)
 - ✅ **Online Bestellsystem** (`/bestellen`): Warenkorb, Kategorien, Artikelauswahl, ASAP-Option, Zeitauswahl basierend auf Öffnungszeiten
 - ✅ **Reservierungssystem** (`/reservieren`): Dynamische Datums-/Zeitauswahl basierend auf Öffnungszeiten und Feiertagen
@@ -26,10 +43,11 @@
 - ⏸️ **E-Mail-Bestätigung**: Code bereit, Resend API-Key benötigt
 
 ### Test-Ergebnisse (18.02.2026)
-- Backend: **100% (18/18 Tests bestanden)**
-- Frontend: **100% bestanden**
-- Vollständiger Bestellablauf getestet
-- ASAP-Bestell-Workflow mit Admin-Zubereitungszeit funktioniert
+- Backend: **100% (14/14 PWA Tests bestanden)**
+- Frontend: **100% PWA-Features verifiziert**
+- PWA Manifest, Service Worker, Icons, Notification Sound alle funktional
+- Polling-Mechanismus getestet und funktioniert
+- Mobile responsive Layout verifiziert
 
 ### Frühere Updates
 - ✅ **GlobalFood Menü-Integration**: Dynamische Speisekarte
@@ -57,7 +75,10 @@
 **Webseiten-Verwaltung** (`/admin`):
 - STARTSEITE, KONTAKT, IMPRESSUM, SOCIAL MEDIA, FOOTER, EINSTELLUNGEN
 
-**Shop-Verwaltung** (`/admin/shop`):
+**Shop-Verwaltung** (`/admin/shop`) - **PWA**:
+- 🟢 **LIVE-Modus**: Automatische Aktualisierung alle 4 Sekunden
+- 🔔 **Audio-Benachrichtigungen**: Ton bei neuen Bestellungen/Reservierungen
+- 📱 **PWA-Installation**: Als App auf Handy installierbar
 - BESTELLUNGEN: Status verwalten (Neu → Bestätigt → Storniert), ASAP-Bestellungen mit Zubereitungszeit-Eingabe bestätigen
 - RESERVIERUNGEN: Nach Datum gruppiert, Bestätigen/Stornieren
 - MENÜ: Kategorien und Artikel verwalten (hinzufügen, bearbeiten, löschen)
@@ -100,8 +121,15 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 2. 🟢 Impressum mit echten Firmendaten ergänzen (über Admin)
 3. 🟢 Weitere Menü-Artikel hinzufügen (über Shop Admin)
 
+## PWA Installation
+**So installierst du die App auf deinem Handy:**
+1. Öffne `/admin/shop` im Browser auf deinem Handy
+2. Klicke auf "INSTALLIEREN" im Banner oder im Menü
+3. Die App erscheint auf deinem Startbildschirm
+4. Öffne die App - sie zeigt automatisch neue Bestellungen mit Ton-Benachrichtigung!
+
 ## Backlog / Zukünftige Features
-- Push-Benachrichtigungen für neue Bestellungen (Browser-Notifications oder Telegram)
+- Push-Benachrichtigungen (Web Push API) für Hintergrund-Notifications
 - Statistiken-Dashboard für Bestellungen/Reservierungen
 - Code-Refactoring: `server.py` in separate Router aufteilen
 - Mehrsprachigkeit (DE/EN)
