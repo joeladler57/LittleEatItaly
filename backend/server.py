@@ -1371,7 +1371,7 @@ async def subscribe_to_push(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """Subscribe a device for push notifications (admin only)"""
-    await verify_admin_token(credentials.credentials)
+    await verify_token(credentials.credentials)
     
     subscription_data = {
         "id": str(uuid.uuid4()),
@@ -1400,7 +1400,7 @@ async def unsubscribe_from_push(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """Unsubscribe a device from push notifications"""
-    await verify_admin_token(credentials.credentials)
+    await verify_token(credentials.credentials)
     
     result = await db.push_subscriptions.delete_one({"endpoint": endpoint})
     if result.deleted_count == 0:
@@ -1413,7 +1413,7 @@ async def get_push_subscriptions(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """Get all push subscriptions (admin only)"""
-    await verify_admin_token(credentials.credentials)
+    await verify_token(credentials.credentials)
     
     subscriptions = await db.push_subscriptions.find({"active": True}, {"_id": 0}).to_list(100)
     return subscriptions
@@ -1495,7 +1495,7 @@ async def test_push_notification(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """Send a test push notification (admin only)"""
-    await verify_admin_token(credentials.credentials)
+    await verify_token(credentials.credentials)
     
     sent_count = await send_push_notification(
         title="🍕 Test Benachrichtigung",
