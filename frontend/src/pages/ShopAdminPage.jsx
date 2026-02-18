@@ -348,7 +348,7 @@ const ShopAdminPage = () => {
               </div>
               {/* Push Status */}
               {isPushSubscribed && (
-                <div className="flex items-center gap-2 bg-blue-500/20 px-3 py-1 border border-blue-500/30">
+                <div className="flex items-center gap-2 bg-blue-500/20 px-3 py-1 border border-blue-500/30" data-testid="push-status-indicator">
                   <Bell className="w-3 h-3 text-blue-400" />
                   <span className="font-mono text-xs text-blue-400">PUSH</span>
                 </div>
