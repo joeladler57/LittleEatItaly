@@ -782,21 +782,95 @@ async def get_order(order_id: str, username: str = Depends(verify_token)):
     return order
 
 @api_router.put("/shop/orders/{order_id}/status")
-async def update_order_status(order_id: str, status: str, username: str = Depends(verify_token)):
-    """Update order status (admin only)"""
+async def update_order_status(order_id: str, status: str, prep_time_minutes: Optional[int] = None, username: str = Depends(verify_token)):
+    """Update order status (admin only). For ASAP orders, specify prep_time_minutes when confirming."""
     valid_statuses = ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"]
     if status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
     
-    result = await db.orders.update_one(
-        {"id": order_id},
-        {"$set": {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}}
-    )
-    
-    if result.matched_count == 0:
+    # Get the order
+    order = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     
-    return {"message": f"Order status updated to {status}"}
+    update_data = {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}
+    
+    # If confirming an ASAP order with prep time, calculate pickup time
+    if status == "confirmed" and prep_time_minutes and order.get("pickup_time") == "So schnell wie möglich":
+        pickup_time = datetime.now(timezone.utc) + timedelta(minutes=prep_time_minutes)
+        pickup_time_str = pickup_time.strftime("%H:%M") + " Uhr"
+        update_data["pickup_time"] = pickup_time_str
+        update_data["prep_time_minutes"] = prep_time_minutes
+        
+        # Send updated email with pickup time
+        settings = await db.shop_settings.find_one({"id": "shop_settings"}, {"_id": 0})
+        if not settings:
+            settings = ShopSettings().model_dump()
+        
+        order["pickup_time"] = pickup_time_str
+        order["status"] = "confirmed"
+        asyncio.create_task(send_order_ready_email(order, settings, prep_time_minutes))
+    
+    result = await db.orders.update_one(
+        {"id": order_id},
+        {"$set": update_data}
+    )
+    
+    return {"message": f"Order status updated to {status}", "pickup_time": update_data.get("pickup_time")}
+
+async def send_order_ready_email(order: dict, settings: dict, prep_time_minutes: int):
+    """Send email with actual pickup time for ASAP orders"""
+    if not RESEND_API_KEY:
+        return
+    
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #1a1a1a; color: #fff; padding: 20px;">
+        <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #FF1F1F;">
+            <h1 style="color: #FF1F1F; margin: 0;">Little Eat Italy</h1>
+        </div>
+        
+        <div style="padding: 20px 0;">
+            <h2 style="color: #28a745;">✓ Bestellung #{order['order_number']} bestätigt!</h2>
+            <p>Hallo {order['customer_name']},</p>
+            <p>deine Bestellung wird jetzt zubereitet.</p>
+            
+            <div style="background: #28a745; color: #fff; padding: 20px; margin: 20px 0; text-align: center;">
+                <p style="margin: 0; font-size: 14px;">DEINE ABHOLZEIT</p>
+                <p style="margin: 10px 0 0 0; font-size: 32px; font-weight: bold;">{order['pickup_time']}</p>
+                <p style="margin: 5px 0 0 0; font-size: 14px;">in ca. {prep_time_minutes} Minuten</p>
+            </div>
+            
+            <div style="background: #262626; padding: 15px; margin: 20px 0;">
+                <h3 style="color: #FF1F1F; margin-top: 0;">Abholadresse</h3>
+                <p style="margin: 0;">
+                    {settings.get('restaurant_name', 'Little Eat Italy')}<br>
+                    {settings.get('restaurant_address', 'Europastrasse 8, 57072 Siegen')}<br>
+                    Tel: {settings.get('restaurant_phone', '0271 31924461')}
+                </p>
+            </div>
+            
+            <p style="background: #FF1F1F; color: #fff; padding: 15px; text-align: center; font-weight: bold;">
+                💵 Zahlung: Barzahlung bei Abholung
+            </p>
+        </div>
+        
+        <div style="text-align: center; padding: 20px 0; border-top: 1px solid #333; color: #666; font-size: 12px;">
+            © 2024 Little Eat Italy. Alle Rechte vorbehalten.
+        </div>
+    </div>
+    """
+    
+    try:
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [order["customer_email"]],
+            "subject": f"Bestellung #{order['order_number']} bestätigt - Abholung um {order['pickup_time']}",
+            "html": html_content
+        }
+        await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Order ready email sent to {order['customer_email']}")
+    except Exception as e:
+        logger.error(f"Failed to send order ready email: {str(e)}")
 
 # ============ RESERVATION ENDPOINTS ============
 
