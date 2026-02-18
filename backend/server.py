@@ -255,7 +255,7 @@ class Reservation(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     reservation_number: int = 0
     customer_name: str
-    customer_email: EmailStr
+    customer_email: Optional[str] = ""  # Made optional for phone reservations
     customer_phone: str
     date: str
     time: str
