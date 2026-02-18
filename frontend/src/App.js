@@ -55,6 +55,7 @@ const AnimatedRoutes = () => {
         <Route path="/impressum" element={<PageWrapper><ImpressumPage /></PageWrapper>} />
         <Route path="/admin" element={<PageWrapper><AdminPage /></PageWrapper>} />
         <Route path="/admin/shop" element={<PageWrapper><ShopAdminPage /></PageWrapper>} />
+        <Route path="/personal" element={<StaffPage />} />
       </Routes>
     </AnimatePresence>
   );
