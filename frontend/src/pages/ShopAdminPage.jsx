@@ -358,7 +358,7 @@ const OrdersSection = ({ orders, onUpdate }) => {
                       {order.status === "pending" && (
                         <>
                           <Button
-                            onClick={() => updateStatus(order.id, "confirmed")}
+                            onClick={() => handleConfirmOrder(order)}
                             disabled={updating === order.id}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-mono text-xs rounded-none"
                           >
