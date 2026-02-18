@@ -34,6 +34,11 @@ SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
 
+# Web Push Configuration
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY_FILE = os.environ.get('VAPID_PRIVATE_KEY_FILE', 'vapid_private.pem')
+VAPID_CLAIMS_EMAIL = os.environ.get('VAPID_CLAIMS_EMAIL', 'admin@little-eat-italy.de')
+
 # Create the main app
 app = FastAPI()
 
