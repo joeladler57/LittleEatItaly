@@ -1,14 +1,78 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { API } from "../App";
-import { CalendarDays, Clock, Users, User, Mail, Phone, Check, MessageSquare } from "lucide-react";
+import { CalendarDays, Clock, Users, User, Mail, Phone, Check, MessageSquare, ChevronDown } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
+
+// Custom Dropdown Component for Safari compatibility
+const CustomDropdown = ({ value, onChange, options, placeholder = "Auswählen...", disabled = false, icon: Icon }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  
+  const selectedOption = options.find(opt => opt.value === value);
+  
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
+  
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`w-full bg-pizza-black border border-pizza-dark text-pizza-white p-3 font-mono text-left flex items-center justify-between ${
+          disabled ? "opacity-50 cursor-not-allowed" : "hover:border-pizza-red cursor-pointer"
+        }`}
+      >
+        <span className={selectedOption ? "text-pizza-white" : "text-neutral-500"}>
+          {selectedOption?.label || placeholder}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+      
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-1 bg-pizza-dark border border-pizza-dark max-h-60 overflow-y-auto shadow-xl">
+          {options.length === 0 ? (
+            <div className="p-3 text-neutral-500 font-mono text-sm">Keine Optionen verfügbar</div>
+          ) : (
+            options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full p-3 text-left font-mono text-sm hover:bg-pizza-red/20 transition-colors ${
+                  option.value === value ? "bg-pizza-red/30 text-pizza-white" : "text-neutral-300"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ReservationPage = () => {
   const [settings, setSettings] = useState(null);
