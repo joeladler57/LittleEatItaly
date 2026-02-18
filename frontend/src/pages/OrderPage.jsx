@@ -694,15 +694,53 @@ const CheckoutForm = ({ customerInfo, setCustomerInfo, pickupTimes, onBack, onSu
       
       <div>
         <Label className="font-mono text-sm text-neutral-400">Abholzeit</Label>
-        <select
-          value={customerInfo.pickupTime}
-          onChange={e => setCustomerInfo({ ...customerInfo, pickupTime: e.target.value })}
-          className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 mt-1 font-mono"
-        >
-          {pickupTimes.map(time => (
-            <option key={time.value} value={time.value}>{time.label}</option>
-          ))}
-        </select>
+        <div className="relative mt-1">
+          <select
+            value={customerInfo.pickupTime}
+            onChange={e => setCustomerInfo({ ...customerInfo, pickupTime: e.target.value })}
+            className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 font-mono appearance-none cursor-pointer"
+            style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
+          >
+            {pickupTimes.map(time => (
+              <option key={time.value} value={time.value}>{time.label}</option>
+            ))}
+          </select>
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <Label className="font-mono text-sm text-neutral-400">Zahlungsart bei Abholung *</Label>
+        <div className="grid grid-cols-2 gap-3 mt-2">
+          <button
+            type="button"
+            onClick={() => setCustomerInfo({ ...customerInfo, paymentMethod: "cash" })}
+            className={`p-4 border-2 transition-all flex flex-col items-center gap-2 ${
+              customerInfo.paymentMethod === "cash"
+                ? "border-pizza-red bg-pizza-red/10 text-pizza-white"
+                : "border-pizza-dark bg-pizza-black text-neutral-400 hover:border-neutral-600"
+            }`}
+          >
+            <span className="text-2xl">💵</span>
+            <span className="font-mono text-sm">Barzahlung</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setCustomerInfo({ ...customerInfo, paymentMethod: "card" })}
+            className={`p-4 border-2 transition-all flex flex-col items-center gap-2 ${
+              customerInfo.paymentMethod === "card"
+                ? "border-pizza-red bg-pizza-red/10 text-pizza-white"
+                : "border-pizza-dark bg-pizza-black text-neutral-400 hover:border-neutral-600"
+            }`}
+          >
+            <span className="text-2xl">💳</span>
+            <span className="font-mono text-sm">Kartenzahlung</span>
+          </button>
+        </div>
       </div>
       
       <div>
@@ -723,8 +761,8 @@ const CheckoutForm = ({ customerInfo, setCustomerInfo, pickupTimes, onBack, onSu
         <span>Nur Abholung</span>
       </div>
       <div className="flex items-center gap-2 text-neutral-400 font-mono text-sm mt-2">
-        <span className="text-lg">💵</span>
-        <span>Nur Barzahlung bei Abholung</span>
+        <span className="text-lg">{customerInfo.paymentMethod === "cash" ? "💵" : "💳"}</span>
+        <span>{customerInfo.paymentMethod === "cash" ? "Barzahlung" : "Kartenzahlung"} bei Abholung</span>
       </div>
     </div>
 
