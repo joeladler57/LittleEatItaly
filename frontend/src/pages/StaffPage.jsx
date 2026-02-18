@@ -504,7 +504,7 @@ const StaffPage = () => {
 
         {/* Today's Reservations Tab */}
         {activeTab === "today" && (
-          <div className="-mx-4">
+          <div className="overflow-x-auto">
             <TodayReservations reservations={reservations} onUpdate={fetchData} />
           </div>
         )}
