@@ -296,7 +296,7 @@ const OrderPage = () => {
             <h1 className="font-anton text-4xl sm:text-5xl tracking-wider text-pizza-white">
               ONLINE <span className="text-pizza-red">BESTELLEN</span>
             </h1>
-            <p className="font-mono text-base text-neutral-400 mt-2">Nur Abholung • Nur Barzahlung</p>
+            <p className="font-mono text-base text-neutral-400 mt-2">Nur Abholung • Bar oder Kartenzahlung</p>
           </motion.div>
         </div>
       </div>
