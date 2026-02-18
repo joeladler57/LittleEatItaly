@@ -409,6 +409,59 @@ const OrdersSection = ({ orders, onUpdate }) => {
           </div>
         ))
       )}
+
+      {/* Prep Time Modal for ASAP orders */}
+      {showPrepTimeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="bg-pizza-dark border border-pizza-red p-6 max-w-md w-full">
+            <h3 className="font-anton text-xl text-pizza-white mb-2">ZUBEREITUNGSZEIT</h3>
+            <p className="font-mono text-sm text-neutral-400 mb-4">
+              Bestellung #{showPrepTimeModal.order_number} ist eine "Schnellstmöglich" Bestellung.
+              Wie viele Minuten dauert die Zubereitung?
+            </p>
+            
+            <div className="flex items-center gap-4 mb-6">
+              <button
+                onClick={() => setPrepTime(Math.max(5, prepTime - 5))}
+                className="w-12 h-12 border border-pizza-dark hover:border-pizza-red text-pizza-white font-anton text-xl"
+              >
+                -
+              </button>
+              <div className="flex-1 text-center">
+                <span className="font-anton text-4xl text-pizza-red">{prepTime}</span>
+                <span className="font-mono text-sm text-neutral-400 block">Minuten</span>
+              </div>
+              <button
+                onClick={() => setPrepTime(prepTime + 5)}
+                className="w-12 h-12 border border-pizza-dark hover:border-pizza-red text-pizza-white font-anton text-xl"
+              >
+                +
+              </button>
+            </div>
+            
+            <p className="font-mono text-xs text-neutral-500 mb-4">
+              Kunde erhält E-Mail mit Abholzeit: ca. {new Date(Date.now() + prepTime * 60000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
+            </p>
+            
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setShowPrepTimeModal(null)}
+                variant="outline"
+                className="flex-1 border-pizza-dark text-pizza-white rounded-none"
+              >
+                Abbrechen
+              </Button>
+              <Button
+                onClick={() => updateStatus(showPrepTimeModal.id, "confirmed", prepTime)}
+                disabled={updating === showPrepTimeModal.id}
+                className="flex-1 bg-pizza-red hover:bg-red-700 text-pizza-white font-anton rounded-none"
+              >
+                {updating ? "..." : "BESTÄTIGEN"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
