@@ -864,17 +864,17 @@ const TodayReservations = ({ reservations, onUpdate }) => {
           <p className="font-mono text-sm text-neutral-600 mt-2">Bestätigte Reservierungen erscheinen hier</p>
         </div>
       ) : (
-        <div className="space-y-1">
+        <div>
           {/* Table Header */}
-          <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-neutral-800 border-b border-neutral-700">
-            <div className="col-span-3">
-              <p className="font-mono text-xs text-neutral-500 uppercase">Uhrzeit</p>
+          <div className="flex items-center gap-3 px-3 py-2 bg-neutral-800 border-b border-neutral-700">
+            <div className="flex-shrink-0 w-16">
+              <p className="font-mono text-xs text-neutral-500 uppercase">Zeit</p>
             </div>
-            <div className="col-span-6">
+            <div className="flex-1">
               <p className="font-mono text-xs text-neutral-500 uppercase">Name</p>
             </div>
-            <div className="col-span-3 text-right">
-              <p className="font-mono text-xs text-neutral-500 uppercase">Personen</p>
+            <div className="flex-shrink-0">
+              <p className="font-mono text-xs text-neutral-500 uppercase">Pers.</p>
             </div>
           </div>
 
@@ -884,15 +884,11 @@ const TodayReservations = ({ reservations, onUpdate }) => {
           ))}
 
           {/* Summary */}
-          <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-neutral-800 border-t-2 border-green-500 mt-2">
-            <div className="col-span-9">
-              <p className="font-anton text-lg text-white">GESAMT</p>
-            </div>
-            <div className="col-span-3 text-right">
-              <p className="font-anton text-2xl text-green-400">
-                {todayReservations.reduce((sum, r) => sum + r.guests, 0)}
-              </p>
-            </div>
+          <div className="flex items-center justify-between px-4 py-4 bg-green-600 mt-2">
+            <p className="font-anton text-xl text-white">GESAMT PERSONEN</p>
+            <p className="font-anton text-3xl text-white">
+              {todayReservations.reduce((sum, r) => sum + r.guests, 0)}
+            </p>
           </div>
         </div>
       )}
