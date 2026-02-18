@@ -1057,4 +1057,188 @@ const TodayReservationRow = ({ reservation, index }) => {
   );
 };
 
+// Phone Reservation Modal Component
+const PhoneReservationModal = ({ onClose, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    customer_name: "",
+    customer_phone: "",
+    date: new Date().toISOString().split('T')[0],
+    time: "19:00",
+    guests: 2,
+    notes: ""
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.customer_name || !formData.customer_phone) {
+      toast.error("Name und Telefon sind Pflichtfelder");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem("staff_token");
+      await axios.post(`${API}/staff/reservations`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Reservierung eingetragen!");
+      onSuccess();
+    } catch (error) {
+      toast.error("Fehler beim Speichern");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Generate time options (every 30 minutes from 11:00 to 22:00)
+  const timeOptions = [];
+  for (let h = 11; h <= 22; h++) {
+    timeOptions.push(`${h.toString().padStart(2, '0')}:00`);
+    if (h < 22) timeOptions.push(`${h.toString().padStart(2, '0')}:30`);
+  }
+
+  // Generate date options (today + next 30 days)
+  const dateOptions = [];
+  for (let i = 0; i < 30; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    dateOptions.push({
+      value: d.toISOString().split('T')[0],
+      label: d.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4">
+      <div className="bg-neutral-900 border-2 border-green-500 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="bg-green-600 p-4 flex items-center justify-between sticky top-0">
+          <div className="flex items-center gap-3">
+            <Phone className="w-6 h-6 text-white" />
+            <h2 className="font-anton text-xl text-white">TELEFONISCHE RESERVIERUNG</h2>
+          </div>
+          <button onClick={onClose} className="text-white hover:text-green-200">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+          {/* Name */}
+          <div>
+            <label className="font-mono text-xs text-neutral-400 block mb-1">NAME *</label>
+            <input
+              type="text"
+              value={formData.customer_name}
+              onChange={(e) => setFormData({...formData, customer_name: e.target.value})}
+              placeholder="z.B. Familie Müller"
+              className="w-full bg-neutral-800 border border-neutral-700 text-white p-3 font-mono focus:border-green-500 outline-none"
+              required
+            />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="font-mono text-xs text-neutral-400 block mb-1">TELEFON *</label>
+            <input
+              type="tel"
+              value={formData.customer_phone}
+              onChange={(e) => setFormData({...formData, customer_phone: e.target.value})}
+              placeholder="z.B. 0176 12345678"
+              className="w-full bg-neutral-800 border border-neutral-700 text-white p-3 font-mono focus:border-green-500 outline-none"
+              required
+            />
+          </div>
+
+          {/* Date & Time Row */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Date */}
+            <div>
+              <label className="font-mono text-xs text-neutral-400 block mb-1">DATUM</label>
+              <select
+                value={formData.date}
+                onChange={(e) => setFormData({...formData, date: e.target.value})}
+                className="w-full bg-neutral-800 border border-neutral-700 text-white p-3 font-mono focus:border-green-500 outline-none"
+              >
+                {dateOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Time */}
+            <div>
+              <label className="font-mono text-xs text-neutral-400 block mb-1">UHRZEIT</label>
+              <select
+                value={formData.time}
+                onChange={(e) => setFormData({...formData, time: e.target.value})}
+                className="w-full bg-neutral-800 border border-neutral-700 text-white p-3 font-mono focus:border-green-500 outline-none"
+              >
+                {timeOptions.map(t => (
+                  <option key={t} value={t}>{t} Uhr</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Guests */}
+          <div>
+            <label className="font-mono text-xs text-neutral-400 block mb-1">PERSONEN</label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, guests: Math.max(1, formData.guests - 1)})}
+                className="w-12 h-12 bg-neutral-800 border border-neutral-700 text-white font-anton text-2xl hover:bg-neutral-700"
+              >
+                -
+              </button>
+              <div className="flex-1 text-center">
+                <span className="font-anton text-4xl text-green-400">{formData.guests}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, guests: Math.min(20, formData.guests + 1)})}
+                className="w-12 h-12 bg-neutral-800 border border-neutral-700 text-white font-anton text-2xl hover:bg-neutral-700"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="font-mono text-xs text-neutral-400 block mb-1">NOTIZEN (optional)</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({...formData, notes: e.target.value})}
+              placeholder="z.B. Kinderstuhl, Geburtstag..."
+              rows={2}
+              className="w-full bg-neutral-800 border border-neutral-700 text-white p-3 font-mono focus:border-green-500 outline-none resize-none"
+            />
+          </div>
+
+          {/* Submit Buttons */}
+          <div className="flex gap-3 pt-2">
+            <Button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-neutral-700 hover:bg-neutral-600 text-white font-anton py-4 rounded-none"
+            >
+              ABBRECHEN
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 bg-green-600 hover:bg-green-500 text-white font-anton py-4 rounded-none"
+            >
+              {isSubmitting ? "..." : "SPEICHERN"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export default StaffPage;
