@@ -711,65 +711,93 @@ const ReservationCard = ({ reservation, onUpdate }) => {
   };
 
   const statusColors = {
-    pending: "border-yellow-500",
-    confirmed: "border-green-500",
-    cancelled: "border-red-500",
-    completed: "border-neutral-500"
+    pending: "border-l-yellow-500 bg-neutral-900",
+    confirmed: "border-l-green-500 bg-neutral-900",
+    cancelled: "border-l-red-500 bg-neutral-800",
+    completed: "border-l-neutral-500 bg-neutral-800"
+  };
+
+  const statusBadge = {
+    pending: "bg-yellow-500 text-black",
+    confirmed: "bg-green-500 text-white",
+    cancelled: "bg-red-500 text-white",
+    completed: "bg-neutral-500 text-white"
+  };
+
+  const statusText = {
+    pending: "OFFEN",
+    confirmed: "BESTÄTIGT",
+    cancelled: "STORNIERT",
+    completed: "ABGESCHLOSSEN"
   };
 
   return (
-    <div className={`bg-pizza-dark border-l-4 ${statusColors[reservation.status]} p-4`}>
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-anton text-lg text-pizza-white">#{reservation.reservation_number}</span>
-            <span className="font-mono text-xs text-neutral-400">• {reservation.customer_name}</span>
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <CalendarDays className="w-3 h-3 text-neutral-500" />
-            <span className="font-mono text-xs text-blue-400">
-              {new Date(reservation.date).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })}
+    <div className={`border-l-4 ${statusColors[reservation.status]} p-4 shadow-lg`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="font-anton text-xl text-white">#{reservation.reservation_number}</span>
+            <span className={`px-2 py-0.5 text-xs font-bold ${statusBadge[reservation.status]}`}>
+              {statusText[reservation.status]}
             </span>
-            <span className="font-mono text-xs text-pizza-red font-bold">{reservation.time} Uhr</span>
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <User className="w-3 h-3 text-neutral-500" />
-            <span className="font-mono text-xs text-neutral-400">{reservation.guests} Personen</span>
-            <span className="text-neutral-600">•</span>
-            <Phone className="w-3 h-3 text-neutral-500" />
-            <span className="font-mono text-xs text-neutral-400">{reservation.customer_phone}</span>
+          <p className="font-mono text-sm text-neutral-200 mt-1">{reservation.customer_name}</p>
+          
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
+            <span className="flex items-center gap-2 bg-blue-500/20 px-2 py-1">
+              <CalendarDays className="w-4 h-4 text-blue-400" />
+              <span className="font-mono text-sm text-blue-300 font-medium">
+                {new Date(reservation.date).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })}
+              </span>
+            </span>
+            <span className="flex items-center gap-2 bg-red-500/20 px-2 py-1">
+              <Clock className="w-4 h-4 text-red-400" />
+              <span className="font-mono text-sm text-red-300 font-bold">{reservation.time} Uhr</span>
+            </span>
           </div>
+          
+          <div className="flex items-center gap-4 mt-3 flex-wrap">
+            <span className="flex items-center gap-2 text-sm text-neutral-200">
+              <User className="w-4 h-4 text-green-400" />
+              <span className="font-bold text-green-400">{reservation.guests}</span> Personen
+            </span>
+            <span className="flex items-center gap-2 text-sm text-neutral-300">
+              <Phone className="w-4 h-4 text-blue-400" />
+              {reservation.customer_phone}
+            </span>
+          </div>
+          
           {reservation.notes && (
-            <p className="font-mono text-xs text-yellow-500 mt-2">📝 {reservation.notes}</p>
+            <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/30">
+              <p className="font-mono text-sm text-yellow-400">📝 {reservation.notes}</p>
+            </div>
           )}
         </div>
 
         {reservation.status === "pending" && (
-          <div className="flex gap-1">
+          <div className="flex flex-col gap-2">
             <Button
               onClick={() => updateStatus("confirmed")}
               disabled={updating}
-              size="sm"
-              className="bg-green-600 hover:bg-green-700 text-white rounded-none h-10 w-10 p-0"
+              className="bg-green-600 hover:bg-green-500 text-white rounded-none h-12 w-12 p-0 shadow-lg"
             >
-              <Check className="w-5 h-5" />
+              <Check className="w-6 h-6" />
             </Button>
             <Button
               onClick={() => updateStatus("cancelled")}
               disabled={updating}
-              size="sm"
-              variant="outline"
-              className="border-red-500 text-red-500 hover:bg-red-500/10 rounded-none h-10 w-10 p-0"
+              className="bg-red-600 hover:bg-red-500 text-white rounded-none h-12 w-12 p-0"
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </Button>
           </div>
         )}
 
         {reservation.status === "confirmed" && (
-          <span className="px-2 py-1 bg-green-500/20 text-green-400 font-mono text-xs">
-            Bestätigt
-          </span>
+          <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/50">
+            <Check className="w-5 h-5 text-green-400" />
+            <span className="font-bold text-green-400 text-sm">Bestätigt</span>
+          </div>
         )}
       </div>
     </div>
