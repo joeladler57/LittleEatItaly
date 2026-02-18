@@ -95,11 +95,7 @@ function App() {
     <div className="App min-h-screen bg-pizza-black text-pizza-white">
       <NoiseOverlay />
       <BrowserRouter>
-        <Navbar />
-        <main>
-          <AnimatedRoutes />
-        </main>
-        <Footer />
+        <AppContent />
       </BrowserRouter>
       <Toaster 
         position="bottom-right"
@@ -114,5 +110,21 @@ function App() {
     </div>
   );
 }
+
+// Separate component to use useLocation
+const AppContent = () => {
+  const location = useLocation();
+  const hideNavFooter = location.pathname === '/personal';
+
+  return (
+    <>
+      {!hideNavFooter && <Navbar />}
+      <main>
+        <AnimatedRoutes />
+      </main>
+      {!hideNavFooter && <Footer />}
+    </>
+  );
+};
 
 export default App;
