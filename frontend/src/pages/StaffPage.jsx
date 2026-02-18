@@ -942,7 +942,7 @@ const TodayReservations = ({ reservations, onUpdate }) => {
   );
 };
 
-// Individual Row for Today's Reservations
+// Individual Row for Today's Reservations - Mobile-First Design
 const TodayReservationRow = ({ reservation, index }) => {
   const isEven = index % 2 === 0;
   
@@ -954,40 +954,78 @@ const TodayReservationRow = ({ reservation, index }) => {
   const isPast = now > resTime;
   const isSoon = !isPast && (resTime - now) < 30 * 60 * 1000; // Within 30 minutes
 
+  const bgColor = isPast 
+    ? 'bg-neutral-900/50' 
+    : isSoon 
+      ? 'bg-yellow-500/15' 
+      : isEven 
+        ? 'bg-neutral-900' 
+        : 'bg-neutral-850';
+
+  const borderColor = isPast 
+    ? 'border-l-neutral-700' 
+    : isSoon 
+      ? 'border-l-yellow-400' 
+      : 'border-l-green-500';
+
   return (
-    <div className={`py-3 px-3 ${
-      isEven ? 'bg-neutral-900' : 'bg-neutral-800'
-    } ${isPast ? 'opacity-40' : ''} ${isSoon ? 'bg-yellow-500/10 border-l-4 border-yellow-400' : 'border-l-4 border-transparent'}`}>
-      {/* Main Row: Time - Name - Persons */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          {/* Time */}
-          <span className={`font-anton text-lg flex-shrink-0 ${
-            isPast ? 'text-neutral-500' : isSoon ? 'text-yellow-400' : 'text-green-400'
+    <div 
+      className={`${bgColor} ${borderColor} border-l-4 ${isPast ? 'opacity-50' : ''}`}
+      data-testid={`today-reservation-${reservation.id}`}
+    >
+      {/* Mobile: Stack vertically, Desktop: Single row */}
+      <div className="p-3">
+        {/* Row 1: Time prominently displayed */}
+        <div className="flex items-center justify-between mb-2 sm:mb-0">
+          <div className="flex items-center gap-3">
+            {/* Large, prominent time display */}
+            <div className={`px-2 py-1 ${
+              isPast ? 'bg-neutral-800' : isSoon ? 'bg-yellow-500/30' : 'bg-green-500/20'
+            }`}>
+              <span className={`font-anton text-xl ${
+                isPast ? 'text-neutral-500' : isSoon ? 'text-yellow-300' : 'text-green-400'
+              }`}>
+                {reservation.time}
+              </span>
+            </div>
+            
+            {/* Soon indicator badge */}
+            {isSoon && !isPast && (
+              <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 animate-pulse">
+                BALD
+              </span>
+            )}
+          </div>
+          
+          {/* Guest count - always visible on right */}
+          <div className={`flex items-center gap-1 px-2 py-1 ${
+            isPast ? 'bg-neutral-800' : 'bg-green-500/20'
           }`}>
-            {reservation.time}
-          </span>
-          {/* Name */}
-          <span className={`font-mono text-sm truncate ${
+            <User className={`w-4 h-4 ${isPast ? 'text-neutral-600' : 'text-green-400'}`} />
+            <span className={`font-anton text-xl ${isPast ? 'text-neutral-600' : 'text-green-400'}`}>
+              {reservation.guests}
+            </span>
+          </div>
+        </div>
+        
+        {/* Row 2: Name */}
+        <div className="mt-1">
+          <span className={`font-mono text-sm ${
             isPast ? 'text-neutral-500' : isSoon ? 'text-yellow-100' : 'text-white'
           }`}>
             {reservation.customer_name}
           </span>
         </div>
-        {/* Persons */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <User className={`w-4 h-4 ${isPast ? 'text-neutral-600' : 'text-green-400'}`} />
-          <span className={`font-anton text-xl ${isPast ? 'text-neutral-600' : 'text-green-400'}`}>
-            {reservation.guests}
-          </span>
-        </div>
+        
+        {/* Row 3: Notes if present */}
+        {reservation.notes && (
+          <p className={`font-mono text-xs mt-2 ${
+            isPast ? 'text-neutral-600' : 'text-yellow-500'
+          }`}>
+            📝 {reservation.notes}
+          </p>
+        )}
       </div>
-      {/* Notes */}
-      {reservation.notes && (
-        <p className="font-mono text-xs text-yellow-500 mt-1 ml-14 truncate">
-          📝 {reservation.notes}
-        </p>
-      )}
     </div>
   );
 };
