@@ -406,7 +406,7 @@ const OrderPage = () => {
                     <MenuItemCard
                       key={item.id}
                       item={item}
-                      onSelect={() => openItemModal(item)}
+                      onSelect={() => openItemModal(item, activeCategory)}
                       formatPrice={formatPrice}
                     />
                   ))}
