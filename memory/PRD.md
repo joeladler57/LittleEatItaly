@@ -10,12 +10,14 @@
 ### Februar 2026 - Bestell- & Reservierungssystem V2 (Getestet ✅)
 - ✅ **Online Bestellsystem** (`/bestellen`): Warenkorb, Kategorien, Artikelauswahl, ASAP-Option, Zeitauswahl basierend auf Öffnungszeiten
 - ✅ **Reservierungssystem** (`/reservieren`): Dynamische Datums-/Zeitauswahl basierend auf Öffnungszeiten und Feiertagen
+- ✅ **Zahlungsart-Auswahl**: Barzahlung oder Kartenzahlung bei Abholung wählbar
+- ✅ **Safari-kompatible Dropdowns**: Verbesserte select-Elemente mit custom arrow icons
 - ✅ **Shop Admin** (`/admin/shop`): 
-  - BESTELLUNGEN: Neue/Bestätigte/Stornierte Bestellungen verwalten, ASAP-Bestätigung mit Zubereitungszeit
+  - BESTELLUNGEN: Neue/Bestätigte/Stornierte Bestellungen verwalten, ASAP-Bestätigung mit Zubereitungszeit, Zahlungsart-Anzeige
   - RESERVIERUNGEN: Nach Datum gruppiert, Bestätigen/Ablehnen
   - MENÜ: Kategorien und Artikel verwalten
   - EINSTELLUNGEN: Öffnungszeiten pro Tag, Geschlossene Tage, Vorlaufzeiten, Restaurant-Infos
-- ✅ **Nur Abholung & Barzahlung**: Wie gewünscht
+- ✅ **Nur Abholung**: Bar oder Kartenzahlung bei Abholung
 - ⏸️ **E-Mail-Bestätigung**: Code bereit, Resend API-Key benötigt
 
 ### Test-Ergebnisse (18.02.2026)
