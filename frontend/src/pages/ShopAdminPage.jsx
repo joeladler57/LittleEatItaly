@@ -297,7 +297,7 @@ const OrdersSection = ({ orders, onUpdate }) => {
                     #{order.order_number} • {order.customer_name}
                   </p>
                   <p className="font-mono text-xs text-neutral-400">
-                    {new Date(order.created_at).toLocaleString('de-DE')} • {order.pickup_time}
+                    {new Date(order.created_at).toLocaleString('de-DE')} • {order.pickup_time} • {order.payment_method || "Barzahlung"}
                   </p>
                 </div>
               </div>
