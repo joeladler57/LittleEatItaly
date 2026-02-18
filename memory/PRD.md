@@ -129,18 +129,24 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 ### 3rd Party Integrations
 - **GlobalFood API**: Restaurant Key `pQ5d8UmzbClR90Y1DR`
 - **Resend**: E-Mail-Versand (API-Key benötigt)
+- **Web Push**: VAPID-Keys konfiguriert für Push-Benachrichtigungen
 
 ## Next Tasks
 1. 🟡 **E-Mail-Benachrichtigungen aktivieren**: Resend API-Key in `/app/backend/.env` eintragen
 2. 🟢 Impressum mit echten Firmendaten ergänzen (über Admin)
 3. 🟢 Weitere Menü-Artikel hinzufügen (über Shop Admin)
 
-## PWA Installation
+## PWA Installation & Push-Benachrichtigungen
 **So installierst du die App auf deinem Handy:**
 1. Öffne `/admin/shop` im Browser auf deinem Handy
 2. Klicke auf "INSTALLIEREN" im Banner oder im Menü
 3. Die App erscheint auf deinem Startbildschirm
-4. Öffne die App - sie zeigt automatisch neue Bestellungen mit Ton-Benachrichtigung!
+
+**So aktivierst du Push-Benachrichtigungen:**
+1. Logge dich als Admin ein auf `/admin/shop`
+2. Klicke auf das Glocken-Icon (🔔) in der Header-Leiste
+3. Erlaube Benachrichtigungen wenn gefragt
+4. Du erhältst jetzt Benachrichtigungen auch bei geschlossenem Browser!
 
 ## Backlog / Zukünftige Features
 - Push-Benachrichtigungen (Web Push API) für Hintergrund-Notifications
