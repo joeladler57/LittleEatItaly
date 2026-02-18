@@ -289,6 +289,67 @@ class ShopSettings(BaseModel):
     restaurant_phone: str = "0271 31924461"
     restaurant_email: str = "bestellung@little-eat-italy.de"
     staff_pin: str = "1234"  # 4-digit PIN for staff login
+    
+    # Printer Settings
+    printer_enabled: bool = False
+    printer_ip: str = ""
+    printer_port: int = 8008  # Epson ePOS default port
+    printer_device_id: str = "local_printer"
+    auto_print_on_accept: bool = True
+    
+    # Receipt Template Settings
+    receipt_template: Dict = {
+        "header": {
+            "show_logo": False,
+            "show_restaurant_name": True,
+            "restaurant_name_size": "large",  # small, medium, large
+            "restaurant_name_bold": True,
+            "show_address": True,
+            "show_phone": True,
+            "show_separator": True
+        },
+        "order_info": {
+            "show_order_number": True,
+            "order_number_size": "large",
+            "order_number_bold": True,
+            "show_date_time": True,
+            "show_customer_name": True,
+            "customer_name_bold": True,
+            "show_customer_phone": True,
+            "show_pickup_time": True,
+            "pickup_time_size": "large",
+            "pickup_time_bold": True,
+            "show_separator": True
+        },
+        "items": {
+            "show_quantity": True,
+            "show_item_name": True,
+            "item_name_bold": False,
+            "show_size": True,
+            "show_options": True,
+            "show_item_price": True,
+            "show_separator": True
+        },
+        "notes": {
+            "show_notes": True,
+            "notes_bold": True,
+            "notes_box": True
+        },
+        "totals": {
+            "show_subtotal": False,
+            "show_total": True,
+            "total_size": "large",
+            "total_bold": True,
+            "show_payment_method": True,
+            "show_separator": True
+        },
+        "footer": {
+            "show_thank_you": True,
+            "thank_you_text": "Vielen Dank für Ihre Bestellung!",
+            "show_custom_text": False,
+            "custom_text": ""
+        }
+    }
 
 # ============ STAFF AUTH MODELS ============
 
