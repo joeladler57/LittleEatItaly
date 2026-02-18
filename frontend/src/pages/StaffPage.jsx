@@ -502,9 +502,9 @@ const StaffPage = () => {
           </div>
         )}
 
-        {/* Today's Reservations Tab */}
+        {/* Today's Reservations Tab - Full width */}
         {activeTab === "today" && (
-          <div className="overflow-x-auto">
+          <div className="-mx-4">
             <TodayReservations reservations={reservations} onUpdate={fetchData} />
           </div>
         )}
