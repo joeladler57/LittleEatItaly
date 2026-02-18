@@ -609,27 +609,27 @@ const OrderCard = ({ order, onUpdate }) => {
                   <Button
                     onClick={() => updateStatus("preparing")}
                     disabled={updating}
-                    className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-mono rounded-none"
+                    className="flex-1 bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-base py-3 rounded-none shadow-lg"
                   >
-                    <Utensils className="w-4 h-4 mr-1" /> IN ZUBEREITUNG
+                    <Utensils className="w-5 h-5 mr-2" /> IN ZUBEREITUNG
                   </Button>
                 )}
                 {order.status === "preparing" && (
                   <Button
                     onClick={() => updateStatus("ready")}
                     disabled={updating}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-mono rounded-none"
+                    className="flex-1 bg-green-500 hover:bg-green-400 text-white font-bold text-base py-3 rounded-none shadow-lg"
                   >
-                    <CheckCircle2 className="w-4 h-4 mr-1" /> FERTIG
+                    <CheckCircle2 className="w-5 h-5 mr-2" /> FERTIG
                   </Button>
                 )}
                 {order.status === "ready" && (
                   <Button
                     onClick={() => updateStatus("completed")}
                     disabled={updating}
-                    className="flex-1 bg-neutral-600 hover:bg-neutral-700 text-white font-mono rounded-none"
+                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-base py-3 rounded-none shadow-lg"
                   >
-                    <Check className="w-4 h-4 mr-1" /> ABGEHOLT
+                    <Check className="w-5 h-5 mr-2" /> ABGEHOLT
                   </Button>
                 )}
               </div>
@@ -640,44 +640,43 @@ const OrderCard = ({ order, onUpdate }) => {
 
       {/* Prep Time Modal */}
       {showPrepTime && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-pizza-dark border border-pizza-red p-6 max-w-sm w-full">
-            <h3 className="font-anton text-xl text-pizza-white mb-2">ZUBEREITUNGSZEIT</h3>
-            <p className="font-mono text-sm text-neutral-400 mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
+          <div className="bg-neutral-900 border-2 border-green-500 p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="font-anton text-2xl text-white mb-2">ZUBEREITUNGSZEIT</h3>
+            <p className="font-mono text-sm text-neutral-300 mb-6">
               Wie viele Minuten dauert die Zubereitung?
             </p>
             
             <div className="flex items-center gap-4 mb-6">
               <button
                 onClick={() => setPrepTime(Math.max(5, prepTime - 5))}
-                className="w-14 h-14 border border-pizza-dark hover:border-pizza-red text-pizza-white font-anton text-2xl"
+                className="w-16 h-16 bg-neutral-800 hover:bg-neutral-700 border-2 border-neutral-600 text-white font-anton text-3xl rounded"
               >
                 -
               </button>
               <div className="flex-1 text-center">
-                <span className="font-anton text-5xl text-pizza-red">{prepTime}</span>
-                <span className="font-mono text-sm text-neutral-400 block">Min.</span>
+                <span className="font-anton text-6xl text-green-400">{prepTime}</span>
+                <span className="font-mono text-base text-neutral-400 block mt-1">Minuten</span>
               </div>
               <button
                 onClick={() => setPrepTime(prepTime + 5)}
-                className="w-14 h-14 border border-pizza-dark hover:border-pizza-red text-pizza-white font-anton text-2xl"
+                className="w-16 h-16 bg-neutral-800 hover:bg-neutral-700 border-2 border-neutral-600 text-white font-anton text-3xl rounded"
               >
                 +
               </button>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Button
                 onClick={() => setShowPrepTime(false)}
-                variant="outline"
-                className="flex-1 border-pizza-dark text-pizza-white rounded-none"
+                className="flex-1 bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-3 rounded-none"
               >
                 Abbrechen
               </Button>
               <Button
                 onClick={() => updateStatus("confirmed", prepTime)}
                 disabled={updating}
-                className="flex-1 bg-pizza-red hover:bg-red-700 text-pizza-white font-anton rounded-none"
+                className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-none"
               >
                 {updating ? "..." : "BESTÄTIGEN"}
               </Button>
