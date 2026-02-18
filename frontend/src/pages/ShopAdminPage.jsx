@@ -379,6 +379,62 @@ const ShopAdminPage = () => {
             >
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </Button>
+
+            {/* Push Notification Toggle */}
+            {isPushSupported && (
+              <Button
+                onClick={async () => {
+                  if (isPushSubscribed) {
+                    try {
+                      await unsubscribeFromPush();
+                      toast.success('Push-Benachrichtigungen deaktiviert');
+                    } catch (e) {
+                      toast.error('Fehler beim Deaktivieren');
+                    }
+                  } else {
+                    try {
+                      await subscribeToPush('Admin Gerät');
+                      toast.success('Push-Benachrichtigungen aktiviert!');
+                    } catch (e) {
+                      toast.error(e.message || 'Fehler beim Aktivieren');
+                    }
+                  }
+                }}
+                disabled={isPushLoading || pushPermission === 'denied'}
+                variant="outline"
+                className={`border-pizza-dark rounded-none ${isPushSubscribed ? 'text-blue-400 border-blue-500/50' : 'text-neutral-500'}`}
+                title={isPushSubscribed ? "Push aktiviert" : pushPermission === 'denied' ? "Push blockiert" : "Push aktivieren"}
+              >
+                {isPushLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : isPushSubscribed ? (
+                  <Bell className="w-4 h-4" />
+                ) : pushPermission === 'denied' ? (
+                  <BellOff className="w-4 h-4" />
+                ) : (
+                  <BellOff className="w-4 h-4" />
+                )}
+              </Button>
+            )}
+
+            {/* Test Push Button (only if subscribed) */}
+            {isPushSubscribed && (
+              <Button
+                onClick={async () => {
+                  try {
+                    await testNotification();
+                    toast.success('Test-Benachrichtigung gesendet!');
+                  } catch (e) {
+                    toast.error('Fehler beim Senden');
+                  }
+                }}
+                variant="outline"
+                className="border-pizza-dark text-blue-400 hover:bg-blue-500/10 rounded-none"
+                title="Test-Benachrichtigung senden"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            )}
             
             {/* Install Button (if not installed) */}
             {isInstallable && !isInstalled && (
