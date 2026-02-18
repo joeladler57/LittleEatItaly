@@ -7,11 +7,12 @@ import { toast } from "sonner";
 import {
   ShoppingBag, CalendarDays, Check, X, Clock, Phone, User, Mail,
   ChevronDown, ChevronUp, Volume2, VolumeX, Bell, BellOff, LogOut,
-  RefreshCw, Utensils, CheckCircle2, CircleDashed, Send, BellRing, Plus, Users
+  RefreshCw, Utensils, CheckCircle2, CircleDashed, Send, BellRing, Plus, Users, Printer
 } from "lucide-react";
 import { useNotificationSound } from "../hooks/useNotificationSound";
 import { usePushNotifications } from "../hooks/usePushNotifications";
 import { registerServiceWorker } from "../hooks/usePWA";
+import { usePrinter } from "../hooks/usePrinter";
 
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
 const POLLING_INTERVAL = 4000;
