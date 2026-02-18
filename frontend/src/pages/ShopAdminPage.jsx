@@ -37,11 +37,21 @@ const ShopAdminPage = () => {
   // PWA and notification states
   const { playSound, enableAudio } = useNotificationSound();
   const { isInstallable, isInstalled, installApp } = usePWA();
+  const { 
+    isSupported: isPushSupported, 
+    permission: pushPermission,
+    isSubscribed: isPushSubscribed, 
+    isLoading: isPushLoading,
+    subscribe: subscribeToPush, 
+    unsubscribe: unsubscribeFromPush,
+    testNotification 
+  } = usePushNotifications();
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [lastOrderCount, setLastOrderCount] = useState(0);
   const [lastReservationCount, setLastReservationCount] = useState(0);
   const [newNotifications, setNewNotifications] = useState(0);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [showPushBanner, setShowPushBanner] = useState(false);
   const pollingRef = useRef(null);
   const isFirstLoad = useRef(true);
 
@@ -57,6 +67,14 @@ const ShopAdminPage = () => {
       return () => clearTimeout(timer);
     }
   }, [isInstallable, isInstalled]);
+
+  // Show push notification banner after 10 seconds if supported and not subscribed
+  useEffect(() => {
+    if (isPushSupported && !isPushSubscribed && pushPermission !== 'denied' && isAuthenticated) {
+      const timer = setTimeout(() => setShowPushBanner(true), 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [isPushSupported, isPushSubscribed, pushPermission, isAuthenticated]);
 
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
