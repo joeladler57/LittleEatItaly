@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
   ShoppingBag, CalendarDays, Check, X, Clock, Phone, User, Mail,
   ChevronDown, ChevronUp, Volume2, VolumeX, Bell, BellOff, LogOut,
-  RefreshCw, Utensils, CheckCircle2, CircleDashed, Send
+  RefreshCw, Utensils, CheckCircle2, CircleDashed, Send, BellRing
 } from "lucide-react";
 import { useNotificationSound } from "../hooks/useNotificationSound";
 import { usePushNotifications } from "../hooks/usePushNotifications";
@@ -29,7 +29,7 @@ const StaffPage = () => {
   const [reservations, setReservations] = useState([]);
 
   // Notification states
-  const { playSound, enableAudio } = useNotificationSound();
+  const { playSound, startLoopingSound, stopLoopingSound, isLooping, enableAudio } = useNotificationSound();
   const { 
     isSupported: isPushSupported, 
     isSubscribed: isPushSubscribed,
@@ -39,6 +39,7 @@ const StaffPage = () => {
     testNotification
   } = usePushNotifications();
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [isAlarmActive, setIsAlarmActive] = useState(false);
   const [lastOrderCount, setLastOrderCount] = useState(0);
   const [lastReservationCount, setLastReservationCount] = useState(0);
   const pollingRef = useRef(null);
