@@ -76,11 +76,11 @@
 - ⏸️ **E-Mail-Bestätigung**: Code bereit, Resend API-Key benötigt
 
 ### Test-Ergebnisse (18.02.2026)
-- Backend: **100% (28/28 Tests bestanden)** - PWA + Push Notifications
+- Backend: **100% (50/50 Tests bestanden)** - PWA + Push + Staff Login
 - Frontend: **100% alle Features verifiziert**
+- Personal-App: PIN-Login, Dashboard, Filter, Bestellungen/Reservierungen
 - PWA: Manifest, Service Worker, Icons, Notification Sound
 - Push: VAPID, Subscribe, Unsubscribe, Test Notifications
-- Polling-Mechanismus, Mobile Layout - alles funktional
 
 ### Frühere Updates
 - ✅ **GlobalFood Menü-Integration**: Dynamische Speisekarte
