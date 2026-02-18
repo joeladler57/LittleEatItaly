@@ -544,8 +544,6 @@ const OrderCard = ({ order, onUpdate }) => {
           </div>
         </div>
       </div>
-        </div>
-      </div>
 
       <AnimatePresence>
         {expanded && (
