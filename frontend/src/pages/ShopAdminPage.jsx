@@ -2076,4 +2076,570 @@ const SettingsSection = ({ settings, onUpdate }) => {
   );
 };
 
+// Printer Section with Receipt Designer
+const PrinterSection = ({ settings, onUpdate }) => {
+  const [formData, setFormData] = useState({
+    printer_enabled: false,
+    printer_ip: "",
+    printer_port: 8008,
+    printer_device_id: "local_printer",
+    auto_print_on_accept: true,
+    receipt_template: {
+      header: {
+        show_logo: false,
+        show_restaurant_name: true,
+        restaurant_name_size: "large",
+        restaurant_name_bold: true,
+        show_address: true,
+        show_phone: true,
+        show_separator: true
+      },
+      order_info: {
+        show_order_number: true,
+        order_number_size: "large",
+        order_number_bold: true,
+        show_date_time: true,
+        show_customer_name: true,
+        customer_name_bold: true,
+        show_customer_phone: true,
+        show_pickup_time: true,
+        pickup_time_size: "large",
+        pickup_time_bold: true,
+        show_separator: true
+      },
+      items: {
+        show_quantity: true,
+        show_item_name: true,
+        item_name_bold: false,
+        show_size: true,
+        show_options: true,
+        show_item_price: true,
+        show_separator: true
+      },
+      notes: {
+        show_notes: true,
+        notes_bold: true,
+        notes_box: true
+      },
+      totals: {
+        show_subtotal: false,
+        show_total: true,
+        total_size: "large",
+        total_bold: true,
+        show_payment_method: true,
+        show_separator: true
+      },
+      footer: {
+        show_thank_you: true,
+        thank_you_text: "Vielen Dank für Ihre Bestellung!",
+        show_custom_text: false,
+        custom_text: ""
+      }
+    }
+  });
+  const [saving, setSaving] = useState(false);
+  const [testPrinting, setTestPrinting] = useState(false);
+
+  useEffect(() => {
+    if (settings) {
+      setFormData({
+        printer_enabled: settings.printer_enabled || false,
+        printer_ip: settings.printer_ip || "",
+        printer_port: settings.printer_port || 8008,
+        printer_device_id: settings.printer_device_id || "local_printer",
+        auto_print_on_accept: settings.auto_print_on_accept !== false,
+        receipt_template: settings.receipt_template || formData.receipt_template
+      });
+    }
+  }, [settings]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      const updatedSettings = {
+        ...settings,
+        printer_enabled: formData.printer_enabled,
+        printer_ip: formData.printer_ip,
+        printer_port: formData.printer_port,
+        printer_device_id: formData.printer_device_id,
+        auto_print_on_accept: formData.auto_print_on_accept,
+        receipt_template: formData.receipt_template
+      };
+      
+      await axios.put(`${API}/shop/settings`, updatedSettings, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Drucker-Einstellungen gespeichert!");
+      onUpdate();
+    } catch (error) {
+      toast.error("Fehler beim Speichern");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateTemplate = (section, key, value) => {
+    setFormData(prev => ({
+      ...prev,
+      receipt_template: {
+        ...prev.receipt_template,
+        [section]: {
+          ...prev.receipt_template[section],
+          [key]: value
+        }
+      }
+    }));
+  };
+
+  // Sample order for preview
+  const sampleOrder = {
+    order_number: 42,
+    customer_name: "Max Mustermann",
+    customer_phone: "0176 12345678",
+    customer_email: "max@example.de",
+    pickup_time: "18:30 Uhr",
+    created_at: new Date().toISOString(),
+    items: [
+      { quantity: 2, item_name: "Margherita", size_name: "Groß", total_price: 21.80 },
+      { quantity: 1, item_name: "Calzone", size_name: null, total_price: 12.50, options: ["Extra Käse", "Pilze"] },
+      { quantity: 3, item_name: "Cola", size_name: "0.5L", total_price: 8.70 }
+    ],
+    notes: "Bitte gut durchbacken!",
+    total: 43.00,
+    payment_method: "Kartenzahlung"
+  };
+
+  const ToggleSwitch = ({ checked, onChange, label }) => (
+    <label className="flex items-center gap-3 cursor-pointer group">
+      <div className={`w-10 h-6 rounded-full p-1 transition-colors ${checked ? 'bg-green-500' : 'bg-neutral-700'}`}>
+        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${checked ? 'translate-x-4' : ''}`} />
+      </div>
+      <span className="font-mono text-sm text-neutral-300 group-hover:text-white">{label}</span>
+    </label>
+  );
+
+  const SizeSelect = ({ value, onChange }) => (
+    <select 
+      value={value} 
+      onChange={(e) => onChange(e.target.value)}
+      className="bg-pizza-black border border-pizza-dark text-white p-1 text-xs font-mono rounded-none"
+    >
+      <option value="small">Klein</option>
+      <option value="medium">Mittel</option>
+      <option value="large">Groß</option>
+    </select>
+  );
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Left: Settings */}
+      <div className="space-y-6">
+        {/* Printer Connection */}
+        <div className="bg-pizza-dark border border-pizza-dark p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Printer className="w-6 h-6 text-pizza-red" />
+            <h2 className="font-anton text-xl text-pizza-white">DRUCKER-VERBINDUNG</h2>
+          </div>
+
+          <div className="space-y-4">
+            <ToggleSwitch 
+              checked={formData.printer_enabled} 
+              onChange={() => setFormData({...formData, printer_enabled: !formData.printer_enabled})}
+              label="Drucker aktivieren"
+            />
+
+            {formData.printer_enabled && (
+              <>
+                <div>
+                  <Label className="font-mono text-neutral-400 text-xs">DRUCKER IP-ADRESSE</Label>
+                  <Input
+                    value={formData.printer_ip}
+                    onChange={(e) => setFormData({...formData, printer_ip: e.target.value})}
+                    placeholder="192.168.1.100"
+                    className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none font-mono"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="font-mono text-neutral-400 text-xs">PORT</Label>
+                    <Input
+                      type="number"
+                      value={formData.printer_port}
+                      onChange={(e) => setFormData({...formData, printer_port: parseInt(e.target.value) || 8008})}
+                      className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none font-mono"
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-mono text-neutral-400 text-xs">GERÄTE-ID</Label>
+                    <Input
+                      value={formData.printer_device_id}
+                      onChange={(e) => setFormData({...formData, printer_device_id: e.target.value})}
+                      placeholder="local_printer"
+                      className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none font-mono"
+                    />
+                  </div>
+                </div>
+
+                <ToggleSwitch 
+                  checked={formData.auto_print_on_accept} 
+                  onChange={() => setFormData({...formData, auto_print_on_accept: !formData.auto_print_on_accept})}
+                  label="Automatisch drucken bei Annahme"
+                />
+
+                <p className="font-mono text-xs text-neutral-500 mt-2">
+                  Epson TM-30III: Standard-Port ist 8008 für ePOS
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Receipt Template Settings */}
+        <div className="bg-pizza-dark border border-pizza-dark p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <FileText className="w-6 h-6 text-pizza-red" />
+            <h2 className="font-anton text-xl text-pizza-white">BON-DESIGN</h2>
+          </div>
+
+          <div className="space-y-6">
+            {/* Header Section */}
+            <div>
+              <h3 className="font-anton text-sm text-neutral-400 mb-3 border-b border-neutral-700 pb-2">KOPFZEILE</h3>
+              <div className="space-y-2">
+                <ToggleSwitch 
+                  checked={formData.receipt_template.header.show_restaurant_name} 
+                  onChange={() => updateTemplate('header', 'show_restaurant_name', !formData.receipt_template.header.show_restaurant_name)}
+                  label="Restaurant-Name"
+                />
+                {formData.receipt_template.header.show_restaurant_name && (
+                  <div className="ml-12 flex items-center gap-2">
+                    <SizeSelect 
+                      value={formData.receipt_template.header.restaurant_name_size}
+                      onChange={(v) => updateTemplate('header', 'restaurant_name_size', v)}
+                    />
+                    <ToggleSwitch 
+                      checked={formData.receipt_template.header.restaurant_name_bold} 
+                      onChange={() => updateTemplate('header', 'restaurant_name_bold', !formData.receipt_template.header.restaurant_name_bold)}
+                      label="Fett"
+                    />
+                  </div>
+                )}
+                <ToggleSwitch 
+                  checked={formData.receipt_template.header.show_address} 
+                  onChange={() => updateTemplate('header', 'show_address', !formData.receipt_template.header.show_address)}
+                  label="Adresse"
+                />
+                <ToggleSwitch 
+                  checked={formData.receipt_template.header.show_phone} 
+                  onChange={() => updateTemplate('header', 'show_phone', !formData.receipt_template.header.show_phone)}
+                  label="Telefon"
+                />
+              </div>
+            </div>
+
+            {/* Order Info Section */}
+            <div>
+              <h3 className="font-anton text-sm text-neutral-400 mb-3 border-b border-neutral-700 pb-2">BESTELLINFO</h3>
+              <div className="space-y-2">
+                <ToggleSwitch 
+                  checked={formData.receipt_template.order_info.show_order_number} 
+                  onChange={() => updateTemplate('order_info', 'show_order_number', !formData.receipt_template.order_info.show_order_number)}
+                  label="Bestellnummer"
+                />
+                {formData.receipt_template.order_info.show_order_number && (
+                  <div className="ml-12 flex items-center gap-2">
+                    <SizeSelect 
+                      value={formData.receipt_template.order_info.order_number_size}
+                      onChange={(v) => updateTemplate('order_info', 'order_number_size', v)}
+                    />
+                    <ToggleSwitch 
+                      checked={formData.receipt_template.order_info.order_number_bold} 
+                      onChange={() => updateTemplate('order_info', 'order_number_bold', !formData.receipt_template.order_info.order_number_bold)}
+                      label="Fett"
+                    />
+                  </div>
+                )}
+                <ToggleSwitch 
+                  checked={formData.receipt_template.order_info.show_date_time} 
+                  onChange={() => updateTemplate('order_info', 'show_date_time', !formData.receipt_template.order_info.show_date_time)}
+                  label="Datum & Uhrzeit"
+                />
+                <ToggleSwitch 
+                  checked={formData.receipt_template.order_info.show_customer_name} 
+                  onChange={() => updateTemplate('order_info', 'show_customer_name', !formData.receipt_template.order_info.show_customer_name)}
+                  label="Kundenname"
+                />
+                <ToggleSwitch 
+                  checked={formData.receipt_template.order_info.show_customer_phone} 
+                  onChange={() => updateTemplate('order_info', 'show_customer_phone', !formData.receipt_template.order_info.show_customer_phone)}
+                  label="Telefonnummer"
+                />
+                <ToggleSwitch 
+                  checked={formData.receipt_template.order_info.show_pickup_time} 
+                  onChange={() => updateTemplate('order_info', 'show_pickup_time', !formData.receipt_template.order_info.show_pickup_time)}
+                  label="Abholzeit"
+                />
+                {formData.receipt_template.order_info.show_pickup_time && (
+                  <div className="ml-12 flex items-center gap-2">
+                    <SizeSelect 
+                      value={formData.receipt_template.order_info.pickup_time_size}
+                      onChange={(v) => updateTemplate('order_info', 'pickup_time_size', v)}
+                    />
+                    <ToggleSwitch 
+                      checked={formData.receipt_template.order_info.pickup_time_bold} 
+                      onChange={() => updateTemplate('order_info', 'pickup_time_bold', !formData.receipt_template.order_info.pickup_time_bold)}
+                      label="Fett"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Items Section */}
+            <div>
+              <h3 className="font-anton text-sm text-neutral-400 mb-3 border-b border-neutral-700 pb-2">ARTIKEL</h3>
+              <div className="space-y-2">
+                <ToggleSwitch 
+                  checked={formData.receipt_template.items.show_quantity} 
+                  onChange={() => updateTemplate('items', 'show_quantity', !formData.receipt_template.items.show_quantity)}
+                  label="Anzahl"
+                />
+                <ToggleSwitch 
+                  checked={formData.receipt_template.items.item_name_bold} 
+                  onChange={() => updateTemplate('items', 'item_name_bold', !formData.receipt_template.items.item_name_bold)}
+                  label="Artikelname fett"
+                />
+                <ToggleSwitch 
+                  checked={formData.receipt_template.items.show_size} 
+                  onChange={() => updateTemplate('items', 'show_size', !formData.receipt_template.items.show_size)}
+                  label="Größe anzeigen"
+                />
+                <ToggleSwitch 
+                  checked={formData.receipt_template.items.show_options} 
+                  onChange={() => updateTemplate('items', 'show_options', !formData.receipt_template.items.show_options)}
+                  label="Optionen/Extras"
+                />
+                <ToggleSwitch 
+                  checked={formData.receipt_template.items.show_item_price} 
+                  onChange={() => updateTemplate('items', 'show_item_price', !formData.receipt_template.items.show_item_price)}
+                  label="Einzelpreis"
+                />
+              </div>
+            </div>
+
+            {/* Notes Section */}
+            <div>
+              <h3 className="font-anton text-sm text-neutral-400 mb-3 border-b border-neutral-700 pb-2">NOTIZEN</h3>
+              <div className="space-y-2">
+                <ToggleSwitch 
+                  checked={formData.receipt_template.notes.show_notes} 
+                  onChange={() => updateTemplate('notes', 'show_notes', !formData.receipt_template.notes.show_notes)}
+                  label="Notizen anzeigen"
+                />
+                <ToggleSwitch 
+                  checked={formData.receipt_template.notes.notes_bold} 
+                  onChange={() => updateTemplate('notes', 'notes_bold', !formData.receipt_template.notes.notes_bold)}
+                  label="Notizen fett"
+                />
+                <ToggleSwitch 
+                  checked={formData.receipt_template.notes.notes_box} 
+                  onChange={() => updateTemplate('notes', 'notes_box', !formData.receipt_template.notes.notes_box)}
+                  label="Rahmen um Notizen"
+                />
+              </div>
+            </div>
+
+            {/* Totals Section */}
+            <div>
+              <h3 className="font-anton text-sm text-neutral-400 mb-3 border-b border-neutral-700 pb-2">SUMME & ZAHLUNG</h3>
+              <div className="space-y-2">
+                <ToggleSwitch 
+                  checked={formData.receipt_template.totals.show_total} 
+                  onChange={() => updateTemplate('totals', 'show_total', !formData.receipt_template.totals.show_total)}
+                  label="Gesamtsumme"
+                />
+                {formData.receipt_template.totals.show_total && (
+                  <div className="ml-12 flex items-center gap-2">
+                    <SizeSelect 
+                      value={formData.receipt_template.totals.total_size}
+                      onChange={(v) => updateTemplate('totals', 'total_size', v)}
+                    />
+                    <ToggleSwitch 
+                      checked={formData.receipt_template.totals.total_bold} 
+                      onChange={() => updateTemplate('totals', 'total_bold', !formData.receipt_template.totals.total_bold)}
+                      label="Fett"
+                    />
+                  </div>
+                )}
+                <ToggleSwitch 
+                  checked={formData.receipt_template.totals.show_payment_method} 
+                  onChange={() => updateTemplate('totals', 'show_payment_method', !formData.receipt_template.totals.show_payment_method)}
+                  label="Zahlungsart"
+                />
+              </div>
+            </div>
+
+            {/* Footer Section */}
+            <div>
+              <h3 className="font-anton text-sm text-neutral-400 mb-3 border-b border-neutral-700 pb-2">FUßZEILE</h3>
+              <div className="space-y-2">
+                <ToggleSwitch 
+                  checked={formData.receipt_template.footer.show_thank_you} 
+                  onChange={() => updateTemplate('footer', 'show_thank_you', !formData.receipt_template.footer.show_thank_you)}
+                  label="Dankestext"
+                />
+                {formData.receipt_template.footer.show_thank_you && (
+                  <Input
+                    value={formData.receipt_template.footer.thank_you_text}
+                    onChange={(e) => updateTemplate('footer', 'thank_you_text', e.target.value)}
+                    placeholder="Vielen Dank..."
+                    className="ml-12 bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none font-mono text-sm"
+                  />
+                )}
+                <ToggleSwitch 
+                  checked={formData.receipt_template.footer.show_custom_text} 
+                  onChange={() => updateTemplate('footer', 'show_custom_text', !formData.receipt_template.footer.show_custom_text)}
+                  label="Eigener Text"
+                />
+                {formData.receipt_template.footer.show_custom_text && (
+                  <Input
+                    value={formData.receipt_template.footer.custom_text}
+                    onChange={(e) => updateTemplate('footer', 'custom_text', e.target.value)}
+                    placeholder="z.B. Öffnungszeiten..."
+                    className="ml-12 bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none font-mono text-sm"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+
+          <Button onClick={handleSave} disabled={saving} className="mt-6 w-full bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-wider rounded-none">
+            <Save className="w-4 h-4 mr-2" /> {saving ? "SPEICHERN..." : "EINSTELLUNGEN SPEICHERN"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Right: Live Preview */}
+      <div className="lg:sticky lg:top-4 h-fit">
+        <div className="bg-pizza-dark border border-pizza-dark p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Eye className="w-6 h-6 text-pizza-red" />
+            <h2 className="font-anton text-xl text-pizza-white">LIVE-VORSCHAU</h2>
+          </div>
+
+          {/* Receipt Preview */}
+          <div className="bg-white text-black p-4 font-mono text-sm max-w-[300px] mx-auto shadow-lg">
+            {/* Header */}
+            {formData.receipt_template.header.show_restaurant_name && (
+              <div className={`text-center mb-2 ${formData.receipt_template.header.restaurant_name_bold ? 'font-bold' : ''} ${
+                formData.receipt_template.header.restaurant_name_size === 'large' ? 'text-xl' : 
+                formData.receipt_template.header.restaurant_name_size === 'medium' ? 'text-lg' : 'text-base'
+              }`}>
+                {settings?.restaurant_name || "Little Eat Italy"}
+              </div>
+            )}
+            {formData.receipt_template.header.show_address && (
+              <div className="text-center text-xs">{settings?.restaurant_address || "Europastrasse 8, 57072 Siegen"}</div>
+            )}
+            {formData.receipt_template.header.show_phone && (
+              <div className="text-center text-xs mb-2">Tel: {settings?.restaurant_phone || "0271 31924461"}</div>
+            )}
+            {formData.receipt_template.header.show_separator && <div className="border-b border-dashed border-black my-2" />}
+
+            {/* Order Info */}
+            {formData.receipt_template.order_info.show_order_number && (
+              <div className={`text-center my-2 ${formData.receipt_template.order_info.order_number_bold ? 'font-bold' : ''} ${
+                formData.receipt_template.order_info.order_number_size === 'large' ? 'text-2xl' : 
+                formData.receipt_template.order_info.order_number_size === 'medium' ? 'text-xl' : 'text-lg'
+              }`}>
+                #{sampleOrder.order_number}
+              </div>
+            )}
+            {formData.receipt_template.order_info.show_date_time && (
+              <div className="text-xs text-center">{new Date().toLocaleString('de-DE')}</div>
+            )}
+            {formData.receipt_template.order_info.show_customer_name && (
+              <div className={`mt-2 ${formData.receipt_template.order_info.customer_name_bold ? 'font-bold' : ''}`}>
+                Kunde: {sampleOrder.customer_name}
+              </div>
+            )}
+            {formData.receipt_template.order_info.show_customer_phone && (
+              <div className="text-xs">Tel: {sampleOrder.customer_phone}</div>
+            )}
+            {formData.receipt_template.order_info.show_pickup_time && (
+              <div className={`mt-2 bg-black text-white p-2 text-center ${formData.receipt_template.order_info.pickup_time_bold ? 'font-bold' : ''} ${
+                formData.receipt_template.order_info.pickup_time_size === 'large' ? 'text-xl' : 
+                formData.receipt_template.order_info.pickup_time_size === 'medium' ? 'text-lg' : 'text-base'
+              }`}>
+                ABHOLUNG: {sampleOrder.pickup_time}
+              </div>
+            )}
+            {formData.receipt_template.order_info.show_separator && <div className="border-b border-dashed border-black my-2" />}
+
+            {/* Items */}
+            <div className="my-2">
+              {sampleOrder.items.map((item, i) => (
+                <div key={i} className="flex justify-between py-1">
+                  <div className="flex-1">
+                    <span className={formData.receipt_template.items.item_name_bold ? 'font-bold' : ''}>
+                      {formData.receipt_template.items.show_quantity && `${item.quantity}x `}
+                      {item.item_name}
+                    </span>
+                    {formData.receipt_template.items.show_size && item.size_name && (
+                      <span className="text-xs"> ({item.size_name})</span>
+                    )}
+                    {formData.receipt_template.items.show_options && item.options && (
+                      <div className="text-xs text-gray-600 ml-4">+ {item.options.join(", ")}</div>
+                    )}
+                  </div>
+                  {formData.receipt_template.items.show_item_price && (
+                    <span>{item.total_price.toFixed(2)}€</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            {formData.receipt_template.items.show_separator && <div className="border-b border-dashed border-black my-2" />}
+
+            {/* Notes */}
+            {formData.receipt_template.notes.show_notes && sampleOrder.notes && (
+              <div className={`my-2 ${formData.receipt_template.notes.notes_box ? 'border-2 border-black p-2' : ''} ${formData.receipt_template.notes.notes_bold ? 'font-bold' : ''}`}>
+                📝 {sampleOrder.notes}
+              </div>
+            )}
+
+            {/* Totals */}
+            {formData.receipt_template.totals.show_total && (
+              <div className={`flex justify-between mt-2 ${formData.receipt_template.totals.total_bold ? 'font-bold' : ''} ${
+                formData.receipt_template.totals.total_size === 'large' ? 'text-xl' : 
+                formData.receipt_template.totals.total_size === 'medium' ? 'text-lg' : 'text-base'
+              }`}>
+                <span>GESAMT:</span>
+                <span>{sampleOrder.total.toFixed(2)}€</span>
+              </div>
+            )}
+            {formData.receipt_template.totals.show_payment_method && (
+              <div className="text-xs mt-1">Zahlung: {sampleOrder.payment_method}</div>
+            )}
+            {formData.receipt_template.totals.show_separator && <div className="border-b border-dashed border-black my-2" />}
+
+            {/* Footer */}
+            {formData.receipt_template.footer.show_thank_you && (
+              <div className="text-center mt-2 text-sm">{formData.receipt_template.footer.thank_you_text}</div>
+            )}
+            {formData.receipt_template.footer.show_custom_text && formData.receipt_template.footer.custom_text && (
+              <div className="text-center mt-1 text-xs">{formData.receipt_template.footer.custom_text}</div>
+            )}
+          </div>
+
+          <p className="font-mono text-xs text-neutral-500 text-center mt-4">
+            Vorschau zeigt ungefähres Layout
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default ShopAdminPage;
