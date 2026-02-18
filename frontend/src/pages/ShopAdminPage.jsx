@@ -1263,29 +1263,5 @@ const SettingsSection = ({ settings, onUpdate }) => {
     </div>
   );
 };
-            <Label className="font-mono text-sm text-neutral-400">Adresse</Label>
-            <Input
-              value={formData.restaurant_address || ""}
-              onChange={e => setFormData({ ...formData, restaurant_address: e.target.value })}
-              className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
-            />
-          </div>
-          <div>
-            <Label className="font-mono text-sm text-neutral-400">E-Mail</Label>
-            <Input
-              value={formData.restaurant_email || ""}
-              onChange={e => setFormData({ ...formData, restaurant_email: e.target.value })}
-              className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
-            />
-          </div>
-        </div>
-
-        <Button onClick={handleSave} disabled={saving} className="bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-wider rounded-none">
-          <Save className="w-4 h-4 mr-2" /> {saving ? "SPEICHERN..." : "EINSTELLUNGEN SPEICHERN"}
-        </Button>
-      </div>
-    </div>
-  );
-};
 
 export default ShopAdminPage;
