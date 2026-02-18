@@ -288,6 +288,17 @@ class ShopSettings(BaseModel):
     restaurant_address: str = "Europastrasse 8, 57072 Siegen"
     restaurant_phone: str = "0271 31924461"
     restaurant_email: str = "bestellung@little-eat-italy.de"
+    staff_pin: str = "1234"  # 4-digit PIN for staff login
+
+# ============ STAFF AUTH MODELS ============
+
+class StaffPinLogin(BaseModel):
+    pin: str
+
+class StaffTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int = 43200  # 12 hours
 
 # ============ CMS CONTENT MODELS ============
 
