@@ -1020,6 +1020,17 @@ const ItemEditor = ({ categoryId, item, onSave, onClose }) => {
 const SettingsSection = ({ settings, onUpdate }) => {
   const [formData, setFormData] = useState(settings || {});
   const [saving, setSaving] = useState(false);
+  const [newClosedDay, setNewClosedDay] = useState("");
+
+  const dayNames = {
+    monday: "Montag",
+    tuesday: "Dienstag",
+    wednesday: "Mittwoch",
+    thursday: "Donnerstag",
+    friday: "Freitag",
+    saturday: "Samstag",
+    sunday: "Sonntag"
+  };
 
   useEffect(() => {
     if (settings) setFormData(settings);
@@ -1041,83 +1052,217 @@ const SettingsSection = ({ settings, onUpdate }) => {
     }
   };
 
+  const updateOpeningHours = (day, field, value) => {
+    setFormData({
+      ...formData,
+      opening_hours: {
+        ...formData.opening_hours,
+        [day]: {
+          ...formData.opening_hours?.[day],
+          [field]: value
+        }
+      }
+    });
+  };
+
+  const addClosedDay = () => {
+    if (!newClosedDay) return;
+    const closedDays = formData.closed_days || [];
+    if (!closedDays.includes(newClosedDay)) {
+      setFormData({
+        ...formData,
+        closed_days: [...closedDays, newClosedDay].sort()
+      });
+    }
+    setNewClosedDay("");
+  };
+
+  const removeClosedDay = (day) => {
+    setFormData({
+      ...formData,
+      closed_days: (formData.closed_days || []).filter(d => d !== day)
+    });
+  };
+
   return (
-    <div className="bg-pizza-dark border border-pizza-dark p-6">
-      <h2 className="font-anton text-xl text-pizza-white mb-6">SHOP EINSTELLUNGEN</h2>
+    <div className="space-y-6">
+      <div className="bg-pizza-dark border border-pizza-dark p-6">
+        <h2 className="font-anton text-xl text-pizza-white mb-6">SHOP EINSTELLUNGEN</h2>
 
-      <div className="space-y-6">
-        {/* Enable/Disable */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <label className="flex items-center gap-3 p-4 bg-pizza-black/50 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.pickup_enabled !== false}
-              onChange={e => setFormData({ ...formData, pickup_enabled: e.target.checked })}
-              className="w-5 h-5 accent-pizza-red"
-            />
-            <div>
-              <p className="font-mono text-pizza-white">Bestellungen aktiviert</p>
-              <p className="font-mono text-xs text-neutral-500">Online-Bestellungen zur Abholung</p>
-            </div>
-          </label>
-          <label className="flex items-center gap-3 p-4 bg-pizza-black/50 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.reservation_enabled !== false}
-              onChange={e => setFormData({ ...formData, reservation_enabled: e.target.checked })}
-              className="w-5 h-5 accent-pizza-red"
-            />
-            <div>
-              <p className="font-mono text-pizza-white">Reservierungen aktiviert</p>
-              <p className="font-mono text-xs text-neutral-500">Online-Tischreservierungen</p>
-            </div>
-          </label>
-        </div>
-
-        {/* Timing */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <Label className="font-mono text-sm text-neutral-400">Mindest-Vorlaufzeit Bestellung (Minuten)</Label>
-            <Input
-              type="number"
-              value={formData.min_pickup_time_minutes || 30}
-              onChange={e => setFormData({ ...formData, min_pickup_time_minutes: parseInt(e.target.value) || 30 })}
-              className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
-            />
+        <div className="space-y-6">
+          {/* Enable/Disable */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <label className="flex items-center gap-3 p-4 bg-pizza-black/50 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.pickup_enabled !== false}
+                onChange={e => setFormData({ ...formData, pickup_enabled: e.target.checked })}
+                className="w-5 h-5 accent-pizza-red"
+              />
+              <div>
+                <p className="font-mono text-pizza-white">Bestellungen aktiviert</p>
+                <p className="font-mono text-xs text-neutral-500">Online-Bestellungen zur Abholung</p>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 p-4 bg-pizza-black/50 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.reservation_enabled !== false}
+                onChange={e => setFormData({ ...formData, reservation_enabled: e.target.checked })}
+                className="w-5 h-5 accent-pizza-red"
+              />
+              <div>
+                <p className="font-mono text-pizza-white">Reservierungen aktiviert</p>
+                <p className="font-mono text-xs text-neutral-500">Online-Tischreservierungen</p>
+              </div>
+            </label>
           </div>
-          <div>
-            <Label className="font-mono text-sm text-neutral-400">Max. Tage im Voraus (Reservierung)</Label>
-            <Input
-              type="number"
-              value={formData.max_reservation_days_ahead || 30}
-              onChange={e => setFormData({ ...formData, max_reservation_days_ahead: parseInt(e.target.value) || 30 })}
-              className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
-            />
-          </div>
-        </div>
 
-        {/* Restaurant Info */}
-        <div className="space-y-4">
-          <h3 className="font-anton text-sm text-pizza-red">RESTAURANT INFO</h3>
+          {/* Timing */}
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <Label className="font-mono text-sm text-neutral-400">Name</Label>
+              <Label className="font-mono text-sm text-neutral-400">Mindest-Vorlaufzeit Bestellung (Minuten)</Label>
               <Input
-                value={formData.restaurant_name || ""}
-                onChange={e => setFormData({ ...formData, restaurant_name: e.target.value })}
+                type="number"
+                value={formData.min_pickup_time_minutes || 30}
+                onChange={e => setFormData({ ...formData, min_pickup_time_minutes: parseInt(e.target.value) || 30 })}
                 className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
               />
             </div>
             <div>
-              <Label className="font-mono text-sm text-neutral-400">Telefon</Label>
+              <Label className="font-mono text-sm text-neutral-400">Max. Tage im Voraus (Reservierung)</Label>
               <Input
-                value={formData.restaurant_phone || ""}
-                onChange={e => setFormData({ ...formData, restaurant_phone: e.target.value })}
+                type="number"
+                value={formData.max_reservation_days_ahead || 30}
+                onChange={e => setFormData({ ...formData, max_reservation_days_ahead: parseInt(e.target.value) || 30 })}
                 className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
               />
             </div>
           </div>
-          <div>
+
+          {/* Restaurant Info */}
+          <div className="space-y-4">
+            <h3 className="font-anton text-sm text-pizza-red">RESTAURANT INFO</h3>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <Label className="font-mono text-sm text-neutral-400">Name</Label>
+                <Input
+                  value={formData.restaurant_name || ""}
+                  onChange={e => setFormData({ ...formData, restaurant_name: e.target.value })}
+                  className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+                />
+              </div>
+              <div>
+                <Label className="font-mono text-sm text-neutral-400">Telefon</Label>
+                <Input
+                  value={formData.restaurant_phone || ""}
+                  onChange={e => setFormData({ ...formData, restaurant_phone: e.target.value })}
+                  className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="font-mono text-sm text-neutral-400">Adresse</Label>
+              <Input
+                value={formData.restaurant_address || ""}
+                onChange={e => setFormData({ ...formData, restaurant_address: e.target.value })}
+                className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+              />
+            </div>
+            <div>
+              <Label className="font-mono text-sm text-neutral-400">E-Mail</Label>
+              <Input
+                value={formData.restaurant_email || ""}
+                onChange={e => setFormData({ ...formData, restaurant_email: e.target.value })}
+                className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+              />
+            </div>
+          </div>
+
+          <Button onClick={handleSave} disabled={saving} className="bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-wider rounded-none">
+            <Save className="w-4 h-4 mr-2" /> {saving ? "SPEICHERN..." : "EINSTELLUNGEN SPEICHERN"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Opening Hours */}
+      <div className="bg-pizza-dark border border-pizza-dark p-6">
+        <h2 className="font-anton text-xl text-pizza-white mb-6">ÖFFNUNGSZEITEN</h2>
+        <p className="font-mono text-sm text-neutral-400 mb-4">Leer lassen = geschlossen an diesem Tag</p>
+        
+        <div className="space-y-3">
+          {Object.entries(dayNames).map(([day, label]) => (
+            <div key={day} className="grid grid-cols-3 gap-4 items-center">
+              <span className="font-mono text-pizza-white">{label}</span>
+              <div>
+                <Input
+                  type="time"
+                  value={formData.opening_hours?.[day]?.open || ""}
+                  onChange={e => updateOpeningHours(day, "open", e.target.value)}
+                  placeholder="Öffnet"
+                  className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none"
+                />
+              </div>
+              <div>
+                <Input
+                  type="time"
+                  value={formData.opening_hours?.[day]?.close || ""}
+                  onChange={e => updateOpeningHours(day, "close", e.target.value)}
+                  placeholder="Schließt"
+                  className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <Button onClick={handleSave} disabled={saving} className="mt-6 bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-wider rounded-none">
+          <Save className="w-4 h-4 mr-2" /> {saving ? "SPEICHERN..." : "ÖFFNUNGSZEITEN SPEICHERN"}
+        </Button>
+      </div>
+
+      {/* Closed Days / Holidays */}
+      <div className="bg-pizza-dark border border-pizza-dark p-6">
+        <h2 className="font-anton text-xl text-pizza-white mb-6">GESCHLOSSENE TAGE / FEIERTAGE</h2>
+        <p className="font-mono text-sm text-neutral-400 mb-4">Tage an denen das Restaurant geschlossen ist</p>
+
+        <div className="flex gap-2 mb-4">
+          <Input
+            type="date"
+            value={newClosedDay}
+            onChange={e => setNewClosedDay(e.target.value)}
+            min={new Date().toISOString().split('T')[0]}
+            className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none flex-1"
+          />
+          <Button onClick={addClosedDay} className="bg-pizza-red hover:bg-red-700 text-pizza-white font-mono rounded-none">
+            <Plus className="w-4 h-4 mr-1" /> Hinzufügen
+          </Button>
+        </div>
+
+        {(formData.closed_days || []).length === 0 ? (
+          <p className="font-mono text-sm text-neutral-500">Keine geschlossenen Tage eingetragen</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {(formData.closed_days || []).map(day => (
+              <div key={day} className="flex items-center gap-2 bg-pizza-black/50 px-3 py-2">
+                <span className="font-mono text-sm text-pizza-white">
+                  {new Date(day).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+                <button onClick={() => removeClosedDay(day)} className="text-red-500 hover:text-red-400">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <Button onClick={handleSave} disabled={saving} className="mt-6 bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-wider rounded-none">
+          <Save className="w-4 h-4 mr-2" /> {saving ? "SPEICHERN..." : "GESCHLOSSENE TAGE SPEICHERN"}
+        </Button>
+      </div>
+    </div>
+  );
+};
             <Label className="font-mono text-sm text-neutral-400">Adresse</Label>
             <Input
               value={formData.restaurant_address || ""}
