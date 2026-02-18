@@ -547,7 +547,14 @@ const StaffPage = () => {
                 </div>
               ) : (
                 filteredOrders.map(order => (
-                  <OrderCard key={order.id} order={order} onUpdate={fetchData} />
+                  <OrderCard 
+                    key={order.id} 
+                    order={order} 
+                    onUpdate={fetchData} 
+                    shopSettings={shopSettings}
+                    printOrder={printOrder}
+                    isPrinting={isPrinting}
+                  />
                 ))
               )}
             </div>
