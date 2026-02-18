@@ -51,10 +51,10 @@
 - STARTSEITE, KONTAKT, IMPRESSUM, SOCIAL MEDIA, FOOTER, EINSTELLUNGEN
 
 **Shop-Verwaltung** (`/admin/shop`):
-- BESTELLUNGEN: Status verwalten (Neu → Bestätigt → Zubereitung → Abholbereit → Abgeschlossen)
-- RESERVIERUNGEN: Bestätigen/Stornieren mit E-Mail-Benachrichtigung
-- MENÜ: Kategorien und Artikel pflegen
-- EINSTELLUNGEN: Vorlaufzeit, Restaurant-Infos
+- BESTELLUNGEN: Status verwalten (Neu → Bestätigt → Storniert), ASAP-Bestellungen mit Zubereitungszeit-Eingabe bestätigen
+- RESERVIERUNGEN: Nach Datum gruppiert, Bestätigen/Stornieren
+- MENÜ: Kategorien und Artikel verwalten (hinzufügen, bearbeiten, löschen)
+- EINSTELLUNGEN: Öffnungszeiten pro Wochentag, Geschlossene Tage (Feiertage), Vorlaufzeiten, Restaurant-Kontaktdaten
 
 ### API Endpoints
 ```bash
