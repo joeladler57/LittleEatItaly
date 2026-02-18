@@ -441,6 +441,11 @@ const StaffPage = () => {
             )}
           </div>
         )}
+
+        {/* Today's Reservations Tab */}
+        {activeTab === "today" && (
+          <TodayReservations reservations={reservations} onUpdate={fetchData} />
+        )}
       </div>
     </div>
   );
