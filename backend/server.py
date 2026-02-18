@@ -1368,10 +1368,9 @@ async def get_vapid_public_key():
 @api_router.post("/push/subscribe")
 async def subscribe_to_push(
     data: PushSubscriptionCreate,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    username: str = Depends(verify_token)
 ):
     """Subscribe a device for push notifications (admin only)"""
-    await verify_token(credentials.credentials)
     
     subscription_data = {
         "id": str(uuid.uuid4()),
@@ -1397,10 +1396,9 @@ async def subscribe_to_push(
 @api_router.delete("/push/unsubscribe")
 async def unsubscribe_from_push(
     endpoint: str,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    username: str = Depends(verify_token)
 ):
     """Unsubscribe a device from push notifications"""
-    await verify_token(credentials.credentials)
     
     result = await db.push_subscriptions.delete_one({"endpoint": endpoint})
     if result.deleted_count == 0:
@@ -1410,10 +1408,9 @@ async def unsubscribe_from_push(
 
 @api_router.get("/push/subscriptions")
 async def get_push_subscriptions(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    username: str = Depends(verify_token)
 ):
     """Get all push subscriptions (admin only)"""
-    await verify_token(credentials.credentials)
     
     subscriptions = await db.push_subscriptions.find({"active": True}, {"_id": 0}).to_list(100)
     return subscriptions
