@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
   ShoppingBag, CalendarDays, Check, X, Clock, Phone, User, Mail,
   ChevronDown, ChevronUp, Volume2, VolumeX, Bell, BellOff, LogOut,
-  RefreshCw, Utensils, CheckCircle2, CircleDashed, Send, BellRing
+  RefreshCw, Utensils, CheckCircle2, CircleDashed, Send, BellRing, Plus, Users
 } from "lucide-react";
 import { useNotificationSound } from "../hooks/useNotificationSound";
 import { usePushNotifications } from "../hooks/usePushNotifications";
