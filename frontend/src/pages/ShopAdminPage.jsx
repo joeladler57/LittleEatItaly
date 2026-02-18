@@ -376,6 +376,7 @@ const ShopAdminPage = () => {
               variant="outline"
               className={`border-pizza-dark rounded-none ${soundEnabled ? 'text-green-400 border-green-500/50' : 'text-neutral-500'}`}
               title={soundEnabled ? "Ton an" : "Ton aus"}
+              data-testid="sound-toggle-button"
             >
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </Button>
@@ -404,6 +405,7 @@ const ShopAdminPage = () => {
                 variant="outline"
                 className={`border-pizza-dark rounded-none ${isPushSubscribed ? 'text-blue-400 border-blue-500/50' : 'text-neutral-500'}`}
                 title={isPushSubscribed ? "Push aktiviert" : pushPermission === 'denied' ? "Push blockiert" : "Push aktivieren"}
+                data-testid="push-toggle-button"
               >
                 {isPushLoading ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -431,6 +433,7 @@ const ShopAdminPage = () => {
                 variant="outline"
                 className="border-pizza-dark text-blue-400 hover:bg-blue-500/10 rounded-none"
                 title="Test-Benachrichtigung senden"
+                data-testid="push-test-button"
               >
                 <Send className="w-4 h-4" />
               </Button>
