@@ -184,20 +184,55 @@ const OrderPage = () => {
   const generatePickupTimes = () => {
     if (!settings) return [];
     
-    const times = [{ value: "ASAP", label: "So schnell wie möglich" }];
+    const times = [{ value: "ASAP", label: "🚀 So schnell wie möglich" }];
     const now = new Date();
     const minMinutes = settings.min_pickup_time_minutes || 30;
     
-    // Round to next 15 minutes and add minimum time
+    // Get today's opening hours
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayName = dayNames[now.getDay()];
+    const hours = settings.opening_hours?.[dayName];
+    
+    if (!hours?.open || !hours?.close) return times;
+    
+    const [openHour] = hours.open.split(':').map(Number);
+    let [closeHour] = hours.close.split(':').map(Number);
+    
+    // Handle closing after midnight
+    if (closeHour === 0) closeHour = 24;
+    else if (closeHour < openHour) closeHour += 24;
+    
+    // Calculate start time (now + minimum lead time, rounded to 15 min)
     let startTime = new Date(now);
-    startTime.setMinutes(Math.ceil(startTime.getMinutes() / 15) * 15 + minMinutes);
+    startTime.setMinutes(Math.ceil((startTime.getMinutes() + minMinutes) / 15) * 15);
     startTime.setSeconds(0);
     
-    // Generate times for the next 4 hours
-    for (let i = 0; i < 16; i++) {
-      const time = new Date(startTime.getTime() + i * 15 * 60000);
-      const hours = time.getHours().toString().padStart(2, '0');
-      const mins = time.getMinutes().toString().padStart(2, '0');
+    // If before opening, start from opening time
+    const openTime = new Date(now);
+    openTime.setHours(openHour, 0, 0, 0);
+    if (startTime < openTime) {
+      startTime = openTime;
+    }
+    
+    // Generate times until closing (minus 30 min buffer)
+    const closeTime = new Date(now);
+    closeTime.setHours(closeHour >= 24 ? closeHour - 24 : closeHour, 0, 0, 0);
+    if (closeHour >= 24) closeTime.setDate(closeTime.getDate() + 1);
+    closeTime.setMinutes(closeTime.getMinutes() - 30);
+    
+    let currentTime = new Date(startTime);
+    while (currentTime <= closeTime) {
+      const displayHours = currentTime.getHours().toString().padStart(2, '0');
+      const displayMins = currentTime.getMinutes().toString().padStart(2, '0');
+      times.push({
+        value: `${displayHours}:${displayMins}`,
+        label: `${displayHours}:${displayMins} Uhr`
+      });
+      currentTime.setMinutes(currentTime.getMinutes() + 15);
+    }
+    
+    return times;
+  };
       times.push({
         value: `${hours}:${mins}`,
         label: `${hours}:${mins} Uhr`
