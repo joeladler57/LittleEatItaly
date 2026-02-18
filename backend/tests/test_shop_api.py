@@ -32,7 +32,8 @@ def auth_token(api_client):
         "password": ADMIN_PASSWORD
     })
     if response.status_code == 200:
-        return response.json().get("token")
+        # API returns access_token, not token
+        return response.json().get("access_token")
     pytest.skip("Authentication failed - skipping authenticated tests")
 
 @pytest.fixture(scope="module")
@@ -90,8 +91,8 @@ class TestAuthentication:
         assert response.status_code == 200, f"Login failed with status {response.status_code}"
         
         data = response.json()
-        assert "token" in data, "Response should contain token"
-        assert len(data["token"]) > 0, "Token should not be empty"
+        assert "access_token" in data, "Response should contain access_token"
+        assert len(data["access_token"]) > 0, "Token should not be empty"
         print(f"✅ Login successful, token received")
 
     def test_login_with_invalid_credentials(self, api_client):
@@ -156,7 +157,7 @@ class TestOrderCreation:
                     "size": None,
                     "size_name": None,
                     "options": [
-                        {"group_name": "Extra", "option_name": "Parmesan", "price": 1.50}
+                        {"group_name": "Extra", "option_name": "Parmesan", "price": "1.50"}
                     ],
                     "unit_price": 11.90,
                     "total_price": 26.80,
