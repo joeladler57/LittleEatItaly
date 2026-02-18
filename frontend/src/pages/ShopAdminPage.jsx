@@ -420,7 +420,7 @@ const ShopAdminPage = () => {
 };
 
 // Stat Card Component
-const StatCard = ({ icon: Icon, label, value, color }) => {
+const StatCard = ({ icon: Icon, label, value, color, pulse }) => {
   const colors = {
     red: "text-red-500 bg-red-500/10",
     yellow: "text-yellow-500 bg-yellow-500/10",
@@ -428,10 +428,17 @@ const StatCard = ({ icon: Icon, label, value, color }) => {
     green: "text-green-500 bg-green-500/10"
   };
 
+  const borderColors = {
+    red: "border-red-500/50",
+    yellow: "border-yellow-500/50",
+    blue: "border-blue-500/50",
+    green: "border-green-500/50"
+  };
+
   return (
-    <div className="bg-pizza-dark border border-pizza-dark p-4">
+    <div className={`bg-pizza-dark border p-4 transition-all ${pulse ? `${borderColors[color]} animate-pulse` : 'border-pizza-dark'}`}>
       <div className={`w-10 h-10 ${colors[color]} flex items-center justify-center mb-2`}>
-        <Icon className="w-5 h-5" />
+        <Icon className={`w-5 h-5 ${pulse ? 'animate-bounce' : ''}`} />
       </div>
       <p className="font-anton text-2xl text-pizza-white">{value}</p>
       <p className="font-mono text-xs text-neutral-400">{label}</p>
