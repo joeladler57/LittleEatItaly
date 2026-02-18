@@ -196,6 +196,21 @@ const OrderPage = () => {
   const addToCart = () => {
     if (!selectedItem) return;
     
+    // Validate required options
+    const missingRequired = selectedItem.groups?.filter(group => {
+      if (!group.required) return false;
+      const selectedOpts = itemConfig.options[group.id];
+      if (group.multiple) {
+        return !selectedOpts || selectedOpts.length === 0;
+      }
+      return !selectedOpts;
+    });
+    
+    if (missingRequired?.length > 0) {
+      toast.error(`Bitte wähle: ${missingRequired.map(g => g.name).join(", ")}`);
+      return;
+    }
+    
     const size = selectedItem.sizes?.find(s => s.id === itemConfig.size);
     const selectedOptions = [];
     
@@ -203,7 +218,7 @@ const OrderPage = () => {
       const group = selectedItem.groups?.find(g => g.id === groupId);
       if (group) {
         const ids = Array.isArray(optIds) ? optIds : [optIds];
-        ids.forEach(optId => {
+        ids.filter(Boolean).forEach(optId => {
           const opt = group.options?.find(o => o.id === optId);
           if (opt) {
             selectedOptions.push({
