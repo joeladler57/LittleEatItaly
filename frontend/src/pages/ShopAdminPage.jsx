@@ -293,6 +293,7 @@ const ShopAdminPage = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               className="mb-4 bg-gradient-to-r from-blue-600 to-blue-800 p-4 flex items-center justify-between"
+              data-testid="push-notification-banner"
             >
               <div className="flex items-center gap-3">
                 <Bell className="w-6 h-6 text-white" />
@@ -314,12 +315,14 @@ const ShopAdminPage = () => {
                   }}
                   disabled={isPushLoading}
                   className="bg-white text-blue-600 hover:bg-white/90 font-anton rounded-none"
+                  data-testid="push-banner-activate-button"
                 >
                   <Bell className="w-4 h-4 mr-2" /> {isPushLoading ? '...' : 'AKTIVIEREN'}
                 </Button>
                 <button
                   onClick={() => setShowPushBanner(false)}
                   className="text-white/80 hover:text-white p-2"
+                  data-testid="push-banner-dismiss-button"
                 >
                   <X className="w-5 h-5" />
                 </button>
