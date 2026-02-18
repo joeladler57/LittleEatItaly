@@ -225,20 +225,42 @@ const StatCard = ({ icon: Icon, label, value, color }) => {
 const OrdersSection = ({ orders, onUpdate }) => {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [updating, setUpdating] = useState(null);
+  const [showPrepTimeModal, setShowPrepTimeModal] = useState(null);
+  const [prepTime, setPrepTime] = useState(30);
 
-  const updateStatus = async (orderId, status) => {
+  const updateStatus = async (orderId, status, prepTimeMinutes = null) => {
     setUpdating(orderId);
     try {
       const token = localStorage.getItem("admin_token");
-      await axios.put(`${API}/shop/orders/${orderId}/status?status=${status}`, {}, {
+      let url = `${API}/shop/orders/${orderId}/status?status=${status}`;
+      if (prepTimeMinutes) {
+        url += `&prep_time_minutes=${prepTimeMinutes}`;
+      }
+      const response = await axios.put(url, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success(`Status auf "${status}" geändert`);
+      
+      if (response.data.pickup_time) {
+        toast.success(`Bestätigt! Abholzeit: ${response.data.pickup_time}`);
+      } else {
+        toast.success(`Status auf "${status}" geändert`);
+      }
       onUpdate();
+      setShowPrepTimeModal(null);
     } catch (e) {
       toast.error("Fehler beim Aktualisieren");
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const handleConfirmOrder = (order) => {
+    // Check if it's an ASAP order
+    if (order.pickup_time === "So schnell wie möglich") {
+      setShowPrepTimeModal(order);
+      setPrepTime(30);
+    } else {
+      updateStatus(order.id, "confirmed");
     }
   };
 
