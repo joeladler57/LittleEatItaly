@@ -1960,6 +1960,30 @@ const SettingsSection = ({ settings, onUpdate }) => {
             </div>
           </div>
 
+          {/* Staff PIN */}
+          <div className="border-t border-pizza-dark pt-6 mt-6">
+            <h3 className="font-anton text-lg text-pizza-white mb-4">PERSONAL-PIN</h3>
+            <p className="font-mono text-xs text-neutral-500 mb-3">
+              4-stelliger PIN für Mitarbeiter-Login auf /personal
+            </p>
+            <div className="flex items-center gap-4">
+              <Input
+                type="text"
+                value={formData.staff_pin || "1234"}
+                onChange={e => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setFormData({ ...formData, staff_pin: val });
+                }}
+                maxLength={4}
+                placeholder="1234"
+                className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none w-32 text-center font-mono text-xl tracking-widest"
+              />
+              <span className="font-mono text-neutral-500 text-sm">
+                URL: <span className="text-blue-400">/personal</span>
+              </span>
+            </div>
+          </div>
+
           <Button onClick={handleSave} disabled={saving} className="bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-wider rounded-none">
             <Save className="w-4 h-4 mr-2" /> {saving ? "SPEICHERN..." : "EINSTELLUNGEN SPEICHERN"}
           </Button>
