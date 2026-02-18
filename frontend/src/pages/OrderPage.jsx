@@ -36,6 +36,7 @@ const OrderPage = () => {
     email: "",
     phone: "",
     pickupTime: "ASAP",
+    paymentMethod: "cash",
     notes: ""
   });
 
