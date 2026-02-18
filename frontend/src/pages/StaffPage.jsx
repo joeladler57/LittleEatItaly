@@ -614,7 +614,7 @@ const StaffPage = () => {
 };
 
 // Order Card Component
-const OrderCard = ({ order, onUpdate }) => {
+const OrderCard = ({ order, onUpdate, shopSettings, printOrder, isPrinting }) => {
   const [expanded, setExpanded] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [showPrepTime, setShowPrepTime] = useState(false);
@@ -629,6 +629,15 @@ const OrderCard = ({ order, onUpdate }) => {
       
       const res = await axios.put(url, {}, { headers: { Authorization: `Bearer ${token}` } });
       
+      // Auto-print on confirm if enabled
+      if (status === "confirmed" && shopSettings?.printer_enabled && shopSettings?.auto_print_on_accept) {
+        const orderToPrint = {
+          ...order,
+          confirmed_pickup_time: res.data.pickup_time || order.pickup_time
+        };
+        await printOrder(orderToPrint, shopSettings);
+      }
+      
       if (res.data.pickup_time) {
         toast.success(`Bestätigt! Abholzeit: ${res.data.pickup_time} Uhr`);
       } else {
@@ -640,6 +649,15 @@ const OrderCard = ({ order, onUpdate }) => {
       toast.error("Fehler beim Aktualisieren");
     } finally {
       setUpdating(false);
+    }
+  };
+
+  // Manual print function
+  const handleManualPrint = async () => {
+    if (shopSettings?.printer_enabled) {
+      await printOrder(order, shopSettings);
+    } else {
+      toast.error("Drucker nicht konfiguriert");
     }
   };
 
