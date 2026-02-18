@@ -2211,12 +2211,15 @@ const PrinterSection = ({ settings, onUpdate }) => {
   };
 
   const ToggleSwitch = ({ checked, onChange, label }) => (
-    <label className="flex items-center gap-3 cursor-pointer group">
+    <div 
+      className="flex items-center gap-3 cursor-pointer group"
+      onClick={() => onChange()}
+    >
       <div className={`w-10 h-6 rounded-full p-1 transition-colors ${checked ? 'bg-green-500' : 'bg-neutral-700'}`}>
         <div className={`w-4 h-4 bg-white rounded-full transition-transform ${checked ? 'translate-x-4' : ''}`} />
       </div>
       <span className="font-mono text-sm text-neutral-300 group-hover:text-white">{label}</span>
-    </label>
+    </div>
   );
 
   const SizeSelect = ({ value, onChange }) => (
