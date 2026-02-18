@@ -3,6 +3,7 @@ import { useCallback, useRef, useEffect } from 'react';
 export const useNotificationSound = () => {
   const audioRef = useRef(null);
   const isPlayingRef = useRef(false);
+  const loopIntervalRef = useRef(null);
 
   useEffect(() => {
     // Pre-load the audio
@@ -13,6 +14,9 @@ export const useNotificationSound = () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
+      }
+      if (loopIntervalRef.current) {
+        clearInterval(loopIntervalRef.current);
       }
     };
   }, []);
@@ -36,6 +40,43 @@ export const useNotificationSound = () => {
     }
   }, []);
 
+  // Play sound in a loop until stopped
+  const startLoopingSound = useCallback(() => {
+    // Stop any existing loop
+    if (loopIntervalRef.current) {
+      clearInterval(loopIntervalRef.current);
+    }
+    
+    // Play immediately
+    playSound();
+    
+    // Then play every 3 seconds
+    loopIntervalRef.current = setInterval(() => {
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.volume = 1.0;
+        audioRef.current.play().catch(() => {});
+      }
+    }, 3000);
+  }, [playSound]);
+
+  // Stop the looping sound
+  const stopLoopingSound = useCallback(() => {
+    if (loopIntervalRef.current) {
+      clearInterval(loopIntervalRef.current);
+      loopIntervalRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  }, []);
+
+  // Check if sound is looping
+  const isLooping = useCallback(() => {
+    return loopIntervalRef.current !== null;
+  }, []);
+
   // Enable audio on user interaction
   const enableAudio = useCallback(() => {
     if (audioRef.current) {
@@ -46,5 +87,5 @@ export const useNotificationSound = () => {
     }
   }, []);
 
-  return { playSound, enableAudio };
+  return { playSound, startLoopingSound, stopLoopingSound, isLooping, enableAudio };
 };
