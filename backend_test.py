@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 
 class LittleEatItalyAPITester:
-    def __init__(self, base_url="https://drippy-menu.preview.emergentagent.com"):
+    def __init__(self, base_url="https://bestellen-demo.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
