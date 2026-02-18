@@ -17,6 +17,9 @@ import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import ImpressumPage from "./pages/ImpressumPage";
 import AdminPage from "./pages/AdminPage";
+import OrderPage from "./pages/OrderPage";
+import ReservationPage from "./pages/ReservationPage";
+import ShopAdminPage from "./pages/ShopAdminPage";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
