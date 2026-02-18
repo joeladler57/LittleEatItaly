@@ -230,17 +230,106 @@ const ShopAdminPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-pizza-black pt-20 pb-8">
+    <div className="min-h-screen bg-pizza-black pt-20 pb-8" onClick={handleUserInteraction}>
       <div className="max-w-7xl mx-auto px-4">
+        {/* PWA Install Banner */}
+        <AnimatePresence>
+          {showInstallBanner && isInstallable && !isInstalled && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-4 bg-gradient-to-r from-pizza-red to-red-700 p-4 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <Smartphone className="w-6 h-6 text-white" />
+                <div>
+                  <p className="font-anton text-white">APP INSTALLIEREN</p>
+                  <p className="font-mono text-xs text-white/80">Erhalte Benachrichtigungen direkt auf dein Handy!</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={installApp}
+                  className="bg-white text-pizza-red hover:bg-white/90 font-anton rounded-none"
+                >
+                  <Download className="w-4 h-4 mr-2" /> INSTALLIEREN
+                </Button>
+                <button
+                  onClick={() => setShowInstallBanner(false)}
+                  className="text-white/80 hover:text-white p-2"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="font-anton text-3xl text-pizza-white">
-              SHOP <span className="text-pizza-red">VERWALTUNG</span>
-            </h1>
-            <p className="font-mono text-sm text-neutral-400 mt-1">Bestellungen, Reservierungen & Menü</p>
+            <div className="flex items-center gap-3">
+              <h1 className="font-anton text-3xl text-pizza-white">
+                SHOP <span className="text-pizza-red">VERWALTUNG</span>
+              </h1>
+              {/* Live Indicator */}
+              <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1 border border-green-500/30">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                <span className="font-mono text-xs text-green-400">LIVE</span>
+              </div>
+              {newNotifications > 0 && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="relative"
+                >
+                  <BellRing className="w-6 h-6 text-pizza-red animate-bounce" />
+                  <span className="absolute -top-1 -right-1 bg-pizza-red text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                    {newNotifications}
+                  </span>
+                </motion.div>
+              )}
+            </div>
+            <p className="font-mono text-sm text-neutral-400 mt-1">Automatische Aktualisierung alle 4 Sekunden</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Sound Toggle */}
+            <Button
+              onClick={() => {
+                setSoundEnabled(!soundEnabled);
+                enableAudio();
+                toast.success(soundEnabled ? "Ton deaktiviert" : "Ton aktiviert");
+              }}
+              variant="outline"
+              className={`border-pizza-dark rounded-none ${soundEnabled ? 'text-green-400 border-green-500/50' : 'text-neutral-500'}`}
+              title={soundEnabled ? "Ton an" : "Ton aus"}
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </Button>
+            
+            {/* Install Button (if not installed) */}
+            {isInstallable && !isInstalled && (
+              <Button
+                onClick={installApp}
+                variant="outline"
+                className="border-pizza-red text-pizza-red hover:bg-pizza-red/10 rounded-none"
+              >
+                <Download className="w-4 h-4 mr-2" /> Installieren
+              </Button>
+            )}
+            
+            {/* Installed Indicator */}
+            {isInstalled && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/30">
+                <Smartphone className="w-4 h-4 text-green-400" />
+                <span className="font-mono text-xs text-green-400">App installiert</span>
+              </div>
+            )}
+            
             <Button onClick={fetchAllData} variant="outline" className="border-pizza-dark text-pizza-white hover:bg-pizza-dark rounded-none">
               <RefreshCw className="w-4 h-4 mr-2" /> Aktualisieren
             </Button>
@@ -257,6 +346,7 @@ const ShopAdminPage = () => {
             label="Neue Bestellungen"
             value={orders.filter(o => o.status === "pending").length}
             color="red"
+            pulse={orders.filter(o => o.status === "pending").length > 0}
           />
           <StatCard
             icon={Clock}
@@ -269,6 +359,7 @@ const ShopAdminPage = () => {
             label="Offene Reservierungen"
             value={reservations.filter(r => r.status === "pending").length}
             color="blue"
+            pulse={reservations.filter(r => r.status === "pending").length > 0}
           />
           <StatCard
             icon={UtensilsCrossed}
