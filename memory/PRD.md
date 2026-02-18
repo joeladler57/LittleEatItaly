@@ -11,6 +11,11 @@
 
 ## What's Been Implemented
 
+### Februar 2026 - Mobile UI Fix für "HEUTE"-Tab (Behoben ✅)
+- ✅ **Scrolling Tab-Leiste**: Horizontale Scrollbar für Tabs auf mobilen Geräten
+- ✅ **Uhrzeiten jetzt sichtbar**: Reservierungszeiten werden korrekt auf allen Bildschirmgrößen angezeigt
+- ✅ **Responsive Layout**: Grid-basiertes Design für Zeit, Name und Personenanzahl
+
 ### Februar 2026 - Personal-App / Mitarbeiter-Login (Getestet ✅)
 - ✅ **Separates Login für Mitarbeiter**:
   - 4-stelliger PIN-Code (konfigurierbar im Admin-Bereich)
