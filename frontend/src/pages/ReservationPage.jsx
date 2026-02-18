@@ -206,11 +206,6 @@ const ReservationPage = () => {
     return times;
   };
 
-  const handleDateChange = (e) => {
-    const newDate = e.target.value;
-    setFormData({ ...formData, date: newDate, time: "" });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
