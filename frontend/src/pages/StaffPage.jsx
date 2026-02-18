@@ -244,19 +244,33 @@ const StaffPage = () => {
 
   return (
     <div className="min-h-screen bg-pizza-black" onClick={enableAudio}>
-      {/* Alarm Banner - Shows when there are pending items */}
+      {/* Alarm Banner - Shows when there are pending items - Clickable */}
       {isAlarmActive && (
         <div className="fixed top-0 left-0 right-0 z-[100] bg-red-600 animate-pulse">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div 
+              className="flex items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => {
+                // Navigate to the tab with pending items
+                const pendingOrders = orders.filter(o => o.status === "pending").length;
+                const pendingRes = reservations.filter(r => r.status === "pending").length;
+                if (pendingOrders > 0) {
+                  setActiveTab("orders");
+                  setOrderFilter("pending");
+                } else if (pendingRes > 0) {
+                  setActiveTab("reservations");
+                }
+              }}
+            >
               <BellRing className="w-6 h-6 text-white animate-bounce" />
               <div>
                 <p className="font-anton text-white text-lg">NEUE BESTELLUNG / RESERVIERUNG!</p>
-                <p className="font-mono text-xs text-red-100">Bitte annehmen oder ablehnen</p>
+                <p className="font-mono text-xs text-red-100">Antippen um anzuzeigen</p>
               </div>
             </div>
             <Button
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 stopLoopingSound();
                 setIsAlarmActive(false);
               }}
