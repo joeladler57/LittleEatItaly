@@ -11,11 +11,16 @@
 - ✅ **Online Bestellsystem** (`/bestellen`): Warenkorb, Kategorien, Artikelauswahl, ASAP-Option, Zeitauswahl basierend auf Öffnungszeiten
 - ✅ **Reservierungssystem** (`/reservieren`): Dynamische Datums-/Zeitauswahl basierend auf Öffnungszeiten und Feiertagen
 - ✅ **Zahlungsart-Auswahl**: Barzahlung oder Kartenzahlung bei Abholung wählbar
-- ✅ **Safari-kompatible Dropdowns**: Verbesserte select-Elemente mit custom arrow icons
+- ✅ **Safari-kompatible Dropdowns**: Custom Dropdown-Komponenten für volle Browser-Kompatibilität
+- ✅ **Add-on System**: 
+  - Globale Add-on Gruppen (z.B. Dressing, Extras) mit Optionen und Aufpreisen
+  - Kategorien können Add-on Gruppen zugeordnet bekommen
+  - Pflicht- und Mehrfachauswahl möglich
+  - Im Frontend werden Add-ons bei Bestellung angezeigt
 - ✅ **Shop Admin** (`/admin/shop`): 
   - BESTELLUNGEN: Neue/Bestätigte/Stornierte Bestellungen verwalten, ASAP-Bestätigung mit Zubereitungszeit, Zahlungsart-Anzeige
   - RESERVIERUNGEN: Nach Datum gruppiert, Bestätigen/Ablehnen
-  - MENÜ: Kategorien und Artikel verwalten
+  - MENÜ: Kategorien und Artikel verwalten, Add-on Gruppen erstellen und zuordnen
   - EINSTELLUNGEN: Öffnungszeiten pro Tag, Geschlossene Tage, Vorlaufzeiten, Restaurant-Infos
 - ✅ **Nur Abholung**: Bar oder Kartenzahlung bei Abholung
 - ⏸️ **E-Mail-Bestätigung**: Code bereit, Resend API-Key benötigt
