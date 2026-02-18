@@ -7,12 +7,22 @@
 
 ## What's Been Implemented
 
-### Dezember 2025 - Bestell- & Reservierungssystem
-- ✅ **Online Bestellsystem** (`/bestellen`): Warenkorb, Kategorien, Artikelauswahl, Checkout
-- ✅ **Reservierungssystem** (`/reservieren`): Datums-/Zeitauswahl, Personenanzahl
-- ✅ **Shop Admin** (`/admin/shop`): Bestellungen, Reservierungen, Menü-Verwaltung
+### Februar 2026 - Bestell- & Reservierungssystem V2 (Getestet ✅)
+- ✅ **Online Bestellsystem** (`/bestellen`): Warenkorb, Kategorien, Artikelauswahl, ASAP-Option, Zeitauswahl basierend auf Öffnungszeiten
+- ✅ **Reservierungssystem** (`/reservieren`): Dynamische Datums-/Zeitauswahl basierend auf Öffnungszeiten und Feiertagen
+- ✅ **Shop Admin** (`/admin/shop`): 
+  - BESTELLUNGEN: Neue/Bestätigte/Stornierte Bestellungen verwalten, ASAP-Bestätigung mit Zubereitungszeit
+  - RESERVIERUNGEN: Nach Datum gruppiert, Bestätigen/Ablehnen
+  - MENÜ: Kategorien und Artikel verwalten
+  - EINSTELLUNGEN: Öffnungszeiten pro Tag, Geschlossene Tage, Vorlaufzeiten, Restaurant-Infos
 - ✅ **Nur Abholung & Barzahlung**: Wie gewünscht
-- ✅ **E-Mail-Bestätigung**: Bereit (benötigt Resend API-Key)
+- ⏸️ **E-Mail-Bestätigung**: Code bereit, Resend API-Key benötigt
+
+### Test-Ergebnisse (18.02.2026)
+- Backend: **100% (18/18 Tests bestanden)**
+- Frontend: **100% bestanden**
+- Vollständiger Bestellablauf getestet
+- ASAP-Bestell-Workflow mit Admin-Zubereitungszeit funktioniert
 
 ### Frühere Updates
 - ✅ **GlobalFood Menü-Integration**: Dynamische Speisekarte
