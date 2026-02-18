@@ -110,19 +110,28 @@ const StaffPage = () => {
 
       const pendingOrders = newOrders.filter(o => o.status === "pending").length;
       const pendingReservations = newReservations.filter(r => r.status === "pending").length;
+      const hasPending = pendingOrders > 0 || pendingReservations > 0;
 
       if (!isFirstLoad.current) {
+        // Check for NEW orders/reservations
         if (pendingOrders > lastOrderCount && soundEnabled) {
-          playSound();
           toast.success(`🍕 ${pendingOrders - lastOrderCount} neue Bestellung(en)!`);
           if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
         }
         if (pendingReservations > lastReservationCount && soundEnabled) {
-          playSound();
           toast.success(`📅 ${pendingReservations - lastReservationCount} neue Reservierung(en)!`);
         }
       } else {
         isFirstLoad.current = false;
+      }
+
+      // Start/stop looping alarm based on pending items
+      if (hasPending && soundEnabled && !isAlarmActive) {
+        startLoopingSound();
+        setIsAlarmActive(true);
+      } else if (!hasPending && isAlarmActive) {
+        stopLoopingSound();
+        setIsAlarmActive(false);
       }
 
       setOrders(newOrders);
@@ -133,7 +142,15 @@ const StaffPage = () => {
       console.error("Fetch failed:", e);
       if (e.response?.status === 401) handleLogout();
     }
-  }, [lastOrderCount, lastReservationCount, soundEnabled, playSound]);
+  }, [lastOrderCount, lastReservationCount, soundEnabled, isAlarmActive, startLoopingSound, stopLoopingSound]);
+
+  // Stop alarm when sound is disabled
+  useEffect(() => {
+    if (!soundEnabled && isAlarmActive) {
+      stopLoopingSound();
+      setIsAlarmActive(false);
+    }
+  }, [soundEnabled, isAlarmActive, stopLoopingSound]);
 
   useEffect(() => {
     if (isAuthenticated) {
