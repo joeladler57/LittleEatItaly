@@ -751,22 +751,13 @@ const CheckoutForm = ({ customerInfo, setCustomerInfo, pickupTimes, onBack, onSu
       
       <div>
         <Label className="font-mono text-sm text-neutral-400">Abholzeit</Label>
-        <div className="relative mt-1">
-          <select
+        <div className="mt-1">
+          <CustomDropdown
             value={customerInfo.pickupTime}
-            onChange={e => setCustomerInfo({ ...customerInfo, pickupTime: e.target.value })}
-            className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 font-mono appearance-none cursor-pointer"
-            style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
-          >
-            {pickupTimes.map(time => (
-              <option key={time.value} value={time.value}>{time.label}</option>
-            ))}
-          </select>
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
+            onChange={(val) => setCustomerInfo({ ...customerInfo, pickupTime: val })}
+            options={pickupTimes}
+            placeholder="Abholzeit wählen..."
+          />
         </div>
       </div>
       
