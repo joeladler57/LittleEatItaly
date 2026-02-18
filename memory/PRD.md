@@ -7,6 +7,20 @@
 
 ## What's Been Implemented
 
+### Februar 2026 - Web Push Notifications (Getestet ✅)
+- ✅ **Push-Benachrichtigungen bei geschlossenem Browser**:
+  - Automatische Benachrichtigung bei neuen Bestellungen/Reservierungen
+  - Funktioniert auch wenn Browser/App geschlossen ist
+  - VAPID-Authentifizierung für sichere Push-Kommunikation
+  - Push-Button zum Aktivieren/Deaktivieren im Admin-Bereich
+  - Test-Notification-Button zum Testen
+- ✅ **Push-Endpoints**:
+  - `/api/push/vapid-key` - Öffentlicher VAPID-Schlüssel
+  - `/api/push/subscribe` - Gerät für Push registrieren
+  - `/api/push/unsubscribe` - Push deaktivieren
+  - `/api/push/subscriptions` - Alle registrierten Geräte anzeigen
+  - `/api/push/test` - Test-Benachrichtigung senden
+
 ### Februar 2026 - PWA Restaurant Admin App (Getestet ✅)
 - ✅ **Progressive Web App (PWA)**: 
   - Installierbar auf Mobilgeräten (Android/iOS)
