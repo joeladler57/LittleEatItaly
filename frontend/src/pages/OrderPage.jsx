@@ -132,8 +132,24 @@ const OrderPage = () => {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(price);
   };
 
-  const openItemModal = (item) => {
-    setSelectedItem(item);
+  // Get addon groups for an item based on its category
+  const getItemWithAddons = (item, categoryId) => {
+    const category = menu.categories?.find(c => c.id === categoryId);
+    const addonGroups = menu.addon_groups || [];
+    
+    // Combine item's own groups with category addon groups
+    const categoryAddonGroups = (category?.addon_group_ids || [])
+      .map(groupId => addonGroups.find(g => g.id === groupId))
+      .filter(Boolean);
+    
+    const combinedGroups = [...(item.groups || []), ...categoryAddonGroups];
+    
+    return { ...item, groups: combinedGroups, categoryId };
+  };
+
+  const openItemModal = (item, categoryId) => {
+    const itemWithAddons = getItemWithAddons(item, categoryId);
+    setSelectedItem(itemWithAddons);
     setItemConfig({
       size: item.sizes?.find(s => s.default)?.id || item.sizes?.[0]?.id || null,
       options: {},
@@ -158,20 +174,19 @@ const OrderPage = () => {
       if (size) price = size.price;
     }
     
-    // Add options prices
-    Object.values(itemConfig.options).forEach(opts => {
+    // Add options prices from all groups (including category addons)
+    Object.entries(itemConfig.options).forEach(([groupId, opts]) => {
+      const group = selectedItem.groups?.find(g => g.id === groupId);
+      if (!group) return;
+      
       if (Array.isArray(opts)) {
         opts.forEach(optId => {
-          selectedItem.groups?.forEach(group => {
-            const opt = group.options?.find(o => o.id === optId);
-            if (opt) price += opt.price;
-          });
-        });
-      } else if (opts) {
-        selectedItem.groups?.forEach(group => {
-          const opt = group.options?.find(o => o.id === opts);
+          const opt = group.options?.find(o => o.id === optId);
           if (opt) price += opt.price;
         });
+      } else if (opts) {
+        const opt = group.options?.find(o => o.id === opts);
+        if (opt) price += opt.price;
       }
     });
     
