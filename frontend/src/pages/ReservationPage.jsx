@@ -293,20 +293,27 @@ const ReservationPage = () => {
                 <CalendarDays className="w-4 h-4 text-pizza-red" />
                 Datum *
               </Label>
-              <select
-                value={formData.date}
-                onChange={handleDateChange}
-                className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 font-mono appearance-none cursor-pointer"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23999'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
-              >
-                {availableDates.length === 0 ? (
-                  <option value="">Keine Termine verfügbar</option>
-                ) : (
-                  availableDates.map(date => (
-                    <option key={date.value} value={date.value}>{date.label}</option>
-                  ))
-                )}
-              </select>
+              <div className="relative">
+                <select
+                  value={formData.date}
+                  onChange={handleDateChange}
+                  className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 font-mono appearance-none cursor-pointer pr-10"
+                  style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
+                >
+                  {availableDates.length === 0 ? (
+                    <option value="">Keine Termine verfügbar</option>
+                  ) : (
+                    availableDates.map(date => (
+                      <option key={date.value} value={date.value}>{date.label}</option>
+                    ))
+                  )}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
             </div>
             
             <div>
@@ -314,21 +321,28 @@ const ReservationPage = () => {
                 <Clock className="w-4 h-4 text-pizza-red" />
                 Uhrzeit *
               </Label>
-              <select
-                value={formData.time}
-                onChange={e => setFormData({ ...formData, time: e.target.value })}
-                disabled={!formData.date || availableTimes.length === 0}
-                className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 font-mono disabled:opacity-50 appearance-none cursor-pointer"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23999'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
-              >
-                {availableTimes.length === 0 ? (
-                  <option value="">Keine Zeiten verfügbar</option>
-                ) : (
-                  availableTimes.map(time => (
-                    <option key={time.value} value={time.value}>{time.label}</option>
-                  ))
-                )}
-              </select>
+              <div className="relative">
+                <select
+                  value={formData.time}
+                  onChange={e => setFormData({ ...formData, time: e.target.value })}
+                  disabled={!formData.date || availableTimes.length === 0}
+                  className="w-full bg-pizza-black border border-pizza-dark focus:border-pizza-red text-pizza-white p-3 font-mono disabled:opacity-50 appearance-none cursor-pointer pr-10"
+                  style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
+                >
+                  {availableTimes.length === 0 ? (
+                    <option value="">Keine Zeiten verfügbar</option>
+                  ) : (
+                    availableTimes.map(time => (
+                      <option key={time.value} value={time.value}>{time.label}</option>
+                    ))
+                  )}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
 
