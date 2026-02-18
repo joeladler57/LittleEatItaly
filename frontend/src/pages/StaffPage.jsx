@@ -365,8 +365,8 @@ const StaffPage = () => {
       </div>
 
       {/* Tabs - Horizontal Scrolling Bar */}
-      <div className="sticky top-[52px] z-40 bg-pizza-black border-b border-pizza-dark">
-        <div className="overflow-x-auto scrollbar-hide">
+      <div className={`sticky ${isAlarmActive ? 'top-[108px]' : 'top-[52px]'} z-40 bg-pizza-black border-b border-pizza-dark transition-all`}>
+        <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
           <div className="flex min-w-max">
             <button
               onClick={() => setActiveTab("orders")}
