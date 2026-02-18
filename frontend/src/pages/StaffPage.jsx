@@ -343,6 +343,34 @@ const StaffPage = () => {
       {/* Stats Bar */}
       <div className="bg-pizza-black border-b border-pizza-dark">
         <div className="max-w-4xl mx-auto px-4 py-3">
+          {/* Today's Reservations Highlight */}
+          {(() => {
+            const today = new Date().toISOString().split('T')[0];
+            const todayConfirmed = reservations.filter(r => r.date === today && r.status === "confirmed");
+            const totalGuests = todayConfirmed.reduce((sum, r) => sum + r.guests, 0);
+            return todayConfirmed.length > 0 ? (
+              <div 
+                onClick={() => setActiveTab("today")}
+                className="mb-3 p-3 bg-green-600/20 border border-green-500/50 cursor-pointer hover:bg-green-600/30 transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-6 h-6 text-green-400" />
+                    <div>
+                      <p className="font-anton text-lg text-white">HEUTE</p>
+                      <p className="font-mono text-xs text-green-300">{new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-anton text-3xl text-green-400">{todayConfirmed.length}</p>
+                    <p className="font-mono text-xs text-green-300">{totalGuests} Personen</p>
+                  </div>
+                </div>
+              </div>
+            ) : null;
+          })()}
+          
+          {/* Order Stats */}
           <div className="grid grid-cols-4 gap-2 text-center">
             <div className={`p-2 ${orders.filter(o => o.status === "pending").length > 0 ? 'bg-red-500/20 border border-red-500/50' : 'bg-pizza-dark'}`}>
               <p className="font-anton text-2xl text-pizza-white">{orders.filter(o => o.status === "pending").length}</p>
