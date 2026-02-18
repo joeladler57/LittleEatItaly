@@ -1489,10 +1489,9 @@ async def send_push_notification(title: str, body: str, url: str = "/admin/shop"
 
 @api_router.post("/push/test")
 async def test_push_notification(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    username: str = Depends(verify_token)
 ):
     """Send a test push notification (admin only)"""
-    await verify_token(credentials.credentials)
     
     sent_count = await send_push_notification(
         title="🍕 Test Benachrichtigung",
