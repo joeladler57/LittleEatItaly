@@ -193,6 +193,7 @@ class ShopMenuCategory(BaseModel):
 class ShopMenu(BaseModel):
     id: str = "shop_menu"
     categories: List[ShopMenuCategory] = []
+    addon_groups: List[ShopMenuOptionGroup] = []  # Global addon groups
     currency: str = "EUR"
 
 # ============ ORDER MODELS ============
