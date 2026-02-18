@@ -909,37 +909,46 @@ const TodayReservationRow = ({ reservation, index }) => {
   const isSoon = !isPast && (resTime - now) < 30 * 60 * 1000; // Within 30 minutes
 
   return (
-    <div className={`flex items-center gap-3 px-3 py-4 transition-colors ${
-      isEven ? 'bg-neutral-900' : 'bg-neutral-900/50'
-    } ${isPast ? 'opacity-50' : ''} ${isSoon ? 'border-l-4 border-yellow-500' : 'border-l-4 border-transparent'}`}>
-      {/* Time */}
-      <div className={`flex-shrink-0 px-3 py-2 ${
-        isPast ? 'bg-neutral-700' : isSoon ? 'bg-yellow-500' : 'bg-green-600'
-      }`}>
-        <span className={`font-anton text-lg ${isPast ? 'text-neutral-400' : isSoon ? 'text-black' : 'text-white'}`}>
-          {reservation.time}
-        </span>
-      </div>
+    <div className={`px-4 py-3 transition-colors ${
+      isEven ? 'bg-neutral-900' : 'bg-neutral-850'
+    } ${isPast ? 'opacity-40' : ''} ${isSoon ? 'border-l-4 border-yellow-400 bg-yellow-500/10' : ''}`}>
+      <div className="flex items-center justify-between">
+        {/* Left: Time + Name */}
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          {/* Time Badge */}
+          <div className={`flex-shrink-0 w-20 text-center py-2 ${
+            isPast ? 'bg-neutral-700' : isSoon ? 'bg-yellow-500' : 'bg-green-600'
+          }`}>
+            <span className={`font-anton text-xl ${isPast ? 'text-neutral-400' : isSoon ? 'text-black' : 'text-white'}`}>
+              {reservation.time}
+            </span>
+          </div>
+          
+          {/* Name */}
+          <div className="min-w-0 flex-1">
+            <p className={`font-mono text-base font-medium truncate ${isPast ? 'text-neutral-500' : 'text-white'}`}>
+              {reservation.customer_name}
+            </p>
+          </div>
+        </div>
 
-      {/* Name */}
-      <div className="flex-1 min-w-0">
-        <p className={`font-mono text-base truncate ${isPast ? 'text-neutral-500' : 'text-white'}`}>
-          {reservation.customer_name}
-        </p>
-        {reservation.notes && (
-          <p className="font-mono text-xs text-yellow-500 truncate">
+        {/* Right: Persons */}
+        <div className="flex-shrink-0 flex items-center gap-1 ml-3">
+          <User className={`w-5 h-5 ${isPast ? 'text-neutral-600' : 'text-green-400'}`} />
+          <span className={`font-anton text-3xl ${isPast ? 'text-neutral-600' : 'text-green-400'}`}>
+            {reservation.guests}
+          </span>
+        </div>
+      </div>
+      
+      {/* Notes row */}
+      {reservation.notes && (
+        <div className="mt-2 ml-24 mr-12">
+          <p className="font-mono text-xs text-yellow-400 bg-yellow-500/10 px-2 py-1 truncate">
             📝 {reservation.notes}
           </p>
-        )}
-      </div>
-
-      {/* Guests */}
-      <div className="flex-shrink-0 flex items-center gap-1">
-        <User className={`w-4 h-4 ${isPast ? 'text-neutral-500' : 'text-green-400'}`} />
-        <span className={`font-anton text-2xl ${isPast ? 'text-neutral-500' : 'text-green-400'}`}>
-          {reservation.guests}
-        </span>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
