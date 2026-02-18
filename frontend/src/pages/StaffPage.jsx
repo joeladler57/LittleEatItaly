@@ -485,39 +485,65 @@ const OrderCard = ({ order, onUpdate }) => {
   };
 
   const statusColors = {
-    pending: "bg-red-500",
-    confirmed: "bg-blue-500",
-    preparing: "bg-yellow-500",
-    ready: "bg-green-500",
-    completed: "bg-neutral-500",
-    cancelled: "bg-neutral-700"
+    pending: "border-l-red-500 bg-neutral-900",
+    confirmed: "border-l-blue-500 bg-neutral-900",
+    preparing: "border-l-yellow-500 bg-neutral-900",
+    ready: "border-l-green-500 bg-neutral-900",
+    completed: "border-l-neutral-500 bg-neutral-800",
+    cancelled: "border-l-neutral-700 bg-neutral-800"
+  };
+
+  const statusBadge = {
+    pending: "bg-red-500 text-white",
+    confirmed: "bg-blue-500 text-white",
+    preparing: "bg-yellow-500 text-black",
+    ready: "bg-green-500 text-white",
+    completed: "bg-neutral-500 text-white",
+    cancelled: "bg-neutral-700 text-white"
+  };
+
+  const statusText = {
+    pending: "NEU",
+    confirmed: "BESTÄTIGT",
+    preparing: "ZUBEREITUNG",
+    ready: "BEREIT",
+    completed: "ABGEHOLT",
+    cancelled: "STORNIERT"
   };
 
   const formatPrice = (p) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(p);
 
   return (
-    <div className={`bg-pizza-dark border-l-4 ${statusColors[order.status]} overflow-hidden`}>
-      <div className="p-4" onClick={() => setExpanded(!expanded)}>
+    <div className={`border-l-4 ${statusColors[order.status]} overflow-hidden shadow-lg`}>
+      <div className="p-4 cursor-pointer hover:bg-neutral-800/50 transition-colors" onClick={() => setExpanded(!expanded)}>
         <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-anton text-lg text-pizza-white">#{order.order_number}</span>
-              <span className="font-mono text-xs text-neutral-400">• {order.customer_name}</span>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <Clock className="w-3 h-3 text-neutral-500" />
-              <span className="font-mono text-xs text-neutral-400">
-                {order.pickup_time}
-                {order.confirmed_pickup_time && ` → ${order.confirmed_pickup_time} Uhr`}
+          <div className="flex-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="font-anton text-xl text-white">#{order.order_number}</span>
+              <span className={`px-2 py-0.5 text-xs font-bold ${statusBadge[order.status]}`}>
+                {statusText[order.status]}
               </span>
-              <span className="text-neutral-600">•</span>
-              <span className="font-mono text-xs text-neutral-400">{order.payment_method || "Barzahlung"}</span>
+            </div>
+            <p className="font-mono text-sm text-neutral-200 mt-1">{order.customer_name}</p>
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
+              <span className="flex items-center gap-1 text-sm">
+                <Clock className="w-4 h-4 text-yellow-400" />
+                <span className="text-yellow-400 font-medium">
+                  {order.pickup_time}
+                  {order.confirmed_pickup_time && ` → ${order.confirmed_pickup_time} Uhr`}
+                </span>
+              </span>
+              <span className="text-neutral-500">•</span>
+              <span className="text-sm text-neutral-300">{order.payment_method || "Barzahlung"}</span>
             </div>
           </div>
-          <div className="text-right">
-            <p className="font-anton text-lg text-pizza-red">{formatPrice(order.total)}</p>
-            <p className="font-mono text-xs text-neutral-500">{order.items?.length} Artikel</p>
+          <div className="text-right ml-4">
+            <p className="font-anton text-2xl text-green-400">{formatPrice(order.total)}</p>
+            <p className="font-mono text-xs text-neutral-400">{order.items?.length} Artikel</p>
+            <ChevronDown className={`w-5 h-5 text-neutral-500 ml-auto mt-1 transition-transform ${expanded ? 'rotate-180' : ''}`} />
           </div>
+        </div>
+      </div>
         </div>
       </div>
 
