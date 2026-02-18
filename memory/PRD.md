@@ -11,6 +11,22 @@
 
 ## What's Been Implemented
 
+### Februar 2026 - Epson TM-30III Bon-Druck (Implementiert ✅)
+- ✅ **Drucker-Einstellungen** im Admin-Bereich (`/admin/shop` → DRUCKER Tab):
+  - IP-Adresse und Port konfigurierbar
+  - Auto-Druck bei Bestellannahme aktivierbar
+  - Geräte-ID für ePOS SDK
+- ✅ **Bon-Designer mit Live-Vorschau**:
+  - Kopfzeile: Restaurant-Name (Größe/Fett), Adresse, Telefon
+  - Bestellinfo: Bestellnummer (Größe/Fett), Datum, Kundenname, Telefon, Abholzeit
+  - Artikel: Anzahl, Name, Größe, Optionen/Extras, Preis
+  - Notizen: Mit/Ohne Rahmen, Fett
+  - Summe: Gesamtpreis (Größe/Fett), Zahlungsart
+  - Fußzeile: Dankestext, Eigener Text
+- ✅ **Auto-Druck im Personal-Bereich**: Bon wird automatisch gedruckt beim Akzeptieren
+- ✅ **Manueller Druck**: Drucker-Button bei bestätigten Bestellungen
+- ✅ **Fallback**: Browser-Druckdialog wenn Epson nicht erreichbar
+
 ### Februar 2026 - Mobile UI Fix für "HEUTE"-Tab (Behoben ✅)
 - ✅ **Scrolling Tab-Leiste**: Horizontale Scrollbar für Tabs auf mobilen Geräten
 - ✅ **Uhrzeiten jetzt sichtbar**: Reservierungszeiten werden korrekt auf allen Bildschirmgrößen angezeigt
