@@ -89,11 +89,12 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 - **Resend**: E-Mail-Versand (API-Key benötigt)
 
 ## Next Tasks
-1. 🟡 Resend API-Key für E-Mail-Bestätigungen einrichten
-2. 🟢 Impressum mit echten Firmendaten (über Admin)
+1. 🟡 **E-Mail-Benachrichtigungen aktivieren**: Resend API-Key in `/app/backend/.env` eintragen
+2. 🟢 Impressum mit echten Firmendaten ergänzen (über Admin)
 3. 🟢 Weitere Menü-Artikel hinzufügen (über Shop Admin)
 
-## Backlog
+## Backlog / Zukünftige Features
+- Push-Benachrichtigungen für neue Bestellungen (Browser-Notifications oder Telegram)
+- Statistiken-Dashboard für Bestellungen/Reservierungen
+- Code-Refactoring: `server.py` in separate Router aufteilen
 - Mehrsprachigkeit (DE/EN)
-- Push-Benachrichtigungen für neue Bestellungen
-- Statistiken/Dashboard für Bestellungen
