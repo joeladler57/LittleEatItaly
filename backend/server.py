@@ -5,6 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import asyncio
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional, Dict
@@ -13,6 +14,7 @@ from datetime import datetime, timezone, timedelta
 import jwt
 import bcrypt
 import httpx
+import resend
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -25,6 +27,12 @@ db = client[os.environ['DB_NAME']]
 # GlobalFood API Configuration
 GLOBALFOOD_API_URL = "https://pos.globalfoodsoft.com/pos/menu"
 GLOBALFOOD_API_KEY = os.environ.get('GLOBALFOOD_API_KEY', 'pQ5d8UmzbClR90Y1DR')
+
+# Resend Email Configuration
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
 
 # Create the main app
 app = FastAPI()
