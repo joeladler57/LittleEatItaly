@@ -744,6 +744,7 @@ async def create_order(order_data: OrderCreate):
         customer_email=order_data.customer_email,
         customer_phone=order_data.customer_phone,
         pickup_time=order_data.pickup_time,
+        payment_method=order_data.payment_method,
         notes=order_data.notes,
         subtotal=subtotal,
         total=total,
