@@ -57,11 +57,11 @@
 - ⏸️ **E-Mail-Bestätigung**: Code bereit, Resend API-Key benötigt
 
 ### Test-Ergebnisse (18.02.2026)
-- Backend: **100% (14/14 PWA Tests bestanden)**
-- Frontend: **100% PWA-Features verifiziert**
-- PWA Manifest, Service Worker, Icons, Notification Sound alle funktional
-- Polling-Mechanismus getestet und funktioniert
-- Mobile responsive Layout verifiziert
+- Backend: **100% (28/28 Tests bestanden)** - PWA + Push Notifications
+- Frontend: **100% alle Features verifiziert**
+- PWA: Manifest, Service Worker, Icons, Notification Sound
+- Push: VAPID, Subscribe, Unsubscribe, Test Notifications
+- Polling-Mechanismus, Mobile Layout - alles funktional
 
 ### Frühere Updates
 - ✅ **GlobalFood Menü-Integration**: Dynamische Speisekarte
