@@ -233,14 +233,6 @@ const OrderPage = () => {
     
     return times;
   };
-      times.push({
-        value: `${hours}:${mins}`,
-        label: `${hours}:${mins} Uhr`
-      });
-    }
-    
-    return times;
-  };
 
   const submitOrder = async () => {
     if (!customerInfo.name || !customerInfo.email || !customerInfo.phone) {
