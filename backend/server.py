@@ -1332,6 +1332,163 @@ def get_default_content():
         }
     }
 
+# ============ PUSH NOTIFICATIONS ============
+
+class PushSubscription(BaseModel):
+    endpoint: str
+    keys: dict  # Contains p256dh and auth keys
+
+class PushSubscriptionCreate(BaseModel):
+    subscription: PushSubscription
+    device_name: Optional[str] = "Unbekanntes Gerät"
+
+@api_router.get("/push/vapid-key")
+async def get_vapid_public_key():
+    """Get the VAPID public key for push subscription"""
+    if not VAPID_PUBLIC_KEY:
+        raise HTTPException(status_code=500, detail="Push notifications not configured")
+    return {"publicKey": VAPID_PUBLIC_KEY}
+
+@api_router.post("/push/subscribe")
+async def subscribe_to_push(
+    data: PushSubscriptionCreate,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Subscribe a device for push notifications (admin only)"""
+    await verify_admin_token(credentials.credentials)
+    
+    subscription_data = {
+        "id": str(uuid.uuid4()),
+        "endpoint": data.subscription.endpoint,
+        "keys": data.subscription.keys,
+        "device_name": data.device_name,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "active": True
+    }
+    
+    # Check if subscription already exists
+    existing = await db.push_subscriptions.find_one({"endpoint": data.subscription.endpoint})
+    if existing:
+        await db.push_subscriptions.update_one(
+            {"endpoint": data.subscription.endpoint},
+            {"$set": {"keys": data.subscription.keys, "active": True, "device_name": data.device_name}}
+        )
+        return {"message": "Subscription updated", "id": existing.get("id")}
+    
+    await db.push_subscriptions.insert_one(subscription_data)
+    return {"message": "Subscription created", "id": subscription_data["id"]}
+
+@api_router.delete("/push/unsubscribe")
+async def unsubscribe_from_push(
+    endpoint: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Unsubscribe a device from push notifications"""
+    await verify_admin_token(credentials.credentials)
+    
+    result = await db.push_subscriptions.delete_one({"endpoint": endpoint})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+    
+    return {"message": "Unsubscribed successfully"}
+
+@api_router.get("/push/subscriptions")
+async def get_push_subscriptions(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get all push subscriptions (admin only)"""
+    await verify_admin_token(credentials.credentials)
+    
+    subscriptions = await db.push_subscriptions.find({"active": True}, {"_id": 0}).to_list(100)
+    return subscriptions
+
+async def send_push_notification(title: str, body: str, url: str = "/admin/shop", tag: str = "order"):
+    """Send push notification to all subscribed devices"""
+    if not VAPID_PUBLIC_KEY:
+        logger.warning("Push notifications not configured - VAPID_PUBLIC_KEY missing")
+        return 0
+    
+    try:
+        from pywebpush import webpush, WebPushException
+        import json
+        
+        # Load private key
+        private_key_path = ROOT_DIR / VAPID_PRIVATE_KEY_FILE
+        if not private_key_path.exists():
+            logger.warning(f"VAPID private key file not found: {private_key_path}")
+            return 0
+        
+        with open(private_key_path, 'r') as f:
+            private_key = f.read()
+        
+        subscriptions = await db.push_subscriptions.find({"active": True}).to_list(100)
+        
+        if not subscriptions:
+            logger.info("No active push subscriptions")
+            return 0
+        
+        payload = json.dumps({
+            "title": title,
+            "body": body,
+            "icon": "/icons/icon-192x192.png",
+            "badge": "/icons/icon-72x72.png",
+            "url": url,
+            "tag": tag,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        
+        sent_count = 0
+        for sub in subscriptions:
+            try:
+                subscription_info = {
+                    "endpoint": sub["endpoint"],
+                    "keys": sub["keys"]
+                }
+                
+                webpush(
+                    subscription_info=subscription_info,
+                    data=payload,
+                    vapid_private_key=private_key,
+                    vapid_claims={"sub": f"mailto:{VAPID_CLAIMS_EMAIL}"}
+                )
+                sent_count += 1
+                logger.info(f"Push notification sent to {sub.get('device_name', 'unknown')}")
+                
+            except WebPushException as e:
+                logger.error(f"Push notification failed for {sub.get('device_name', 'unknown')}: {e}")
+                # If subscription is invalid, mark it as inactive
+                if e.response and e.response.status_code in [404, 410]:
+                    await db.push_subscriptions.update_one(
+                        {"endpoint": sub["endpoint"]},
+                        {"$set": {"active": False}}
+                    )
+            except Exception as e:
+                logger.error(f"Push notification error: {e}")
+        
+        return sent_count
+        
+    except ImportError:
+        logger.warning("pywebpush not installed")
+        return 0
+    except Exception as e:
+        logger.error(f"Push notification error: {e}")
+        return 0
+
+@api_router.post("/push/test")
+async def test_push_notification(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Send a test push notification (admin only)"""
+    await verify_admin_token(credentials.credentials)
+    
+    sent_count = await send_push_notification(
+        title="🍕 Test Benachrichtigung",
+        body="Push-Benachrichtigungen funktionieren!",
+        tag="test"
+    )
+    
+    return {"message": f"Test notification sent to {sent_count} device(s)"}
+
 # Seed data endpoint
 @api_router.post("/seed")
 async def seed_data():
