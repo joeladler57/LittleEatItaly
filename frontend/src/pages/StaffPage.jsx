@@ -29,6 +29,10 @@ const StaffPage = () => {
   // Data states
   const [orders, setOrders] = useState([]);
   const [reservations, setReservations] = useState([]);
+  const [shopSettings, setShopSettings] = useState(null);
+
+  // Printer hook
+  const { printOrder, isPrinting } = usePrinter();
 
   // Notification states
   const { playSound, startLoopingSound, stopLoopingSound, isLooping, enableAudio } = useNotificationSound();
@@ -46,6 +50,19 @@ const StaffPage = () => {
   const [lastReservationCount, setLastReservationCount] = useState(0);
   const pollingRef = useRef(null);
   const isFirstLoad = useRef(true);
+
+  // Fetch shop settings for printer config
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await axios.get(`${API}/shop/settings`);
+        setShopSettings(response.data);
+      } catch (e) {
+        console.error("Failed to fetch settings:", e);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
     registerServiceWorker();
