@@ -63,6 +63,9 @@ export const usePrinter = () => {
       console.error('Print error:', error);
       setPrinterStatus('error');
       
+      // Show error and try fallback
+      toast.error("Direktdruck fehlgeschlagen - öffne Browser-Dialog...");
+      
       // If direct printing fails, try fallback approach
       return await printFallback(order, settings);
     } finally {
