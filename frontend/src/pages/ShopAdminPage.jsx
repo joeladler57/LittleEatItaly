@@ -2323,6 +2323,44 @@ const PrinterSection = ({ settings, onUpdate }) => {
     }
   };
 
+  // Check printer connection status
+  const checkPrinterStatus = async () => {
+    setCheckingStatus(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      const response = await axios.get(`${API}/printer/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPrinterStatus(response.data);
+      if (response.data.connected) {
+        toast.success("✅ Drucker erreichbar!");
+      } else {
+        toast.error(`❌ ${response.data.message}`);
+      }
+    } catch (error) {
+      setPrinterStatus({ connected: false, message: "Fehler beim Prüfen" });
+      toast.error("Fehler beim Prüfen der Verbindung");
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
+
+  // Send test print
+  const sendTestPrint = async () => {
+    setTestPrinting(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.post(`${API}/printer/test`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("✅ Testdruck gesendet!");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Druckfehler");
+    } finally {
+      setTestPrinting(false);
+    }
+  };
+
   const updateTemplate = (section, key, value) => {
     setFormData(prev => ({
       ...prev,
