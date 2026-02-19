@@ -3510,6 +3510,294 @@ const TerminalSection = ({ onUpdate }) => {
         </div>
       )}
 
+      {/* Extras Tab - Addon Groups */}
+      {activeSubTab === "extras" && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="font-anton text-xl text-pizza-white">EXTRAS / ADDONS</h3>
+              <p className="font-mono text-xs text-neutral-500">Addon-Gruppen erstellen und Kategorien zuweisen</p>
+            </div>
+            <Button
+              onClick={() => setShowAddAddonGroup(true)}
+              className="bg-pizza-red hover:bg-red-700 text-white font-mono rounded-none"
+            >
+              <Plus className="w-4 h-4 mr-2" /> ADDON-GRUPPE
+            </Button>
+          </div>
+
+          {/* Add Addon Group Form */}
+          {showAddAddonGroup && (
+            <div className="bg-pizza-dark border border-pizza-red p-4">
+              <h4 className="font-anton text-lg text-pizza-white mb-4">NEUE ADDON-GRUPPE</h4>
+              <div className="space-y-4">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="font-mono text-sm text-neutral-400">Gruppenname *</Label>
+                    <Input
+                      value={newAddonGroup.name}
+                      onChange={e => setNewAddonGroup({ ...newAddonGroup, name: e.target.value })}
+                      placeholder="z.B. Extra Belag, Extras"
+                      className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+                    />
+                  </div>
+                  <div className="flex items-center gap-4 pt-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newAddonGroup.multi_select}
+                        onChange={e => setNewAddonGroup({ ...newAddonGroup, multi_select: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <span className="font-mono text-sm text-neutral-400">Mehrfachauswahl</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label className="font-mono text-sm text-neutral-400 mb-2 block">Optionen</Label>
+                  {newAddonGroup.options.map((opt, idx) => (
+                    <div key={idx} className="flex gap-2 mb-2">
+                      <Input
+                        value={opt.name}
+                        onChange={e => {
+                          const opts = [...newAddonGroup.options];
+                          opts[idx].name = e.target.value;
+                          setNewAddonGroup({ ...newAddonGroup, options: opts });
+                        }}
+                        placeholder="Name (z.B. Extra Käse)"
+                        className="bg-pizza-black border-pizza-dark text-pizza-white rounded-none flex-1"
+                      />
+                      <Input
+                        type="number"
+                        step="0.50"
+                        value={opt.price}
+                        onChange={e => {
+                          const opts = [...newAddonGroup.options];
+                          opts[idx].price = parseFloat(e.target.value) || 0;
+                          setNewAddonGroup({ ...newAddonGroup, options: opts });
+                        }}
+                        placeholder="Preis"
+                        className="bg-pizza-black border-pizza-dark text-pizza-white rounded-none w-24"
+                      />
+                      <Button
+                        onClick={() => {
+                          const opts = newAddonGroup.options.filter((_, i) => i !== idx);
+                          setNewAddonGroup({ ...newAddonGroup, options: opts.length ? opts : [{ name: "", price: 0 }] });
+                        }}
+                        size="sm"
+                        variant="outline"
+                        className="border-red-500 text-red-500 rounded-none"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    onClick={() => setNewAddonGroup({ ...newAddonGroup, options: [...newAddonGroup.options, { name: "", price: 0 }] })}
+                    size="sm"
+                    variant="outline"
+                    className="border-pizza-dark text-neutral-400 rounded-none mt-2"
+                  >
+                    <Plus className="w-4 h-4 mr-1" /> Option
+                  </Button>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button onClick={createAddonGroup} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-mono rounded-none">
+                  {saving ? "Speichern..." : "Hinzufügen"}
+                </Button>
+                <Button onClick={() => setShowAddAddonGroup(false)} variant="outline" className="border-pizza-dark text-pizza-white rounded-none">
+                  Abbrechen
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Addon Groups List */}
+          {addonGroups.length === 0 ? (
+            <div className="bg-pizza-dark border border-pizza-dark p-8 text-center">
+              <Plus className="w-12 h-12 text-pizza-dark mx-auto mb-2" />
+              <p className="font-mono text-neutral-400">Keine Addon-Gruppen vorhanden</p>
+              <p className="font-mono text-xs text-neutral-500 mt-1">Erstelle Addon-Gruppen wie "Extra Belag" oder "Extras"</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {addonGroups.map(group => (
+                <div key={group.id} className="bg-pizza-dark border border-pizza-dark p-4">
+                  {editingAddonGroup?.id === group.id ? (
+                    <div className="space-y-4">
+                      <Input
+                        value={editingAddonGroup.name}
+                        onChange={e => setEditingAddonGroup({ ...editingAddonGroup, name: e.target.value })}
+                        className="bg-pizza-black border-pizza-dark text-pizza-white rounded-none"
+                      />
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editingAddonGroup.multi_select}
+                            onChange={e => setEditingAddonGroup({ ...editingAddonGroup, multi_select: e.target.checked })}
+                            className="w-4 h-4"
+                          />
+                          <span className="font-mono text-sm text-neutral-400">Mehrfachauswahl</span>
+                        </label>
+                      </div>
+                      <div>
+                        <Label className="font-mono text-sm text-neutral-400 mb-2 block">Optionen</Label>
+                        {(editingAddonGroup.options || []).map((opt, idx) => (
+                          <div key={idx} className="flex gap-2 mb-2">
+                            <Input
+                              value={opt.name}
+                              onChange={e => {
+                                const opts = [...editingAddonGroup.options];
+                                opts[idx].name = e.target.value;
+                                setEditingAddonGroup({ ...editingAddonGroup, options: opts });
+                              }}
+                              className="bg-pizza-black border-pizza-dark text-pizza-white rounded-none flex-1"
+                            />
+                            <Input
+                              type="number"
+                              step="0.50"
+                              value={opt.price}
+                              onChange={e => {
+                                const opts = [...editingAddonGroup.options];
+                                opts[idx].price = parseFloat(e.target.value) || 0;
+                                setEditingAddonGroup({ ...editingAddonGroup, options: opts });
+                              }}
+                              className="bg-pizza-black border-pizza-dark text-pizza-white rounded-none w-24"
+                            />
+                            <Button
+                              onClick={() => {
+                                const opts = editingAddonGroup.options.filter((_, i) => i !== idx);
+                                setEditingAddonGroup({ ...editingAddonGroup, options: opts.length ? opts : [{ name: "", price: 0 }] });
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="border-red-500 text-red-500 rounded-none"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          onClick={() => setEditingAddonGroup({ ...editingAddonGroup, options: [...(editingAddonGroup.options || []), { name: "", price: 0 }] })}
+                          size="sm"
+                          variant="outline"
+                          className="border-pizza-dark text-neutral-400 rounded-none mt-2"
+                        >
+                          <Plus className="w-4 h-4 mr-1" /> Option
+                        </Button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={() => updateAddonGroup(group.id, editingAddonGroup)} size="sm" className="bg-green-600 hover:bg-green-700 rounded-none">
+                          <Save className="w-4 h-4 mr-1" /> Speichern
+                        </Button>
+                        <Button onClick={() => setEditingAddonGroup(null)} size="sm" variant="outline" className="border-pizza-dark rounded-none">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-anton text-lg text-pizza-white">{group.name}</h4>
+                          <p className="font-mono text-xs text-neutral-500">
+                            {group.multi_select ? "Mehrfachauswahl" : "Einzelauswahl"} • {(group.options || []).length} Optionen
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button onClick={() => setEditingAddonGroup(group)} size="sm" variant="outline" className="border-pizza-dark text-pizza-white rounded-none h-8 w-8 p-0">
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button onClick={() => deleteAddonGroup(group.id)} size="sm" variant="outline" className="border-red-500 text-red-500 rounded-none h-8 w-8 p-0">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {(group.options || []).map((opt, idx) => (
+                          <span key={idx} className="bg-pizza-black px-2 py-1 font-mono text-sm text-neutral-300">
+                            {opt.name} {opt.price > 0 && <span className="text-pizza-red">+{opt.price.toFixed(2)}€</span>}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Category Assignment */}
+          {addonGroups.length > 0 && (
+            <div className="mt-8">
+              <h3 className="font-anton text-xl text-pizza-white mb-4">KATEGORIEN ZUWEISEN</h3>
+              <p className="font-mono text-xs text-neutral-500 mb-4">Weise Addon-Gruppen zu Kategorien zu. Alle Artikel dieser Kategorie erhalten diese Extras.</p>
+              
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {categories.filter(cat => menuItems.some(item => item.category === cat.name)).map(category => (
+                  <div key={category.name} className="bg-pizza-dark border border-pizza-dark p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-anton text-lg text-pizza-white">{category.name}</h4>
+                      <Button
+                        onClick={() => setEditingCategory(editingCategory === category.name ? null : category.name)}
+                        size="sm"
+                        variant="outline"
+                        className="border-pizza-dark text-pizza-white rounded-none h-8 w-8 p-0"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    {editingCategory === category.name ? (
+                      <div className="space-y-2">
+                        {addonGroups.map(group => {
+                          const isSelected = (category.addon_group_ids || []).includes(group.id);
+                          return (
+                            <label key={group.id} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {
+                                  const currentIds = category.addon_group_ids || [];
+                                  const newIds = isSelected
+                                    ? currentIds.filter(id => id !== group.id)
+                                    : [...currentIds, group.id];
+                                  updateCategoryAddons(category.name, newIds);
+                                }}
+                                className="w-4 h-4"
+                              />
+                              <span className="font-mono text-sm text-neutral-300">{group.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {(category.addon_group_ids || []).length > 0 ? (
+                          (category.addon_group_ids || []).map(groupId => {
+                            const group = addonGroups.find(g => g.id === groupId);
+                            return group ? (
+                              <span key={groupId} className="bg-green-900/30 border border-green-500/30 text-green-400 px-2 py-0.5 font-mono text-xs">
+                                {group.name}
+                              </span>
+                            ) : null;
+                          })
+                        ) : (
+                          <span className="font-mono text-xs text-neutral-500">Keine Extras zugewiesen</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Menu Tab */}
       {activeSubTab === "menu" && (
         <div className="space-y-4">
