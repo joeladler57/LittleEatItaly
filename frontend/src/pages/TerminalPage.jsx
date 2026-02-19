@@ -362,28 +362,44 @@ const TerminalPage = () => {
             </div>
           </div>
 
-          {/* Addons */}
-          {selectedItem.addons && selectedItem.addons.length > 0 && (
-            <div className="bg-neutral-900 border border-neutral-700 p-4 mb-4">
-              <p className="font-mono text-xs text-neutral-400 mb-3">EXTRAS</p>
-              <div className="space-y-2">
-                {selectedItem.addons.map((addon, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => toggleAddon(addon)}
-                    className={`w-full p-3 border flex items-center justify-between ${
-                      selectedAddons.find(a => a.name === addon.name)
-                        ? 'border-green-500 bg-green-500/10'
-                        : 'border-neutral-700 hover:border-neutral-500'
-                    }`}
-                  >
-                    <span className="font-mono text-sm">{addon.name}</span>
-                    <span className="font-mono text-sm text-green-400">+{addon.price.toFixed(2)}€</span>
-                  </button>
+          {/* Addons from Category */}
+          {(() => {
+            // Get addon groups for this item's category
+            const itemCategory = categories.find(c => c.name === selectedItem.category);
+            const categoryAddonGroupIds = itemCategory?.addon_group_ids || [];
+            const categoryAddonGroups = addonGroups.filter(g => categoryAddonGroupIds.includes(g.id));
+            
+            if (categoryAddonGroups.length === 0) return null;
+            
+            return (
+              <div className="bg-neutral-900 border border-neutral-700 p-4 mb-4">
+                <p className="font-mono text-xs text-neutral-400 mb-3">EXTRAS</p>
+                {categoryAddonGroups.map(group => (
+                  <div key={group.id} className="mb-4 last:mb-0">
+                    <p className="font-mono text-xs text-neutral-500 mb-2">{group.name}</p>
+                    <div className="space-y-2">
+                      {(group.options || []).map((addon, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => toggleAddon(addon)}
+                          className={`w-full p-3 border flex items-center justify-between ${
+                            selectedAddons.find(a => a.name === addon.name)
+                              ? 'border-green-500 bg-green-500/10'
+                              : 'border-neutral-700 hover:border-neutral-500'
+                          }`}
+                        >
+                          <span className="font-mono text-sm">{addon.name}</span>
+                          {addon.price > 0 && (
+                            <span className="font-mono text-sm text-green-400">+{addon.price.toFixed(2)}€</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Note */}
           <div className="bg-neutral-900 border border-neutral-700 p-4 mb-4">
