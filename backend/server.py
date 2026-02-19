@@ -1164,6 +1164,116 @@ async def delete_print_job(job_id: str, role: str = Depends(verify_staff_token))
     await db.print_queue.delete_one({"id": job_id})
     return {"message": "Print job deleted"}
 
+# ============ DIRECT NETWORK PRINTING ENDPOINTS ============
+
+@api_router.post("/printer/test")
+async def test_printer(role: str = Depends(verify_staff_token)):
+    """Test the network printer connection and print a test receipt"""
+    settings = await db.shop_settings.find_one({"id": "shop_settings"}, {"_id": 0})
+    if not settings:
+        settings = ShopSettings().model_dump()
+    
+    if not settings.get("printer_enabled"):
+        raise HTTPException(status_code=400, detail="Drucker ist deaktiviert. Bitte in Einstellungen aktivieren.")
+    
+    if not settings.get("printer_ip"):
+        raise HTTPException(status_code=400, detail="Drucker-IP nicht konfiguriert")
+    
+    # Build test receipt
+    test_order = {
+        "order_number": "TEST",
+        "customer_name": "Test Kunde",
+        "customer_phone": "0000-0000000",
+        "pickup_time": "JETZT",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "items": [
+            {"quantity": 1, "item_name": "Test Pizza Margherita", "size_name": "32cm", "total_price": 10.00},
+            {"quantity": 2, "item_name": "Coca Cola", "total_price": 6.00}
+        ],
+        "total": 16.00,
+        "notes": "Das ist ein Testdruck!",
+        "payment_method": "Bar"
+    }
+    
+    result = await print_order_receipt(test_order, settings)
+    
+    if result.get("success"):
+        return {"success": True, "message": "Testdruck erfolgreich gesendet!"}
+    else:
+        raise HTTPException(status_code=500, detail=result.get("error", "Druckfehler"))
+
+@api_router.post("/printer/print/{order_id}")
+async def print_order_directly(order_id: str, role: str = Depends(verify_staff_token)):
+    """Print a specific order directly to the network printer"""
+    order = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Bestellung nicht gefunden")
+    
+    settings = await db.shop_settings.find_one({"id": "shop_settings"}, {"_id": 0})
+    if not settings:
+        settings = ShopSettings().model_dump()
+    
+    if not settings.get("printer_enabled"):
+        raise HTTPException(status_code=400, detail="Drucker ist deaktiviert")
+    
+    result = await print_order_receipt(order, settings)
+    
+    if result.get("success"):
+        # Log the print
+        await db.print_queue.insert_one({
+            "id": str(uuid.uuid4()),
+            "order_id": order_id,
+            "order_number": order.get("order_number", 0),
+            "order_data": order,
+            "status": "completed",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "printed_at": datetime.now(timezone.utc).isoformat()
+        })
+        return {"success": True, "message": f"Bon #{order.get('order_number')} gedruckt!"}
+    else:
+        raise HTTPException(status_code=500, detail=result.get("error", "Druckfehler"))
+
+@api_router.get("/printer/status")
+async def get_printer_status(role: str = Depends(verify_staff_token)):
+    """Check printer connection status"""
+    settings = await db.shop_settings.find_one({"id": "shop_settings"}, {"_id": 0})
+    if not settings:
+        settings = ShopSettings().model_dump()
+    
+    if not settings.get("printer_enabled"):
+        return {"enabled": False, "connected": False, "message": "Drucker deaktiviert"}
+    
+    printer_ip = settings.get("printer_ip", "")
+    printer_port = settings.get("printer_port", 9100)
+    
+    if not printer_ip:
+        return {"enabled": True, "connected": False, "message": "Keine IP konfiguriert"}
+    
+    # Test connection
+    try:
+        loop = asyncio.get_event_loop()
+        def _test_connection():
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(2.0)
+            try:
+                sock.connect((printer_ip, printer_port))
+                sock.close()
+                return True
+            except:
+                return False
+        
+        connected = await loop.run_in_executor(None, _test_connection)
+        
+        return {
+            "enabled": True,
+            "connected": connected,
+            "ip": printer_ip,
+            "port": printer_port,
+            "message": "Verbunden" if connected else "Nicht erreichbar"
+        }
+    except Exception as e:
+        return {"enabled": True, "connected": False, "message": str(e)}
+
 class StaffReservationCreate(BaseModel):
     """Model for staff-created phone reservations"""
     customer_name: str
