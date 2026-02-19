@@ -464,8 +464,8 @@ const PrintStationPage = () => {
 
   // Manual print test
   const testPrint = async () => {
-    if (!bluetoothConnected) {
-      toast.error("Drucker nicht verbunden");
+    if (!rawbtConnected) {
+      toast.error("RawBT nicht verbunden");
       return;
     }
     
@@ -492,6 +492,112 @@ const PrintStationPage = () => {
       setIsPrinting(false);
     }
   };
+
+  // Setup Guide Component
+  const SetupGuide = () => (
+    <div className="fixed inset-0 bg-black/90 z-50 overflow-auto p-4">
+      <div className="max-w-md mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="font-anton text-xl text-white">RAWBT EINRICHTUNG</h2>
+          <button 
+            onClick={() => setShowSetupGuide(false)}
+            className="text-neutral-400 hover:text-white text-2xl"
+          >
+            ×
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          {/* Step 1 */}
+          <div className="bg-neutral-900 border border-neutral-700 p-4">
+            <div className="flex items-start gap-3">
+              <span className="bg-green-600 text-white font-bold w-8 h-8 flex items-center justify-center flex-shrink-0">1</span>
+              <div>
+                <h3 className="font-bold text-white mb-2">RawBT App installieren</h3>
+                <p className="text-sm text-neutral-400 mb-3">
+                  Installiere "RawBT Print Service" aus dem Google Play Store auf diesem Gerät.
+                </p>
+                <a 
+                  href="https://play.google.com/store/apps/details?id=ru.a402d.rawbtprinter"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 text-sm"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Play Store öffnen
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div className="bg-neutral-900 border border-neutral-700 p-4">
+            <div className="flex items-start gap-3">
+              <span className="bg-green-600 text-white font-bold w-8 h-8 flex items-center justify-center flex-shrink-0">2</span>
+              <div>
+                <h3 className="font-bold text-white mb-2">Drucker in RawBT einrichten</h3>
+                <ul className="text-sm text-neutral-400 space-y-1">
+                  <li>• Öffne RawBT App</li>
+                  <li>• Wähle "Bluetooth" als Verbindungstyp</li>
+                  <li>• Wähle deinen Epson TM-m30II aus der Liste</li>
+                  <li>• Teste mit "Test drucken"</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div className="bg-neutral-900 border border-neutral-700 p-4">
+            <div className="flex items-start gap-3">
+              <span className="bg-green-600 text-white font-bold w-8 h-8 flex items-center justify-center flex-shrink-0">3</span>
+              <div>
+                <h3 className="font-bold text-white mb-2">WebSocket Server aktivieren</h3>
+                <ul className="text-sm text-neutral-400 space-y-1">
+                  <li>• In RawBT: Einstellungen → "WebSocket Server"</li>
+                  <li>• Server aktivieren (Port 40213)</li>
+                  <li>• RawBT im Hintergrund laufen lassen</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 4 */}
+          <div className="bg-neutral-900 border border-neutral-700 p-4">
+            <div className="flex items-start gap-3">
+              <span className="bg-green-600 text-white font-bold w-8 h-8 flex items-center justify-center flex-shrink-0">4</span>
+              <div>
+                <h3 className="font-bold text-white mb-2">Diese Seite neu laden</h3>
+                <p className="text-sm text-neutral-400 mb-3">
+                  Wenn RawBT läuft, verbindet sich die Print-Station automatisch.
+                </p>
+                <button 
+                  onClick={() => {
+                    setShowSetupGuide(false);
+                    connectRawBT();
+                  }}
+                  className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 text-sm"
+                >
+                  Jetzt verbinden
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-bold text-yellow-400 mb-1">Wichtig</h4>
+              <p className="text-sm text-neutral-300">
+                RawBT muss im Hintergrund laufen und der Drucker muss via Bluetooth verbunden sein, damit automatisches Drucken funktioniert.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   // PIN Login Screen
   if (!isAuthenticated) {
