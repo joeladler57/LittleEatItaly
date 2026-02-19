@@ -837,6 +837,60 @@ async def update_staff_reservation_status(reservation_id: str, status: str, role
     
     return {"message": f"Status updated to {status}"}
 
+# ============ PRINT QUEUE ENDPOINTS ============
+
+@api_router.get("/print-queue")
+async def get_print_queue(role: str = Depends(verify_staff_token)):
+    """Get pending print jobs for the print station"""
+    jobs = await db.print_queue.find(
+        {"status": "pending"},
+        {"_id": 0}
+    ).sort("created_at", 1).to_list(100)
+    return jobs
+
+@api_router.post("/print-queue")
+async def add_to_print_queue(order_id: str, role: str = Depends(verify_staff_token)):
+    """Add an order to the print queue"""
+    order = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Check if already in queue
+    existing = await db.print_queue.find_one({"order_id": order_id, "status": "pending"})
+    if existing:
+        return {"message": "Already in queue", "job_id": existing["id"]}
+    
+    job = PrintJob(
+        order_id=order_id,
+        order_number=order.get("order_number", 0),
+        order_data=order
+    )
+    job_dict = job.model_dump()
+    job_dict["created_at"] = job_dict["created_at"].isoformat()
+    
+    await db.print_queue.insert_one(job_dict)
+    return {"message": "Added to print queue", "job_id": job.id}
+
+@api_router.put("/print-queue/{job_id}/complete")
+async def complete_print_job(job_id: str, role: str = Depends(verify_staff_token)):
+    """Mark a print job as completed"""
+    result = await db.print_queue.update_one(
+        {"id": job_id},
+        {"$set": {
+            "status": "completed",
+            "printed_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Print job not found")
+    return {"message": "Print job completed"}
+
+@api_router.delete("/print-queue/{job_id}")
+async def delete_print_job(job_id: str, role: str = Depends(verify_staff_token)):
+    """Delete a print job"""
+    await db.print_queue.delete_one({"id": job_id})
+    return {"message": "Print job deleted"}
+
 class StaffReservationCreate(BaseModel):
     """Model for staff-created phone reservations"""
     customer_name: str
