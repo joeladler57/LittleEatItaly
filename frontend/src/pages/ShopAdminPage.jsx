@@ -3844,9 +3844,11 @@ const TerminalSection = ({ onUpdate }) => {
                     onChange={e => setNewMenuItem({ ...newMenuItem, category: e.target.value })}
                     className="w-full bg-pizza-black border border-pizza-dark text-pizza-white p-2 rounded-none mt-1"
                   >
-                    {categories.map(cat => (
+                    {categoryNames.length > 0 ? categoryNames.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
-                    ))}
+                    )) : (
+                      <option value="Sonstiges">Sonstiges</option>
+                    )}
                   </select>
                 </div>
                 <div>
