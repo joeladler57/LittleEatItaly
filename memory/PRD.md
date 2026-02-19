@@ -210,28 +210,31 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 4. Du erhältst jetzt Benachrichtigungen auch bei geschlossenem Browser!
 
 ## Druck-Station für Bon-Druck (Dezember 2025)
-**Problem gelöst:** Epson TM-m30II nutzt Bluetooth Classic (3.0), das nicht mit Web Bluetooth API (nur BLE) kompatibel ist. Lösung: RawBT Android App als Brücke.
+**Netzwerk-Drucker direkt angebunden!** Der Epson TM-m30II ist per Netzwerkkabel verbunden und druckt jetzt automatisch.
 
-**So richtest du die Druck-Station ein:**
-1. Öffne `/print-station` auf einem alten Android-Handy
-2. Logge dich mit dem Staff-PIN (1234) ein
-3. Tippe auf "JETZT EINRICHTEN" um die Anleitung zu sehen
-4. Installiere "RawBT Print Service" aus dem Play Store
-5. In RawBT: Bluetooth auswählen → Epson TM-m30II verbinden
-6. Testdruck in RawBT machen
-7. Zurück zur Print-Station: "EINRICHTUNG ABSCHLIESSEN" tippen
-8. Die Station ist bereit - Bons werden automatisch gedruckt!
+**Drucker-Einstellungen (Admin → DRUCKER):**
+1. IP-Adresse des Druckers eintragen (z.B. 192.168.2.129)
+2. Port: **9100** (Standard für Netzwerk-Thermodrucker)
+3. "Drucker aktivieren" einschalten
+4. "Automatisch drucken bei Annahme" aktivieren
+5. Mit "Verbindung prüfen" testen
+6. Mit "Testdruck" einen Testbon drucken
 
-**Funktionen:**
-- ✅ Automatischer Bon-Druck bei neuen Bestellungen
-- ✅ Manuelle Druck-Buttons für jeden Job in der Warteschlange
-- ✅ Sound-Benachrichtigung bei neuen Jobs
-- ✅ Auto-Druck An/Aus schaltbar
-- ✅ RawBT URL-Schema Integration (rawbt:base64,...)
+**Funktionsweise:**
+- ✅ Bestellung wird im Personal-Bereich oder Admin angenommen
+- ✅ Backend sendet ESC/POS-Befehle direkt an Drucker (Port 9100)
+- ✅ Bon wird automatisch gedruckt - keine extra App/Gerät nötig!
 
-**URLs:**
-- Print-Station: `/print-station` (Staff-PIN benötigt)
-- Play Store: https://play.google.com/store/apps/details?id=ru.a402d.rawbtprinter
+**Status-Seite `/print-station`:**
+- Zeigt Drucker-Verbindungsstatus in Echtzeit
+- Zählt gedruckte Bons
+- Testdruck-Button
+- Print-Historie
+
+**API-Endpunkte:**
+- `GET /api/printer/status` - Drucker-Status prüfen
+- `POST /api/printer/test` - Testdruck senden
+- `POST /api/printer/print/{order_id}` - Bestellung manuell drucken
 
 ## Backlog / Zukünftige Features
 - E-Mail-Benachrichtigungen aktivieren (Resend API-Key benötigt)
