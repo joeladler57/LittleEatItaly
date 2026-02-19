@@ -508,19 +508,22 @@ const TerminalPage = () => {
         
         {/* Categories */}
         <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 font-mono text-sm whitespace-nowrap ${
-                selectedCategory === cat
-                  ? 'bg-green-600 text-white'
-                  : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          {categories.map(cat => {
+            const catName = typeof cat === 'string' ? cat : cat.name;
+            return (
+              <button
+                key={catName}
+                onClick={() => setSelectedCategory(catName)}
+                className={`px-4 py-2 font-mono text-sm whitespace-nowrap ${
+                  selectedCategory === catName
+                    ? 'bg-green-600 text-white'
+                    : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
+                }`}
+              >
+                {catName}
+              </button>
+            );
+          })}
         </div>
       </div>
 
