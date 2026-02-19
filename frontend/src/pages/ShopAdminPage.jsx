@@ -2192,6 +2192,20 @@ const PrinterSection = ({ settings, onUpdate }) => {
     }));
   };
 
+  // Helper to toggle template values
+  const toggleTemplate = (section, key) => {
+    setFormData(prev => ({
+      ...prev,
+      receipt_template: {
+        ...prev.receipt_template,
+        [section]: {
+          ...prev.receipt_template[section],
+          [key]: !prev.receipt_template[section][key]
+        }
+      }
+    }));
+  };
+
   // Sample order for preview
   const sampleOrder = {
     order_number: 42,
