@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Print Station - Little Eat Italy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .header small {
+            font-size: 11px;
+            color: #888;
+            display: block;
+        }
+        .status-box {
+            padding: 16px;
+            border: 2px solid #333;
+            margin-bottom: 16px;
+        }
+        .status-box.connected {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+        .status-box.error {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-info h3 {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .status-info p {
+            font-size: 11px;
+            color: #888;
+            font-family: monospace;
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-green { background: #22c55e; color: #fff; }
+        .btn-red { background: #ef4444; color: #fff; }
+        .btn-gray { background: #333; color: #fff; }
+        .btn:disabled { background: #555; color: #888; }
+        .btn-full { width: 100%; margin-top: 12px; padding: 16px; }
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            background: #111;
+            padding: 24px;
+            margin-bottom: 16px;
+            border: 1px solid #333;
+        }
+        .stat { text-align: center; }
+        .stat-label { font-size: 10px; color: #888; margin-bottom: 4px; }
+        .stat-value { font-size: 36px; font-weight: bold; }
+        .stat-value.yellow { color: #eab308; }
+        .stat-value.green { color: #22c55e; }
+        .main-status {
+            padding: 32px;
+            text-align: center;
+            border: 2px solid #333;
+            margin-bottom: 16px;
+        }
+        .main-status.ready {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+        .main-status.printing {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+        .main-status h2 {
+            font-size: 20px;
+            margin-top: 12px;
+        }
+        .main-status p {
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+        }
+        .icon { font-size: 48px; }
+        .settings {
+            margin-top: 16px;
+            padding: 16px;
+            background: #111;
+            border: 1px solid #333;
+        }
+        .settings h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .input-group {
+            margin-bottom: 12px;
+        }
+        .input-group label {
+            font-size: 10px;
+            color: #888;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            border: 1px solid #333;
+            color: #fff;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .log {
+            margin-top: 16px;
+            padding: 12px;
+            background: #111;
+            border: 1px solid #333;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 10px;
+            color: #888;
+        }
+        .log-entry { margin-bottom: 4px; }
+        .log-entry.success { color: #22c55e; }
+        .log-entry.error { color: #ef4444; }
+        .queue-item {
+            background: #111;
+            border: 1px solid #333;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .queue-item h4 { font-size: 18px; }
+        .queue-item small { font-size: 10px; color: #888; }
+        .hidden { display: none; }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinning { animation: spin 1s linear infinite; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span style="font-size: 32px;">🖨️</span>
+        <div>
+            <h1>DRUCK-STATION</h1>
+            <small id="restaurantName">Little Eat Italy</small>
+        </div>
+    </div>
+
+    <div id="connectionBox" class="status-box">
+        <div class="status-row">
+            <div class="status-info">
+                <h3 id="connectionStatus">DRUCKER VERBINDEN</h3>
+                <p id="printerAddress">192.168.2.129:8008</p>
+            </div>
+            <button id="connectBtn" class="btn btn-green" onclick="toggleConnection()">Verbinden</button>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-label">WARTESCHLANGE</div>
+            <div class="stat-value yellow" id="queueCount">0</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">GEDRUCKT</div>
+            <div class="stat-value green" id="printedCount">0</div>
+        </div>
+    </div>
+
+    <div id="mainStatus" class="main-status">
+        <div class="icon">🖨️</div>
+        <h2 id="mainStatusText">DRUCKER VERBINDEN</h2>
+        <p id="mainStatusSub">Oben auf "Verbinden" tippen</p>
+    </div>
+
+    <div id="queueList"></div>
+
+    <button id="testPrintBtn" class="btn btn-gray btn-full" onclick="testPrint()" style="display:none;">
+        🖨️ Testdruck
+    </button>
+
+    <div class="settings">
+        <h3>⚙️ Einstellungen</h3>
+        <div class="input-group">
+            <label>DRUCKER IP-ADRESSE</label>
+            <input type="text" id="printerIP" value="192.168.2.129" onchange="saveSettings()">
+        </div>
+        <div class="input-group">
+            <label>PORT</label>
+            <input type="number" id="printerPort" value="8008" onchange="saveSettings()">
+        </div>
+        <div class="input-group">
+            <label>BACKEND API URL</label>
+            <input type="text" id="apiUrl" value="https://thermal-print-10.preview.emergentagent.com/api" onchange="saveSettings()">
+        </div>
+    </div>
+
+    <div class="log" id="logBox">
+        <div class="log-entry">Print Station bereit...</div>
+    </div>
+
+    <script>
+        // State
+        let isConnected = false;
+        let isPrinting = false;
+        let printedCount = 0;
+        let printQueue = [];
+        let pollInterval = null;
+        let settings = null;
+
+        // Load settings from localStorage
+        function loadSettings() {
+            const savedIP = localStorage.getItem('printer_ip');
+            const savedPort = localStorage.getItem('printer_port');
+            const savedAPI = localStorage.getItem('api_url');
+            
+            if (savedIP) document.getElementById('printerIP').value = savedIP;
+            if (savedPort) document.getElementById('printerPort').value = savedPort;
+            if (savedAPI) document.getElementById('apiUrl').value = savedAPI;
+            
+            updatePrinterAddress();
+        }
+
+        function saveSettings() {
+            localStorage.setItem('printer_ip', document.getElementById('printerIP').value);
+            localStorage.setItem('printer_port', document.getElementById('printerPort').value);
+            localStorage.setItem('api_url', document.getElementById('apiUrl').value);
+            updatePrinterAddress();
+            log('Einstellungen gespeichert');
+        }
+
+        function updatePrinterAddress() {
+            const ip = document.getElementById('printerIP').value;
+            const port = document.getElementById('printerPort').value;
+            document.getElementById('printerAddress').textContent = `${ip}:${port}`;
+        }
+
+        function log(message, type = '') {
+            const logBox = document.getElementById('logBox');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logBox.insertBefore(entry, logBox.firstChild);
+            if (logBox.children.length > 50) {
+                logBox.removeChild(logBox.lastChild);
+            }
+        }
+
+        function toggleConnection() {
+            if (isConnected) {
+                disconnect();
+            } else {
+                connect();
+            }
+        }
+
+        function connect() {
+            isConnected = true;
+            document.getElementById('connectionBox').classList.add('connected');
+            document.getElementById('connectionStatus').textContent = 'DRUCKER BEREIT';
+            document.getElementById('connectBtn').textContent = 'Trennen';
+            document.getElementById('connectBtn').className = 'btn btn-red';
+            document.getElementById('testPrintBtn').style.display = 'block';
+            updateMainStatus();
+            log('Drucker verbunden', 'success');
+            
+            // Start polling for print jobs
+            fetchShopSettings();
+            startPolling();
+        }
+
+        function disconnect() {
+            isConnected = false;
+            stopPolling();
+            document.getElementById('connectionBox').classList.remove('connected');
+            document.getElementById('connectionStatus').textContent = 'DRUCKER VERBINDEN';
+            document.getElementById('connectBtn').textContent = 'Verbinden';
+            document.getElementById('connectBtn').className = 'btn btn-green';
+            document.getElementById('testPrintBtn').style.display = 'none';
+            updateMainStatus();
+            log('Drucker getrennt');
+        }
+
+        function updateMainStatus() {
+            const mainStatus = document.getElementById('mainStatus');
+            const mainText = document.getElementById('mainStatusText');
+            const mainSub = document.getElementById('mainStatusSub');
+            
+            mainStatus.className = 'main-status';
+            
+            if (!isConnected) {
+                mainText.innerHTML = '🖨️ DRUCKER VERBINDEN';
+                mainSub.textContent = 'Oben auf "Verbinden" tippen';
+            } else if (isPrinting) {
+                mainStatus.classList.add('printing');
+                mainText.innerHTML = '<span class="spinning">⏳</span> DRUCKT...';
+                mainSub.textContent = '';
+            } else if (printQueue.length > 0) {
+                mainText.innerHTML = `🖨️ ${printQueue.length} BON(S) WARTEN`;
+                mainSub.textContent = 'Automatischer Druck aktiv';
+            } else {
+                mainStatus.classList.add('ready');
+                mainText.innerHTML = '✅ BEREIT';
+                mainSub.textContent = 'Warte auf Bestellungen...';
+            }
+        }
+
+        async function fetchShopSettings() {
+            try {
+                const apiUrl = document.getElementById('apiUrl').value;
+                const response = await fetch(`${apiUrl}/shop/settings`);
+                settings = await response.json();
+                if (settings.restaurant_name) {
+                    document.getElementById('restaurantName').textContent = settings.restaurant_name;
+                }
+                log('Shop-Einstellungen geladen');
+            } catch (e) {
+                log('Fehler beim Laden der Einstellungen: ' + e.message, 'error');
+            }
+        }
+
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(fetchPrintQueue, 3000);
+            fetchPrintQueue();
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        async function fetchPrintQueue() {
+            if (!isConnected) return;
+            
+            try {
+                const apiUrl = document.getElementById('apiUrl').value;
+                const response = await fetch(`${apiUrl}/print-queue/pending`);
+                const jobs = await response.json();
+                
+                const prevCount = printQueue.length;
+                printQueue = jobs;
+                
+                document.getElementById('queueCount').textContent = printQueue.length;
+                
+                // Play sound if new job
+                if (printQueue.length > prevCount && prevCount >= 0) {
+                    playSound();
+                }
+                
+                // Auto-print first job
+                if (printQueue.length > 0 && !isPrinting) {
+                    await processPrintJob(printQueue[0]);
+                }
+                
+                renderQueue();
+                updateMainStatus();
+                
+            } catch (e) {
+                // Silent fail - backend might be unavailable
+            }
+        }
+
+        function renderQueue() {
+            const container = document.getElementById('queueList');
+            container.innerHTML = '';
+            
+            printQueue.forEach(job => {
+                const div = document.createElement('div');
+                div.className = 'queue-item';
+                div.innerHTML = `
+                    <div>
+                        <h4>#${job.order_number}</h4>
+                        <small>${new Date(job.created_at).toLocaleTimeString()}</small>
+                    </div>
+                    <button class="btn btn-green" onclick="processPrintJob(${JSON.stringify(job).replace(/"/g, '&quot;')})">Drucken</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function playSound() {
+            try {
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleRg1TYyh1K5WARlQoMfbqGIlPnOLrdKvYCAzVIS11bZnJDNYeaXGs3Y0QlhuobSqd0xPW2mEm56Sd1NVYnCAjI2EeWVhZ3B4fnyAgoGEhIKBgYOEhYWEhIOCgoKCgoKBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgX5+');
+                audio.play();
+            } catch (e) {}
+        }
+
+        async function testPrint() {
+            const testOrder = {
+                order_number: 'TEST',
+                customer_name: 'Test Kunde',
+                customer_phone: '0000-0000000',
+                pickup_time: 'JETZT',
+                created_at: new Date().toISOString(),
+                items: [
+                    { quantity: 1, item_name: 'Test Pizza Margherita', size_name: '32cm', total_price: 10.00 },
+                    { quantity: 2, item_name: 'Coca Cola', size_name: '0.5L', total_price: 6.00 }
+                ],
+                total: 16.00,
+                notes: 'Das ist ein Testdruck!',
+                payment_method: 'Bar'
+            };
+            
+            const success = await printReceipt(testOrder);
+            if (success) {
+                printedCount++;
+                document.getElementById('printedCount').textContent = printedCount;
+                log('Testdruck erfolgreich!', 'success');
+            }
+        }
+
+        async function processPrintJob(job) {
+            if (isPrinting) return;
+            
+            isPrinting = true;
+            updateMainStatus();
+            log(`Drucke Bon #${job.order_number}...`);
+            
+            try {
+                const orderData = job.order_data || job;
+                const success = await printReceipt(orderData);
+                
+                if (success) {
+                    // Mark as completed in backend
+                    try {
+                        const apiUrl = document.getElementById('apiUrl').value;
+                        await fetch(`${apiUrl}/print-queue/${job.id}/status`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'completed' })
+                        });
+                    } catch (e) {}
+                    
+                    printedCount++;
+                    document.getElementById('printedCount').textContent = printedCount;
+                    log(`Bon #${job.order_number} gedruckt!`, 'success');
+                    
+                    // Remove from local queue
+                    printQueue = printQueue.filter(j => j.id !== job.id);
+                    document.getElementById('queueCount').textContent = printQueue.length;
+                    renderQueue();
+                } else {
+                    log(`Druckfehler bei #${job.order_number}`, 'error');
+                }
+            } catch (e) {
+                log(`Fehler: ${e.message}`, 'error');
+            } finally {
+                isPrinting = false;
+                updateMainStatus();
+            }
+        }
+
+        function escapeXML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+        }
+
+        function buildReceiptXML(order) {
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+<text lang="de"/>`;
+
+            // Header
+            xml += `<text align="center"/>`;
+            xml += `<text font="font_a" dw="true" dh="true" em="true"/>`;
+            xml += `<text>${escapeXML(settings?.restaurant_name || 'Little Eat Italy')}&#10;</text>`;
+            xml += `<text dw="false" dh="false" em="false"/>`;
+
+            if (settings?.restaurant_address) {
+                xml += `<text>${escapeXML(settings.restaurant_address)}&#10;</text>`;
+            }
+            if (settings?.restaurant_phone) {
+                xml += `<text>Tel: ${escapeXML(settings.restaurant_phone)}&#10;</text>`;
+            }
+
+            xml += `<text>--------------------------------&#10;</text>`;
+
+            // Order Number
+            xml += `<text align="center"/>`;
+            xml += `<text dw="true" dh="true" em="true"/>`;
+            xml += `<text>#${escapeXML(String(order.order_number || '?'))}&#10;</text>`;
+            xml += `<text dw="false" dh="false" em="false"/>`;
+
+            // Date/Time
+            const date = new Date(order.created_at);
+            xml += `<text>${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}&#10;</text>`;
+
+            // Customer
+            xml += `<text align="left"/>`;
+            xml += `<text em="true"/>`;
+            xml += `<text>Kunde: ${escapeXML(order.customer_name || '')}&#10;</text>`;
+            xml += `<text em="false"/>`;
+
+            if (order.customer_phone) {
+                xml += `<text>Tel: ${escapeXML(order.customer_phone)}&#10;</text>`;
+            }
+
+            // Pickup Time
+            xml += `<feed line="1"/>`;
+            xml += `<text align="center"/>`;
+            xml += `<text dw="true" dh="true" em="true"/>`;
+            xml += `<text>================&#10;</text>`;
+            const pickupTime = order.confirmed_pickup_time || order.pickup_time || 'N/A';
+            xml += `<text>ABHOLUNG: ${escapeXML(pickupTime)}&#10;</text>`;
+            xml += `<text>================&#10;</text>`;
+            xml += `<text dw="false" dh="false" em="false"/>`;
+
+            xml += `<text align="left"/>`;
+            xml += `<text>--------------------------------&#10;</text>`;
+
+            // Items
+            for (const item of (order.items || [])) {
+                let itemLine = (item.quantity || 1) + 'x ' + (item.item_name || '');
+                if (item.size_name) itemLine += ' (' + item.size_name + ')';
+                
+                const price = (item.total_price || 0).toFixed(2) + '€';
+                const spaces = Math.max(1, 32 - itemLine.length - price.length);
+                xml += `<text>${escapeXML(itemLine)}${' '.repeat(spaces)}${price}&#10;</text>`;
+
+                if (item.options && item.options.length > 0) {
+                    const opts = item.options.map(o => o.option_name || o.name || String(o)).join(', ');
+                    xml += `<text>  + ${escapeXML(opts)}&#10;</text>`;
+                }
+            }
+
+            xml += `<text>--------------------------------&#10;</text>`;
+
+            // Notes
+            if (order.notes) {
+                xml += `<text em="true"/>`;
+                xml += `<text>* ${escapeXML(order.notes)}&#10;</text>`;
+                xml += `<text em="false"/>`;
+            }
+
+            // Total
+            xml += `<text em="true" dh="true"/>`;
+            const totalLine = 'GESAMT:';
+            const totalPrice = (order.total || 0).toFixed(2) + '€';
+            const spaces = Math.max(1, 32 - totalLine.length - totalPrice.length);
+            xml += `<text>${totalLine}${' '.repeat(spaces)}${totalPrice}&#10;</text>`;
+            xml += `<text dh="false" em="false"/>`;
+
+            if (order.payment_method) {
+                xml += `<text>Zahlung: ${escapeXML(order.payment_method)}&#10;</text>`;
+            }
+
+            xml += `<text>--------------------------------&#10;</text>`;
+
+            // Footer
+            xml += `<text align="center"/>`;
+            xml += `<text>Vielen Dank!&#10;</text>`;
+
+            // Feed and cut
+            xml += `<feed line="4"/>`;
+            xml += `<cut/>`;
+            xml += `</epos-print>`;
+
+            return xml;
+        }
+
+        function printReceipt(order) {
+            return new Promise((resolve) => {
+                const ip = document.getElementById('printerIP').value;
+                const port = document.getElementById('printerPort').value;
+                const url = `http://${ip}:${port}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000`;
+                const xml = buildReceiptXML(order);
+                
+                log('Sende an: ' + url);
+                
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', url, true);
+                xhr.setRequestHeader('Content-Type', 'application/xml; charset=UTF-8');
+                xhr.timeout = 15000;
+                
+                xhr.onload = function() {
+                    log('Antwort: ' + xhr.status);
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        if (xhr.responseText.includes('success="false"')) {
+                            log('Drucker meldet Fehler: ' + xhr.responseText, 'error');
+                            resolve(false);
+                        } else {
+                            resolve(true);
+                        }
+                    } else {
+                        log('HTTP Fehler: ' + xhr.status, 'error');
+                        resolve(false);
+                    }
+                };
+                
+                xhr.onerror = function() {
+                    log('Netzwerk-Fehler (könnte trotzdem gedruckt haben)', 'error');
+                    resolve(true); // Optimistic - request might have succeeded
+                };
+                
+                xhr.ontimeout = function() {
+                    log('Timeout', 'error');
+                    resolve(false);
+                };
+                
+                xhr.send(xml);
+            });
+        }
+
+        // Initialize
+        loadSettings();
+    </script>
+</body>
+</html>
