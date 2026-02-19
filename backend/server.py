@@ -106,6 +106,11 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+# Alias for admin token verification (same as verify_token for admin endpoints)
+async def verify_admin_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+    """Verify admin JWT token - alias for verify_token"""
+    return await verify_token(credentials)
+
 async def get_or_create_admin():
     admin = await db.admin_credentials.find_one({"id": "admin_credentials"}, {"_id": 0})
     if not admin:
