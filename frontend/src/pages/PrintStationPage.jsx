@@ -660,6 +660,9 @@ const PrintStationPage = () => {
   // Print Station Dashboard
   return (
     <div className="min-h-screen bg-black text-white p-4">
+      {/* Setup Guide Modal */}
+      {showSetupGuide && <SetupGuide />}
+      
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -677,41 +680,51 @@ const PrintStationPage = () => {
         </div>
       </div>
 
-      {/* Bluetooth Connection */}
-      <div className={`p-4 mb-4 border ${bluetoothConnected ? 'bg-blue-500/10 border-blue-500' : 'bg-neutral-900 border-neutral-700'}`}>
+      {/* RawBT Connection */}
+      <div className={`p-4 mb-4 border ${rawbtConnected ? 'bg-green-500/10 border-green-500' : 'bg-neutral-900 border-neutral-700'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {bluetoothConnected ? (
-              <Bluetooth className="w-6 h-6 text-blue-400" />
+            {rawbtConnected ? (
+              <Smartphone className="w-6 h-6 text-green-400" />
             ) : (
-              <BluetoothOff className="w-6 h-6 text-neutral-500" />
+              <Smartphone className="w-6 h-6 text-neutral-500" />
             )}
             <div>
               <p className="font-anton text-sm">
-                {bluetoothConnected ? bluetoothDevice?.name : 'DRUCKER VERBINDEN'}
+                {rawbtConnected ? 'RAWBT VERBUNDEN' : 'RAWBT APP'}
               </p>
               <p className="font-mono text-xs text-neutral-400">
-                {bluetoothConnected ? 'Verbunden via Bluetooth' : 'Tippen um zu verbinden'}
+                {rawbtConnected ? 'Drucker bereit' : 'Nicht verbunden'}
               </p>
             </div>
           </div>
           
-          {bluetoothConnected ? (
-            <button
-              onClick={disconnectBluetooth}
-              className="bg-red-600 hover:bg-red-500 text-white font-mono text-xs px-3 py-2"
-            >
-              Trennen
-            </button>
-          ) : (
-            <button
-              onClick={connectBluetooth}
-              disabled={isConnecting}
-              className="bg-blue-600 hover:bg-blue-500 disabled:bg-neutral-700 text-white font-mono text-xs px-3 py-2"
-            >
-              {isConnecting ? '...' : 'Verbinden'}
-            </button>
-          )}
+          <div className="flex gap-2">
+            {!rawbtConnected && (
+              <button
+                onClick={() => setShowSetupGuide(true)}
+                className="bg-neutral-700 hover:bg-neutral-600 text-white font-mono text-xs px-3 py-2"
+              >
+                Anleitung
+              </button>
+            )}
+            {rawbtConnected ? (
+              <button
+                onClick={disconnectRawBT}
+                className="bg-red-600 hover:bg-red-500 text-white font-mono text-xs px-3 py-2"
+              >
+                Trennen
+              </button>
+            ) : (
+              <button
+                onClick={connectRawBT}
+                disabled={isConnecting}
+                className="bg-green-600 hover:bg-green-500 disabled:bg-neutral-700 text-white font-mono text-xs px-3 py-2"
+              >
+                {isConnecting ? '...' : 'Verbinden'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -737,18 +750,24 @@ const PrintStationPage = () => {
 
       {/* Current Status */}
       <div className={`p-6 text-center border ${
-        !bluetoothConnected ? 'bg-yellow-500/10 border-yellow-500' :
+        !rawbtConnected ? 'bg-yellow-500/10 border-yellow-500' :
         isPrinting ? 'bg-blue-500/20 border-blue-500' : 
         printQueue.length > 0 ? 'bg-yellow-500/10 border-yellow-500' :
         'bg-green-500/10 border-green-500'
       }`}>
-        {!bluetoothConnected ? (
+        {!rawbtConnected ? (
           <>
-            <BluetoothOff className="w-12 h-12 text-yellow-400 mx-auto mb-3" />
-            <p className="font-anton text-xl text-yellow-400">DRUCKER VERBINDEN</p>
+            <Smartphone className="w-12 h-12 text-yellow-400 mx-auto mb-3" />
+            <p className="font-anton text-xl text-yellow-400">RAWBT VERBINDEN</p>
             <p className="font-mono text-sm text-neutral-400 mt-2">
-              Bitte oben auf "Verbinden" tippen
+              RawBT App starten und hier verbinden
             </p>
+            <button
+              onClick={() => setShowSetupGuide(true)}
+              className="mt-4 bg-yellow-600 hover:bg-yellow-500 text-black font-mono text-sm px-4 py-2"
+            >
+              Einrichtung anzeigen
+            </button>
           </>
         ) : isPrinting ? (
           <>
@@ -770,7 +789,7 @@ const PrintStationPage = () => {
       </div>
 
       {/* Test Print Button */}
-      {bluetoothConnected && (
+      {rawbtConnected && (
         <button
           onClick={testPrint}
           disabled={isPrinting}
@@ -784,9 +803,9 @@ const PrintStationPage = () => {
       {/* Instructions */}
       <div className="mt-4 p-4 bg-neutral-900/50 border border-neutral-800">
         <p className="font-mono text-xs text-neutral-500 text-center">
-          {bluetoothConnected 
-            ? "✅ Drucker verbunden. Bons werden automatisch gedruckt."
-            : "Bluetooth-Drucker verbinden um automatisch zu drucken."}
+          {rawbtConnected 
+            ? "✅ RawBT verbunden. Bons werden automatisch gedruckt."
+            : "RawBT App installieren und starten für automatischen Druck."}
         </p>
       </div>
     </div>
