@@ -305,7 +305,7 @@ class ShopSettings(BaseModel):
     # Printer Settings
     printer_enabled: bool = False
     printer_ip: str = ""
-    printer_port: int = 8008  # Epson ePOS default port
+    printer_port: int = 9100  # Standard RAW/AppSocket port for network printers
     printer_device_id: str = "local_printer"
     auto_print_on_accept: bool = True
     
