@@ -2210,23 +2210,37 @@ const PrinterSection = ({ settings, onUpdate }) => {
     payment_method: "Kartenzahlung"
   };
 
+  // Safari-compatible Toggle Switch using button element
   const ToggleSwitch = ({ checked, onChange, label }) => (
-    <div 
-      className="flex items-center gap-3 cursor-pointer group"
-      onClick={() => onChange()}
+    <button 
+      type="button"
+      className="flex items-center gap-3 cursor-pointer group text-left w-full"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onChange();
+      }}
     >
-      <div className={`w-10 h-6 rounded-full p-1 transition-colors ${checked ? 'bg-green-500' : 'bg-neutral-700'}`}>
-        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${checked ? 'translate-x-4' : ''}`} />
+      <div 
+        className={`w-12 h-7 rounded-full p-1 transition-all duration-200 flex-shrink-0 ${
+          checked ? 'bg-green-500' : 'bg-neutral-600'
+        }`}
+      >
+        <div 
+          className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-200 ${
+            checked ? 'translate-x-5' : 'translate-x-0'
+          }`} 
+        />
       </div>
       <span className="font-mono text-sm text-neutral-300 group-hover:text-white">{label}</span>
-    </div>
+    </button>
   );
 
   const SizeSelect = ({ value, onChange }) => (
     <select 
       value={value} 
       onChange={(e) => onChange(e.target.value)}
-      className="bg-pizza-black border border-pizza-dark text-white p-1 text-xs font-mono rounded-none"
+      className="bg-pizza-black border border-pizza-dark text-white p-2 text-xs font-mono rounded-none"
     >
       <option value="small">Klein</option>
       <option value="medium">Mittel</option>
@@ -2248,7 +2262,7 @@ const PrinterSection = ({ settings, onUpdate }) => {
           <div className="space-y-4">
             <ToggleSwitch 
               checked={formData.printer_enabled} 
-              onChange={() => setFormData({...formData, printer_enabled: !formData.printer_enabled})}
+              onChange={() => setFormData(prev => ({...prev, printer_enabled: !prev.printer_enabled}))}
               label="Drucker aktivieren"
             />
 
