@@ -3215,7 +3215,16 @@ const TerminalSection = ({ onUpdate }) => {
     }
   };
 
-  const categoryNames = ["Vorspeise", "Hauptspeise", "Pizza", "Pasta", "Salat", "Nachspeise", "Getränke", "Sonstiges"];
+  // Generate category names from menu items dynamically
+  const categoryNames = [...new Set(menuItems.map(item => item.category))].sort((a, b) => {
+    const order = ["Vorspeisen", "Salate", "Pizza Classics", "Pizza Signatures", "Pizza Specials", "Pasta", "Pasta Creations", "Fresh Chicken", "Dips", "Add-On", "Softdrinks", "Wasser", "Schorle", "Bier", "Aperitif", "Weißwein", "Rotwein", "Absacker"];
+    const aIdx = order.indexOf(a);
+    const bIdx = order.indexOf(b);
+    if (aIdx === -1 && bIdx === -1) return a.localeCompare(b);
+    if (aIdx === -1) return 1;
+    if (bIdx === -1) return -1;
+    return aIdx - bIdx;
+  });
 
   if (loading) {
     return (
