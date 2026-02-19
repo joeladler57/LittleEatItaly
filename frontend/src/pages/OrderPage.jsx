@@ -436,7 +436,7 @@ const OrderPage = () => {
             </div>
 
             {/* Cart Sidebar - always visible when checkout, or when cart has items on desktop */}
-            <div className={`lg:w-96 ${step === "menu" && cart.length === 0 ? "hidden lg:block" : ""}`}>
+            <div className={`lg:w-80 xl:w-96 flex-shrink-0 ${step === "menu" && cart.length === 0 ? "hidden lg:block" : ""}`}>
               {/* Cart Summary - NOT sticky during checkout to prevent overlap */}
               <div className={`bg-pizza-dark border border-pizza-dark ${step === "menu" ? "lg:sticky lg:top-24" : ""}`}>
                 <div className="p-4 border-b border-pizza-black">
