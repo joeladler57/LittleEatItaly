@@ -504,11 +504,12 @@ const ShopAdminPage = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-pizza-dark border border-pizza-dark mb-6 p-1 rounded-none">
+          <TabsList className="bg-pizza-dark border border-pizza-dark mb-6 p-1 rounded-none overflow-x-auto flex-wrap">
             {[
               { id: "orders", label: "BESTELLUNGEN", icon: ShoppingBag, count: orders.filter(o => o.status === "pending").length },
               { id: "reservations", label: "RESERVIERUNGEN", icon: CalendarDays, count: reservations.filter(r => r.status === "pending").length },
               { id: "menu", label: "MENÜ", icon: UtensilsCrossed },
+              { id: "terminal", label: "TERMINAL", icon: Tablet },
               { id: "printer", label: "DRUCKER", icon: Printer },
               { id: "settings", label: "EINSTELLUNGEN", icon: Settings },
             ].map((tab) => (
