@@ -216,7 +216,7 @@ class OrderItem(BaseModel):
     quantity: int
     size: Optional[str] = None
     size_name: Optional[str] = None
-    options: List[Dict[str, str]] = []  # [{group_name, option_name, price}]
+    options: List[Dict[str, Any]] = []  # [{group_name, option_name, price}]
     unit_price: float
     total_price: float
     notes: str = ""
