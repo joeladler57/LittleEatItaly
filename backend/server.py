@@ -1404,7 +1404,7 @@ async def get_terminal_addon_groups():
 async def create_terminal_addon_group(data: dict, role: str = Depends(verify_admin_token)):
     """Create a new addon group"""
     group = {
-        "id": str(uuid4()),
+        "id": str(uuid.uuid4()),
         "name": data.get("name", ""),
         "options": data.get("options", []),  # [{name, price}]
         "required": data.get("required", False),
