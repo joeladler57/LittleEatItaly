@@ -2223,7 +2223,7 @@ const PrinterSection = ({ settings, onUpdate }) => {
   const [formData, setFormData] = useState({
     printer_enabled: false,
     printer_ip: "",
-    printer_port: 8008,
+    printer_port: 9100,
     printer_device_id: "local_printer",
     auto_print_on_accept: true,
     receipt_template: {
@@ -2281,13 +2281,15 @@ const PrinterSection = ({ settings, onUpdate }) => {
   });
   const [saving, setSaving] = useState(false);
   const [testPrinting, setTestPrinting] = useState(false);
+  const [printerStatus, setPrinterStatus] = useState(null);
+  const [checkingStatus, setCheckingStatus] = useState(false);
 
   useEffect(() => {
     if (settings) {
       setFormData({
         printer_enabled: settings.printer_enabled || false,
         printer_ip: settings.printer_ip || "",
-        printer_port: settings.printer_port || 8008,
+        printer_port: settings.printer_port || 9100,
         printer_device_id: settings.printer_device_id || "local_printer",
         auto_print_on_accept: settings.auto_print_on_accept !== false,
         receipt_template: settings.receipt_template || formData.receipt_template
