@@ -1058,16 +1058,23 @@ async def update_staff_order_status(
         updated_order = await db.orders.find_one({"id": order_id}, {"_id": 0})
         asyncio.create_task(send_order_status_email(updated_order, settings, "confirmed", pickup_time))
         
-        # Auto-add to print queue if printer is enabled
+        # Auto-print directly to network printer if enabled
         if settings.get("printer_enabled") and settings.get("auto_print_on_accept"):
-            job = PrintJob(
-                order_id=order_id,
-                order_number=updated_order.get("order_number", 0),
-                order_data=updated_order
-            )
-            job_dict = job.model_dump()
-            job_dict["created_at"] = job_dict["created_at"].isoformat()
-            await db.print_queue.insert_one(job_dict)
+            print_result = await print_order_receipt(updated_order, settings)
+            if print_result.get("success"):
+                # Log successful print
+                await db.print_queue.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "order_id": order_id,
+                    "order_number": updated_order.get("order_number", 0),
+                    "order_data": updated_order,
+                    "status": "completed",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "printed_at": datetime.now(timezone.utc).isoformat()
+                })
+                logging.info(f"Auto-printed order #{updated_order.get('order_number')}")
+            else:
+                logging.error(f"Auto-print failed: {print_result.get('error')}")
     
     return {"message": f"Status updated to {status}", "pickup_time": pickup_time}
 
