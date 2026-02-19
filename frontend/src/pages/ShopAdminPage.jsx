@@ -2307,7 +2307,7 @@ const PrinterSection = ({ settings, onUpdate }) => {
 
                 <ToggleSwitch 
                   checked={formData.auto_print_on_accept} 
-                  onChange={() => setFormData({...formData, auto_print_on_accept: !formData.auto_print_on_accept})}
+                  onChange={(val) => setFormData(prev => ({...prev, auto_print_on_accept: val}))}
                   label="Automatisch drucken bei Annahme"
                 />
 
