@@ -9,7 +9,49 @@
 - **URL**: /personal
 - **PIN**: 1234 (Standard, änderbar in Admin → Einstellungen)
 
+## Kellner-Terminal Access
+- **URL**: /terminal
+- **Kellner-PINs** (konfigurierbar im Admin → TERMINAL):
+  | Name | PIN |
+  |------|-----|
+  | Marco | 1111 |
+  | Lucia | 2222 |
+  | Giuseppe | 3333 |
+  | Sofia | 4444 |
+  | Antonio | 5555 |
+  | Elena | 6666 |
+  | Roberto | 7777 |
+  | Francesca | 8888 |
+  | Paolo | 9999 |
+  | Maria | 0000 |
+
 ## What's Been Implemented
+
+### Dezember 2025 - Kellner-Terminal (Getestet ✅)
+- ✅ **Kellner-Login** (`/terminal`):
+  - 4-stelliger PIN für jeden Kellner
+  - Große, mobilfreundliche Nummerntastatur
+  - 12-Stunden Token-Gültigkeit
+- ✅ **Tischauswahl**:
+  - 20 vorkonfigurierte Tische
+  - Grid-Ansicht für schnelle Auswahl
+  - Tischnummer auf Bon gedruckt
+- ✅ **Inhouse-Menü**:
+  - Separates Menü nur für Terminal
+  - Kategorien: Vorspeise, Pizza, Pasta, Salat, Hauptspeise, Nachspeise, Getränke
+  - Preise und Extras pro Artikel
+- ✅ **Bestellvorgang**:
+  - Artikel antippen → Detailansicht
+  - Anzahl wählen
+  - Gang wählen (Vorspeise, Hauptspeise, Nachspeise, Getränke)
+  - Optionale Notiz (z.B. "ohne Zwiebeln")
+  - Warenkorb mit Gesamtsumme
+  - "BON DRUCKEN" sendet Bestellung an Drucker
+- ✅ **Admin-Verwaltung** (`/admin/shop` → TERMINAL):
+  - Kellner: Name + 4-stelliger PIN (muss einzigartig sein)
+  - Tische: Nummer + optionale Beschreibung
+  - Inhouse-Menü: Artikel mit Kategorie, Preis, Extras
+- ✅ **Auto-Druck**: Bestellungen werden automatisch in Druckwarteschlange eingefügt
 
 ### Februar 2026 - Epson TM-30III Bon-Druck (Implementiert ✅)
 - ✅ **Drucker-Einstellungen** im Admin-Bereich (`/admin/shop` → DRUCKER Tab):
