@@ -2,10 +2,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { API } from "../App";
 import { toast } from "sonner";
-import { Printer, Wifi, WifiOff, Check, RefreshCw, Bluetooth, BluetoothOff, Settings } from "lucide-react";
+import { Printer, Wifi, WifiOff, Check, RefreshCw, Smartphone, Settings, AlertCircle, ExternalLink } from "lucide-react";
 
 const POLLING_INTERVAL = 3000;
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
+
+// RawBT WebSocket Configuration
+const RAWBT_WS_URL = "ws://127.0.0.1:40213/";
 
 // ESC/POS Commands
 const ESC = 0x1B;
