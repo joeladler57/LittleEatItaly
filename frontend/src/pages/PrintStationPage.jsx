@@ -91,6 +91,11 @@ const PrintStationPage = () => {
       setIsAuthenticated(true);
       setPinError("");
       fetchSettings();
+      // Check if RawBT preference was saved
+      const savedRawbt = localStorage.getItem("print_station_rawbt_ready");
+      if (savedRawbt === "true") {
+        setRawbtReady(true);
+      }
       toast.success("Angemeldet!");
     } catch (e) {
       setPinError("Falscher PIN");
@@ -106,107 +111,52 @@ const PrintStationPage = () => {
     }
   };
 
-  // Connect to RawBT WebSocket Server
-  const connectRawBT = useCallback(() => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      return; // Already connected
-    }
-
-    setIsConnecting(true);
-    
-    try {
-      const ws = new WebSocket(RAWBT_WS_URL);
-      
-      ws.onopen = () => {
-        console.log("RawBT WebSocket connected");
-        setRawbtConnected(true);
-        setIsConnecting(false);
-        toast.success("✅ RawBT verbunden!");
-      };
-      
-      ws.onclose = () => {
-        console.log("RawBT WebSocket closed");
-        setRawbtConnected(false);
-        wsRef.current = null;
-        
-        // Auto-reconnect after 5 seconds if authenticated
-        if (isAuthenticated) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            console.log("Attempting RawBT reconnection...");
-            connectRawBT();
-          }, 5000);
-        }
-      };
-      
-      ws.onerror = (error) => {
-        console.error("RawBT WebSocket error:", error);
-        setIsConnecting(false);
-        setRawbtConnected(false);
-      };
-      
-      ws.onmessage = (event) => {
-        console.log("RawBT message:", event.data);
-        // Handle any response from RawBT if needed
-      };
-      
-      wsRef.current = ws;
-    } catch (error) {
-      console.error("Failed to connect to RawBT:", error);
-      setIsConnecting(false);
-      setRawbtConnected(false);
-    }
-  }, [isAuthenticated]);
-
-  // Disconnect from RawBT
-  const disconnectRawBT = () => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-    setRawbtConnected(false);
-    toast.info("RawBT getrennt");
-  };
-
-  // Auto-connect to RawBT when authenticated
+  // Initialize audio for notification
   useEffect(() => {
-    if (isAuthenticated) {
-      // Small delay before attempting connection
-      const timer = setTimeout(() => {
-        connectRawBT();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated, connectRawBT]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
+    audioRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleRg1TYyh1K5WARlQoMfbqGIlPnOLrdKvYCAzVIS11bZnJDNYeaXGs3Y0QlhuobSqd0xPW2mEm56Sd1NVYnCAjI2EeWVhZ3B4fnyAgoGEhIKBgYOEhYWEhIOCgoKCgoKBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgX5+");
   }, []);
 
-  // Send data to RawBT printer
-  const sendToPrinter = async (data) => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      throw new Error("RawBT nicht verbunden");
+  // Play notification sound
+  const playNotificationSound = () => {
+    if (soundEnabled && audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(e => console.log("Audio play failed:", e));
     }
+  };
 
-    // Convert byte array to base64 for WebSocket transmission
-    const uint8Array = new Uint8Array(data);
+  // Mark RawBT as ready (user confirms app is installed and configured)
+  const confirmRawbtReady = () => {
+    setRawbtReady(true);
+    localStorage.setItem("print_station_rawbt_ready", "true");
+    toast.success("✅ RawBT bereit!");
+    setShowSetupGuide(false);
+  };
+
+  // Reset RawBT status
+  const resetRawbtStatus = () => {
+    setRawbtReady(false);
+    localStorage.removeItem("print_station_rawbt_ready");
+  };
+
+  // Send data to RawBT printer via URL scheme
+  const sendToPrinter = async (data) => {
+    // Convert byte array to base64
+    const base64Data = arrayToBase64(data);
     
-    // Send as binary data
-    wsRef.current.send(uint8Array);
+    // Build RawBT URL
+    const rawbtUrl = `rawbt:base64,${base64Data}`;
     
-    // Small delay to ensure data is processed
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Open RawBT app with print data
+    // Using intent scheme for better reliability
+    const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+    
+    // Try opening via standard link first
+    const link = document.createElement('a');
+    link.href = rawbtUrl;
+    link.click();
+    
+    // Small delay to allow app to process
+    await new Promise(resolve => setTimeout(resolve, 500));
   };
 
   // Build ESC/POS receipt
