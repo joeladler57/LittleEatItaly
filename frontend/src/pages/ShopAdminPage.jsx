@@ -851,6 +851,16 @@ const OrdersSection = ({ orders, onUpdate, settings }) => {
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2">
+                      {/* Print Button - always visible */}
+                      <Button
+                        onClick={() => handlePrintOrder(order)}
+                        disabled={printing === order.id}
+                        variant="outline"
+                        className="border-neutral-500 text-neutral-300 hover:bg-neutral-700 font-mono text-xs rounded-none"
+                      >
+                        <Printer className="w-4 h-4 mr-1" /> {printing === order.id ? "..." : "Bon drucken"}
+                      </Button>
+                      
                       {order.status === "pending" && (
                         <>
                           <Button
