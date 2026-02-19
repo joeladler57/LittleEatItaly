@@ -178,6 +178,7 @@
 - BESTELLUNGEN: Status verwalten (Neu → Bestätigt → Storniert), ASAP-Bestellungen mit Zubereitungszeit-Eingabe bestätigen
 - RESERVIERUNGEN: Nach Datum gruppiert, Bestätigen/Stornieren
 - MENÜ: Kategorien und Artikel verwalten (hinzufügen, bearbeiten, löschen)
+- TERMINAL: Kellner, Tische und Inhouse-Menü verwalten
 - EINSTELLUNGEN: Öffnungszeiten pro Wochentag, Geschlossene Tage (Feiertage), Vorlaufzeiten, Restaurant-Kontaktdaten
 
 ### API Endpoints
@@ -207,6 +208,26 @@ GET  /api/staff/orders                 # Bestellungen für Personal
 PUT  /api/staff/orders/{id}/status     # Bestellung Status ändern
 GET  /api/staff/reservations           # Reservierungen für Personal
 PUT  /api/staff/reservations/{id}/status # Reservierung Status ändern
+
+# Terminal / Kellner-Terminal
+POST /api/terminal/login               # Kellner-Login mit PIN
+GET  /api/terminal/tables              # Alle Tische abrufen
+GET  /api/terminal/menu                # Terminal-Menü abrufen
+GET  /api/terminal/categories          # Kategorien abrufen
+POST /api/terminal/orders              # Bestellung aufgeben (→ Druckwarteschlange)
+GET  /api/terminal/orders              # Bestellungen abrufen
+GET  /api/terminal/orders/today        # Heutige Bestellungen
+GET  /api/terminal/waiters             # Kellner abrufen (Admin)
+POST /api/terminal/waiters             # Kellner hinzufügen (Admin)
+PUT  /api/terminal/waiters/{id}        # Kellner bearbeiten (Admin)
+DELETE /api/terminal/waiters/{id}      # Kellner löschen (Admin)
+POST /api/terminal/tables              # Tisch hinzufügen (Admin)
+PUT  /api/terminal/tables/{id}         # Tisch bearbeiten (Admin)
+DELETE /api/terminal/tables/{id}       # Tisch löschen (Admin)
+GET  /api/terminal/menu/all            # Alle Menüartikel inkl. inaktive (Admin)
+POST /api/terminal/menu                # Artikel hinzufügen (Admin)
+PUT  /api/terminal/menu/{id}           # Artikel bearbeiten (Admin)
+DELETE /api/terminal/menu/{id}         # Artikel löschen (Admin)
 ```
 
 ### E-Mail Konfiguration
