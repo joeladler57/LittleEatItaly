@@ -56,14 +56,16 @@ const TerminalPage = () => {
 
   const fetchData = async () => {
     try {
-      const [tablesRes, menuRes, categoriesRes] = await Promise.all([
+      const [tablesRes, menuRes, categoriesRes, addonGroupsRes] = await Promise.all([
         axios.get(`${API}/terminal/tables`),
         axios.get(`${API}/terminal/menu`),
-        axios.get(`${API}/terminal/categories`)
+        axios.get(`${API}/terminal/categories`),
+        axios.get(`${API}/terminal/addon-groups`)
       ]);
       setTables(tablesRes.data);
       setMenuItems(menuRes.data);
       setCategories(categoriesRes.data);
+      setAddonGroups(addonGroupsRes.data);
     } catch (e) {
       console.error("Failed to fetch data:", e);
     }
