@@ -1128,6 +1128,15 @@ async def get_print_queue(role: str = Depends(verify_staff_token)):
     ).sort("created_at", 1).to_list(100)
     return jobs
 
+@api_router.get("/print-queue/pending")
+async def get_pending_print_jobs():
+    """Get pending print jobs - public endpoint for print station"""
+    jobs = await db.print_queue.find(
+        {"status": "pending"},
+        {"_id": 0}
+    ).sort("created_at", 1).to_list(100)
+    return jobs
+
 @api_router.post("/print-queue")
 async def add_to_print_queue(order_id: str, role: str = Depends(verify_staff_token)):
     """Add an order to the print queue"""
