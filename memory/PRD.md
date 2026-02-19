@@ -319,9 +319,16 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 4. Artikel antippen, Anzahl und Gang wählen
 5. "BON DRUCKEN" drücken → Bestellung geht an die Küche
 
+### Dezember 2025 - Desktop Warenkorb Fix (Behoben ✅)
+- ✅ **Desktop Cart Layout Fix**: 
+  - `overflow-x-hidden` aus OrderPage.jsx entfernt, das den Warenkorb abschnitt
+  - Container-Padding und Sidebar-Breite für verschiedene Desktop-Auflösungen optimiert
+  - "ZUR KASSE" Button ist jetzt auf allen Desktop-Bildschirmen (1920px, 1440px) vollständig sichtbar
+  - Getestet auf 1920x1080 und 1440x900 Viewports
+
 ## Backlog / Zukünftige Features
 - E-Mail-Benachrichtigungen aktivieren (Resend API-Key benötigt)
 - Statistiken-Dashboard für Bestellungen/Reservierungen
-- Code-Refactoring: `server.py` in separate Router aufteilen
+- Code-Refactoring: `server.py` in separate Router aufteilen (über 1500 Zeilen, sollte in `/backend/routers/` aufgeteilt werden)
 - Mehrsprachigkeit (DE/EN)
 - Terminal: Extras/Addons pro Artikel konfigurieren
