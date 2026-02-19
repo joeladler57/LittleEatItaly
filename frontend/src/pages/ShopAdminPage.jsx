@@ -3242,6 +3242,7 @@ const TerminalSection = ({ onUpdate }) => {
         {[
           { id: "waiters", label: "Kellner", icon: Users, count: waiters.length },
           { id: "tables", label: "Tische", icon: Hash, count: tables.length },
+          { id: "extras", label: "Extras", icon: Plus, count: addonGroups.length },
           { id: "menu", label: "Inhouse-Menü", icon: UtensilsCrossed, count: menuItems.length }
         ].map(tab => (
           <button
