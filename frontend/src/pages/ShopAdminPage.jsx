@@ -2347,7 +2347,7 @@ const PrinterSection = ({ settings, onUpdate }) => {
               <div className="space-y-2">
                 <ToggleSwitch 
                   checked={formData.receipt_template.header.show_restaurant_name} 
-                  onChange={() => updateTemplate('header', 'show_restaurant_name', !formData.receipt_template.header.show_restaurant_name)}
+                  onChange={(val) => updateTemplate('header', 'show_restaurant_name', val)}
                   label="Restaurant-Name"
                 />
                 {formData.receipt_template.header.show_restaurant_name && (
@@ -2358,19 +2358,19 @@ const PrinterSection = ({ settings, onUpdate }) => {
                     />
                     <ToggleSwitch 
                       checked={formData.receipt_template.header.restaurant_name_bold} 
-                      onChange={() => updateTemplate('header', 'restaurant_name_bold', !formData.receipt_template.header.restaurant_name_bold)}
+                      onChange={(val) => updateTemplate('header', 'restaurant_name_bold', val)}
                       label="Fett"
                     />
                   </div>
                 )}
                 <ToggleSwitch 
                   checked={formData.receipt_template.header.show_address} 
-                  onChange={() => updateTemplate('header', 'show_address', !formData.receipt_template.header.show_address)}
+                  onChange={(val) => updateTemplate('header', 'show_address', val)}
                   label="Adresse"
                 />
                 <ToggleSwitch 
                   checked={formData.receipt_template.header.show_phone} 
-                  onChange={() => updateTemplate('header', 'show_phone', !formData.receipt_template.header.show_phone)}
+                  onChange={(val) => updateTemplate('header', 'show_phone', val)}
                   label="Telefon"
                 />
               </div>
@@ -2382,7 +2382,7 @@ const PrinterSection = ({ settings, onUpdate }) => {
               <div className="space-y-2">
                 <ToggleSwitch 
                   checked={formData.receipt_template.order_info.show_order_number} 
-                  onChange={() => updateTemplate('order_info', 'show_order_number', !formData.receipt_template.order_info.show_order_number)}
+                  onChange={(val) => updateTemplate('order_info', 'show_order_number', val)}
                   label="Bestellnummer"
                 />
                 {formData.receipt_template.order_info.show_order_number && (
@@ -2393,29 +2393,29 @@ const PrinterSection = ({ settings, onUpdate }) => {
                     />
                     <ToggleSwitch 
                       checked={formData.receipt_template.order_info.order_number_bold} 
-                      onChange={() => updateTemplate('order_info', 'order_number_bold', !formData.receipt_template.order_info.order_number_bold)}
+                      onChange={(val) => updateTemplate('order_info', 'order_number_bold', val)}
                       label="Fett"
                     />
                   </div>
                 )}
                 <ToggleSwitch 
                   checked={formData.receipt_template.order_info.show_date_time} 
-                  onChange={() => updateTemplate('order_info', 'show_date_time', !formData.receipt_template.order_info.show_date_time)}
+                  onChange={(val) => updateTemplate('order_info', 'show_date_time', val)}
                   label="Datum & Uhrzeit"
                 />
                 <ToggleSwitch 
                   checked={formData.receipt_template.order_info.show_customer_name} 
-                  onChange={() => updateTemplate('order_info', 'show_customer_name', !formData.receipt_template.order_info.show_customer_name)}
+                  onChange={(val) => updateTemplate('order_info', 'show_customer_name', val)}
                   label="Kundenname"
                 />
                 <ToggleSwitch 
                   checked={formData.receipt_template.order_info.show_customer_phone} 
-                  onChange={() => updateTemplate('order_info', 'show_customer_phone', !formData.receipt_template.order_info.show_customer_phone)}
+                  onChange={(val) => updateTemplate('order_info', 'show_customer_phone', val)}
                   label="Telefonnummer"
                 />
                 <ToggleSwitch 
                   checked={formData.receipt_template.order_info.show_pickup_time} 
-                  onChange={() => updateTemplate('order_info', 'show_pickup_time', !formData.receipt_template.order_info.show_pickup_time)}
+                  onChange={(val) => updateTemplate('order_info', 'show_pickup_time', val)}
                   label="Abholzeit"
                 />
                 {formData.receipt_template.order_info.show_pickup_time && (
@@ -2426,7 +2426,7 @@ const PrinterSection = ({ settings, onUpdate }) => {
                     />
                     <ToggleSwitch 
                       checked={formData.receipt_template.order_info.pickup_time_bold} 
-                      onChange={() => updateTemplate('order_info', 'pickup_time_bold', !formData.receipt_template.order_info.pickup_time_bold)}
+                      onChange={(val) => updateTemplate('order_info', 'pickup_time_bold', val)}
                       label="Fett"
                     />
                   </div>
@@ -2440,27 +2440,27 @@ const PrinterSection = ({ settings, onUpdate }) => {
               <div className="space-y-2">
                 <ToggleSwitch 
                   checked={formData.receipt_template.items.show_quantity} 
-                  onChange={() => updateTemplate('items', 'show_quantity', !formData.receipt_template.items.show_quantity)}
+                  onChange={(val) => updateTemplate('items', 'show_quantity', val)}
                   label="Anzahl"
                 />
                 <ToggleSwitch 
                   checked={formData.receipt_template.items.item_name_bold} 
-                  onChange={() => updateTemplate('items', 'item_name_bold', !formData.receipt_template.items.item_name_bold)}
+                  onChange={(val) => updateTemplate('items', 'item_name_bold', val)}
                   label="Artikelname fett"
                 />
                 <ToggleSwitch 
                   checked={formData.receipt_template.items.show_size} 
-                  onChange={() => updateTemplate('items', 'show_size', !formData.receipt_template.items.show_size)}
+                  onChange={(val) => updateTemplate('items', 'show_size', val)}
                   label="Größe anzeigen"
                 />
                 <ToggleSwitch 
                   checked={formData.receipt_template.items.show_options} 
-                  onChange={() => updateTemplate('items', 'show_options', !formData.receipt_template.items.show_options)}
+                  onChange={(val) => updateTemplate('items', 'show_options', val)}
                   label="Optionen/Extras"
                 />
                 <ToggleSwitch 
                   checked={formData.receipt_template.items.show_item_price} 
-                  onChange={() => updateTemplate('items', 'show_item_price', !formData.receipt_template.items.show_item_price)}
+                  onChange={(val) => updateTemplate('items', 'show_item_price', val)}
                   label="Einzelpreis"
                 />
               </div>
@@ -2472,17 +2472,17 @@ const PrinterSection = ({ settings, onUpdate }) => {
               <div className="space-y-2">
                 <ToggleSwitch 
                   checked={formData.receipt_template.notes.show_notes} 
-                  onChange={() => updateTemplate('notes', 'show_notes', !formData.receipt_template.notes.show_notes)}
+                  onChange={(val) => updateTemplate('notes', 'show_notes', val)}
                   label="Notizen anzeigen"
                 />
                 <ToggleSwitch 
                   checked={formData.receipt_template.notes.notes_bold} 
-                  onChange={() => updateTemplate('notes', 'notes_bold', !formData.receipt_template.notes.notes_bold)}
+                  onChange={(val) => updateTemplate('notes', 'notes_bold', val)}
                   label="Notizen fett"
                 />
                 <ToggleSwitch 
                   checked={formData.receipt_template.notes.notes_box} 
-                  onChange={() => updateTemplate('notes', 'notes_box', !formData.receipt_template.notes.notes_box)}
+                  onChange={(val) => updateTemplate('notes', 'notes_box', val)}
                   label="Rahmen um Notizen"
                 />
               </div>
@@ -2494,7 +2494,7 @@ const PrinterSection = ({ settings, onUpdate }) => {
               <div className="space-y-2">
                 <ToggleSwitch 
                   checked={formData.receipt_template.totals.show_total} 
-                  onChange={() => updateTemplate('totals', 'show_total', !formData.receipt_template.totals.show_total)}
+                  onChange={(val) => updateTemplate('totals', 'show_total', val)}
                   label="Gesamtsumme"
                 />
                 {formData.receipt_template.totals.show_total && (
@@ -2505,14 +2505,14 @@ const PrinterSection = ({ settings, onUpdate }) => {
                     />
                     <ToggleSwitch 
                       checked={formData.receipt_template.totals.total_bold} 
-                      onChange={() => updateTemplate('totals', 'total_bold', !formData.receipt_template.totals.total_bold)}
+                      onChange={(val) => updateTemplate('totals', 'total_bold', val)}
                       label="Fett"
                     />
                   </div>
                 )}
                 <ToggleSwitch 
                   checked={formData.receipt_template.totals.show_payment_method} 
-                  onChange={() => updateTemplate('totals', 'show_payment_method', !formData.receipt_template.totals.show_payment_method)}
+                  onChange={(val) => updateTemplate('totals', 'show_payment_method', val)}
                   label="Zahlungsart"
                 />
               </div>
@@ -2524,7 +2524,7 @@ const PrinterSection = ({ settings, onUpdate }) => {
               <div className="space-y-2">
                 <ToggleSwitch 
                   checked={formData.receipt_template.footer.show_thank_you} 
-                  onChange={() => updateTemplate('footer', 'show_thank_you', !formData.receipt_template.footer.show_thank_you)}
+                  onChange={(val) => updateTemplate('footer', 'show_thank_you', val)}
                   label="Dankestext"
                 />
                 {formData.receipt_template.footer.show_thank_you && (
@@ -2537,7 +2537,7 @@ const PrinterSection = ({ settings, onUpdate }) => {
                 )}
                 <ToggleSwitch 
                   checked={formData.receipt_template.footer.show_custom_text} 
-                  onChange={() => updateTemplate('footer', 'show_custom_text', !formData.receipt_template.footer.show_custom_text)}
+                  onChange={(val) => updateTemplate('footer', 'show_custom_text', val)}
                   label="Eigener Text"
                 />
                 {formData.receipt_template.footer.show_custom_text && (
