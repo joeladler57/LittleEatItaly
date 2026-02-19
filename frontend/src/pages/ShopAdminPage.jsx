@@ -593,86 +593,116 @@ const OrdersSection = ({ orders, onUpdate, settings }) => {
   const [prepTime, setPrepTime] = useState(30);
   const [printing, setPrinting] = useState(null);
 
-  // Print function - sends directly to Epson printer via IP
+  // Print function - uses native browser print with AirPrint/Network printer support
   const handlePrintOrder = async (order) => {
-    if (!settings?.printer_enabled || !settings?.printer_ip) {
-      toast.error("Drucker nicht konfiguriert - bitte IP-Adresse eingeben");
-      return;
-    }
-    
     setPrinting(order.id);
     
     try {
-      // Build ESC/POS XML for Epson ePOS
-      const receiptXml = buildEpsonXml(order, settings);
+      // Build optimized receipt HTML for thermal printer (80mm)
+      const receiptHtml = buildReceiptHtml(order, settings);
       
-      // Epson ePOS SDK URL
-      const printerUrl = `http://${settings.printer_ip}:${settings.printer_port || 8008}/cgi-bin/epos/service.cgi?devid=${settings.printer_device_id || 'local_printer'}&timeout=10000`;
-      
-      // Create SOAP envelope
-      const soapEnvelope = `<?xml version="1.0" encoding="utf-8"?>
-<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
-  <s:Body>
-    <epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
-      ${receiptXml}
-    </epos-print>
-  </s:Body>
-</s:Envelope>`;
-
-      // Send to printer
-      const response = await fetch(printerUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/xml; charset=utf-8',
-          'SOAPAction': '""'
-        },
-        body: soapEnvelope
-      });
-
-      if (response.ok) {
-        toast.success("🖨️ Bon wird gedruckt!");
-      } else {
-        throw new Error(`Drucker antwortet nicht: ${response.status}`);
-      }
+      // Open print window optimized for thermal receipt
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=80mm">
+          <title>Bon #${order.order_number}</title>
+          <style>
+            @page { 
+              size: 80mm auto; 
+              margin: 0; 
+            }
+            @media print {
+              html, body { 
+                width: 80mm; 
+                margin: 0; 
+                padding: 0;
+              }
+            }
+            * { 
+              box-sizing: border-box; 
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            body { 
+              font-family: 'Courier New', 'Menlo', monospace; 
+              font-size: 12px; 
+              line-height: 1.3;
+              width: 80mm; 
+              max-width: 80mm;
+              margin: 0 auto; 
+              padding: 5mm;
+              background: white;
+              color: black;
+            }
+            .center { text-align: center; }
+            .bold { font-weight: bold; }
+            .large { font-size: 16px; }
+            .xlarge { font-size: 22px; font-weight: bold; }
+            .separator { 
+              border: none;
+              border-top: 1px dashed #000; 
+              margin: 8px 0; 
+            }
+            .item-row { 
+              display: flex; 
+              justify-content: space-between; 
+              padding: 3px 0; 
+            }
+            .item-name { flex: 1; }
+            .item-price { text-align: right; white-space: nowrap; margin-left: 10px; }
+            .highlight { 
+              background: #000; 
+              color: #fff; 
+              padding: 10px; 
+              text-align: center; 
+              margin: 10px 0;
+              font-size: 18px;
+              font-weight: bold;
+            }
+            .notes-box { 
+              border: 2px solid #000; 
+              padding: 8px; 
+              margin: 10px 0;
+              font-weight: bold;
+            }
+            .total-row {
+              font-size: 18px;
+              font-weight: bold;
+              border-top: 2px solid #000;
+              padding-top: 8px;
+              margin-top: 8px;
+            }
+          </style>
+        </head>
+        <body>
+          ${receiptHtml}
+          <script>
+            // Auto-print when loaded
+            window.onload = function() { 
+              setTimeout(function() {
+                window.print();
+              }, 300);
+            };
+            // Close after print (or cancel)
+            window.onafterprint = function() {
+              window.close();
+            };
+          </script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      toast.success("🖨️ Druckdialog wird geöffnet...");
     } catch (error) {
-      console.error("Epson print error:", error);
-      // Fallback to browser print
-      toast.error("Direktdruck fehlgeschlagen - öffne Druckdialog...");
-      openBrowserPrint(order);
+      console.error("Print error:", error);
+      toast.error("Drucken fehlgeschlagen");
     } finally {
       setPrinting(null);
     }
-  };
-
-  // Fallback: Browser print dialog
-  const openBrowserPrint = (order) => {
-    const receiptHtml = buildReceiptHtml(order, settings);
-    const printWindow = window.open('', '_blank', 'width=400,height=600');
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Bon #${order.order_number}</title>
-        <style>
-          @page { margin: 0; size: 80mm auto; }
-          body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0 auto; padding: 10px; }
-          .center { text-align: center; }
-          .bold { font-weight: bold; }
-          .large { font-size: 18px; }
-          .xlarge { font-size: 24px; }
-          .separator { border-top: 1px dashed #000; margin: 8px 0; }
-          .item-row { display: flex; justify-content: space-between; padding: 2px 0; }
-          .highlight { background: #000; color: #fff; padding: 8px; text-align: center; margin: 8px 0; }
-          .notes-box { border: 2px solid #000; padding: 8px; margin: 8px 0; }
-        </style>
-      </head>
-      <body>
-        ${receiptHtml}
-        <script>window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); }</script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
   };
 
   // Build ESC/POS XML for Epson printer
