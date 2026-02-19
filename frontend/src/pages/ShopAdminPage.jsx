@@ -593,61 +593,200 @@ const OrdersSection = ({ orders, onUpdate, settings }) => {
   const [prepTime, setPrepTime] = useState(30);
   const [printing, setPrinting] = useState(null);
 
-  // Print function
+  // Print function - sends directly to Epson printer via IP
   const handlePrintOrder = async (order) => {
-    if (!settings?.printer_enabled) {
-      toast.error("Drucker nicht aktiviert");
+    if (!settings?.printer_enabled || !settings?.printer_ip) {
+      toast.error("Drucker nicht konfiguriert - bitte IP-Adresse eingeben");
       return;
     }
     
     setPrinting(order.id);
+    
     try {
-      // Build receipt HTML for browser print
-      const receiptHtml = buildReceiptHtml(order, settings);
+      // Build ESC/POS XML for Epson ePOS
+      const receiptXml = buildEpsonXml(order, settings);
       
-      const printWindow = window.open('', '_blank', 'width=400,height=600');
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Bon #${order.order_number}</title>
-          <style>
-            @page { margin: 0; size: 80mm auto; }
-            body { 
-              font-family: 'Courier New', monospace; 
-              font-size: 12px; 
-              width: 80mm; 
-              margin: 0 auto; 
-              padding: 10px;
-            }
-            .center { text-align: center; }
-            .bold { font-weight: bold; }
-            .large { font-size: 18px; }
-            .xlarge { font-size: 24px; }
-            .separator { border-top: 1px dashed #000; margin: 8px 0; }
-            .item-row { display: flex; justify-content: space-between; padding: 2px 0; }
-            .highlight { background: #000; color: #fff; padding: 8px; text-align: center; margin: 8px 0; }
-            .notes-box { border: 2px solid #000; padding: 8px; margin: 8px 0; }
-          </style>
-        </head>
-        <body>
-          ${receiptHtml}
-          <script>
-            window.onload = function() { 
-              window.print(); 
-              setTimeout(function() { window.close(); }, 500);
-            }
-          </script>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-      toast.success("🖨️ Druckdialog geöffnet");
+      // Epson ePOS SDK URL
+      const printerUrl = `http://${settings.printer_ip}:${settings.printer_port || 8008}/cgi-bin/epos/service.cgi?devid=${settings.printer_device_id || 'local_printer'}&timeout=10000`;
+      
+      // Create SOAP envelope
+      const soapEnvelope = `<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+  <s:Body>
+    <epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+      ${receiptXml}
+    </epos-print>
+  </s:Body>
+</s:Envelope>`;
+
+      // Send to printer
+      const response = await fetch(printerUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': '""'
+        },
+        body: soapEnvelope
+      });
+
+      if (response.ok) {
+        toast.success("🖨️ Bon wird gedruckt!");
+      } else {
+        throw new Error(`Drucker antwortet nicht: ${response.status}`);
+      }
     } catch (error) {
-      toast.error("Drucken fehlgeschlagen");
+      console.error("Epson print error:", error);
+      // Fallback to browser print
+      toast.error("Direktdruck fehlgeschlagen - öffne Druckdialog...");
+      openBrowserPrint(order);
     } finally {
       setPrinting(null);
     }
+  };
+
+  // Fallback: Browser print dialog
+  const openBrowserPrint = (order) => {
+    const receiptHtml = buildReceiptHtml(order, settings);
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Bon #${order.order_number}</title>
+        <style>
+          @page { margin: 0; size: 80mm auto; }
+          body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0 auto; padding: 10px; }
+          .center { text-align: center; }
+          .bold { font-weight: bold; }
+          .large { font-size: 18px; }
+          .xlarge { font-size: 24px; }
+          .separator { border-top: 1px dashed #000; margin: 8px 0; }
+          .item-row { display: flex; justify-content: space-between; padding: 2px 0; }
+          .highlight { background: #000; color: #fff; padding: 8px; text-align: center; margin: 8px 0; }
+          .notes-box { border: 2px solid #000; padding: 8px; margin: 8px 0; }
+        </style>
+      </head>
+      <body>
+        ${receiptHtml}
+        <script>window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); }</script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  // Build ESC/POS XML for Epson printer
+  const buildEpsonXml = (order, settings) => {
+    const t = settings?.receipt_template || {};
+    const h = t.header || {};
+    const o = t.order_info || {};
+    const i = t.items || {};
+    const n = t.notes || {};
+    const tot = t.totals || {};
+    const f = t.footer || {};
+
+    const escapeXml = (str) => str ? str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : '';
+    const getSizeAttr = (size) => size === 'large' ? 'width="2" height="2"' : size === 'medium' ? 'width="1" height="2"' : 'width="1" height="1"';
+
+    let xml = '<text lang="de"/>';
+
+    // Header
+    if (h.show_restaurant_name) {
+      xml += `<text align="center" ${h.restaurant_name_bold ? 'em="true"' : ''} ${getSizeAttr(h.restaurant_name_size)}/>`;
+      xml += `<text>${escapeXml(settings?.restaurant_name || 'Restaurant')}&#10;</text>`;
+    }
+    if (h.show_address) {
+      xml += '<text align="center" width="1" height="1"/>';
+      xml += `<text>${escapeXml(settings?.restaurant_address || '')}&#10;</text>`;
+    }
+    if (h.show_phone) {
+      xml += `<text>Tel: ${escapeXml(settings?.restaurant_phone || '')}&#10;</text>`;
+    }
+    if (h.show_separator) xml += '<text>--------------------------------&#10;</text>';
+
+    // Order Number
+    if (o.show_order_number) {
+      xml += '<feed unit="20"/>';
+      xml += `<text align="center" ${o.order_number_bold ? 'em="true"' : ''} ${getSizeAttr(o.order_number_size)}/>`;
+      xml += `<text>#${order.order_number}&#10;</text>`;
+    }
+    if (o.show_date_time) {
+      xml += '<text align="center" width="1" height="1"/>';
+      xml += `<text>${new Date(order.created_at).toLocaleString('de-DE')}&#10;</text>`;
+    }
+    if (o.show_customer_name) {
+      xml += '<feed unit="10"/>';
+      xml += `<text ${o.customer_name_bold ? 'em="true"' : ''}/>`;
+      xml += `<text>Kunde: ${escapeXml(order.customer_name)}&#10;</text>`;
+    }
+    if (o.show_customer_phone) {
+      xml += '<text em="false"/>';
+      xml += `<text>Tel: ${escapeXml(order.customer_phone)}&#10;</text>`;
+    }
+    if (o.show_pickup_time) {
+      xml += '<feed unit="10"/><text reverse="true" align="center"/>';
+      xml += `<text ${o.pickup_time_bold ? 'em="true"' : ''} ${getSizeAttr(o.pickup_time_size)}/>`;
+      xml += `<text> ABHOLUNG: ${escapeXml(order.pickup_time || order.confirmed_pickup_time || 'N/A')} </text>`;
+      xml += '<text reverse="false"/>&#10;';
+    }
+    if (o.show_separator) xml += '<text align="left" em="false" width="1" height="1"/><text>--------------------------------&#10;</text>';
+
+    // Items
+    xml += '<feed unit="10"/>';
+    for (const item of (order.items || [])) {
+      xml += `<text ${i.item_name_bold ? 'em="true"' : 'em="false"'}/>`;
+      let itemLine = '';
+      if (i.show_quantity) itemLine += `${item.quantity}x `;
+      itemLine += item.item_name;
+      if (i.show_size && item.size_name) itemLine += ` (${item.size_name})`;
+      if (i.show_item_price) {
+        const price = `${(item.total_price || 0).toFixed(2)}€`;
+        const padding = 32 - itemLine.length - price.length;
+        itemLine += ' '.repeat(Math.max(1, padding)) + price;
+      }
+      xml += `<text>${escapeXml(itemLine)}&#10;</text>`;
+      if (i.show_options && item.options?.length > 0) {
+        xml += '<text em="false"/>';
+        const opts = item.options.map(opt => opt.option_name || opt).join(', ');
+        xml += `<text>  + ${escapeXml(opts)}&#10;</text>`;
+      }
+    }
+    if (i.show_separator) xml += '<text>--------------------------------&#10;</text>';
+
+    // Notes
+    if (n.show_notes && order.notes) {
+      xml += '<feed unit="10"/>';
+      if (n.notes_box) xml += '<text>================================&#10;</text>';
+      xml += `<text ${n.notes_bold ? 'em="true"' : 'em="false"'}/>`;
+      xml += `<text>* ${escapeXml(order.notes)}&#10;</text>`;
+      if (n.notes_box) xml += '<text>================================&#10;</text>';
+    }
+
+    // Total
+    if (tot.show_total) {
+      xml += '<feed unit="10"/>';
+      xml += `<text ${tot.total_bold ? 'em="true"' : ''} ${getSizeAttr(tot.total_size)}/>`;
+      xml += `<text align="right"/><text>GESAMT: ${(order.total || 0).toFixed(2)}€&#10;</text>`;
+    }
+    if (tot.show_payment_method) {
+      xml += '<text em="false" width="1" height="1"/>';
+      xml += `<text>Zahlung: ${escapeXml(order.payment_method || 'Bar')}&#10;</text>`;
+    }
+    if (tot.show_separator) xml += '<text>--------------------------------&#10;</text>';
+
+    // Footer
+    if (f.show_thank_you) {
+      xml += '<feed unit="10"/><text align="center"/>';
+      xml += `<text>${escapeXml(f.thank_you_text || 'Vielen Dank!')}&#10;</text>`;
+    }
+    if (f.show_custom_text && f.custom_text) {
+      xml += `<text>${escapeXml(f.custom_text)}&#10;</text>`;
+    }
+
+    // Cut paper
+    xml += '<feed unit="30"/><cut type="feed"/>';
+
+    return xml;
   };
 
   // Build receipt HTML
