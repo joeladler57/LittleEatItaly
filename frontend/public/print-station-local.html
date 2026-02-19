@@ -178,7 +178,7 @@
         <div class="status-row">
             <div class="status-info">
                 <h3 id="connectionStatus">DRUCKER VERBINDEN</h3>
-                <p id="printerAddress">192.168.2.129:8008</p>
+                <p id="printerAddress">192.168.2.129:80</p>
             </div>
             <button id="connectBtn" class="btn btn-green" onclick="toggleConnection()">Verbinden</button>
         </div>
@@ -214,8 +214,8 @@
             <input type="text" id="printerIP" value="192.168.2.129" onchange="saveSettings()">
         </div>
         <div class="input-group">
-            <label>PORT</label>
-            <input type="number" id="printerPort" value="8008" onchange="saveSettings()">
+            <label>PORT (80 für Webinterface)</label>
+            <input type="number" id="printerPort" value="80" onchange="saveSettings()">
         </div>
         <div class="input-group">
             <label>BACKEND API URL</label>
@@ -239,11 +239,11 @@
         // Load settings from localStorage
         function loadSettings() {
             const savedIP = localStorage.getItem('printer_ip');
-            const savedPort = localStorage.getItem('printer_port');
+            const savedPort = localStorage.getItem('printer_port') || '80';
             const savedAPI = localStorage.getItem('api_url');
             
             if (savedIP) document.getElementById('printerIP').value = savedIP;
-            if (savedPort) document.getElementById('printerPort').value = savedPort;
+            document.getElementById('printerPort').value = savedPort;
             if (savedAPI) document.getElementById('apiUrl').value = savedAPI;
             
             updatePrinterAddress();
@@ -403,10 +403,15 @@
                         <h4>#${job.order_number}</h4>
                         <small>${new Date(job.created_at).toLocaleTimeString()}</small>
                     </div>
-                    <button class="btn btn-green" onclick="processPrintJob(${JSON.stringify(job).replace(/"/g, '&quot;')})">Drucken</button>
+                    <button class="btn btn-green" onclick="manualPrint('${job.id}')">Drucken</button>
                 `;
                 container.appendChild(div);
             });
+        }
+
+        function manualPrint(jobId) {
+            const job = printQueue.find(j => j.id === jobId);
+            if (job) processPrintJob(job);
         }
 
         function playSound() {
@@ -420,17 +425,22 @@
             const testOrder = {
                 order_number: 'TEST',
                 customer_name: 'Test Kunde',
-                customer_phone: '0000-0000000',
+                customer_phone: '0176 12345678',
                 pickup_time: 'JETZT',
                 created_at: new Date().toISOString(),
                 items: [
-                    { quantity: 1, item_name: 'Test Pizza Margherita', size_name: '32cm', total_price: 10.00 },
-                    { quantity: 2, item_name: 'Coca Cola', size_name: '0.5L', total_price: 6.00 }
+                    { quantity: 2, item_name: 'Margherita', size_name: 'Gross', total_price: 21.80 },
+                    { quantity: 1, item_name: 'Calzone', size_name: null, total_price: 12.50, options: [{option_name: 'Extra Kaese'}, {option_name: 'Pilze'}] },
+                    { quantity: 3, item_name: 'Cola', size_name: '0.5L', total_price: 8.70 }
                 ],
-                total: 16.00,
-                notes: 'Das ist ein Testdruck!',
-                payment_method: 'Bar'
+                total: 43.00,
+                notes: 'Bitte gut durchbacken!',
+                payment_method: 'Kartenzahlung'
             };
+            
+            isPrinting = true;
+            updateMainStatus();
+            log('Sende Testdruck...');
             
             const success = await printReceipt(testOrder);
             if (success) {
@@ -438,6 +448,9 @@
                 document.getElementById('printedCount').textContent = printedCount;
                 log('Testdruck erfolgreich!', 'success');
             }
+            
+            isPrinting = false;
+            updateMainStatus();
         }
 
         async function processPrintJob(job) {
@@ -492,105 +505,209 @@
         }
 
         function buildReceiptXML(order) {
+            // Get template settings
+            const template = settings?.receipt_template || {};
+            const header = template.header || {};
+            const orderInfo = template.order_info || {};
+            const itemsCfg = template.items || {};
+            const notesCfg = template.notes || {};
+            const totalsCfg = template.totals || {};
+            const footerCfg = template.footer || {};
+            
             let body = '';
 
-            // Header
+            // ========== HEADER ==========
             body += `<text align="center"/>`;
-            body += `<text width="2" height="2"/>`;
-            body += `<text em="true"/>`;
-            body += `<text>${escapeXML(settings?.restaurant_name || 'Little Eat Italy')}&#10;</text>`;
-            body += `<text em="false"/>`;
-            body += `<text width="1" height="1"/>`;
+            
+            // Restaurant Name
+            if (header.show_restaurant_name !== false) {
+                if (header.restaurant_name_bold !== false) {
+                    body += `<text em="true"/>`;
+                }
+                if (header.restaurant_name_size === 'large') {
+                    body += `<text width="2" height="2"/>`;
+                } else if (header.restaurant_name_size === 'medium') {
+                    body += `<text width="1" height="2"/>`;
+                }
+                body += `<text>${escapeXML(settings?.restaurant_name || 'Little Eat Italy')}&#10;</text>`;
+                body += `<text width="1" height="1"/>`;
+                body += `<text em="false"/>`;
+            }
 
-            if (settings?.restaurant_address) {
+            // Address
+            if (header.show_address !== false && settings?.restaurant_address) {
                 body += `<text>${escapeXML(settings.restaurant_address)}&#10;</text>`;
             }
-            if (settings?.restaurant_phone) {
+            
+            // Phone
+            if (header.show_phone !== false && settings?.restaurant_phone) {
                 body += `<text>Tel: ${escapeXML(settings.restaurant_phone)}&#10;</text>`;
             }
 
-            body += `<text>--------------------------------&#10;</text>`;
+            // Separator
+            if (header.show_separator !== false) {
+                body += `<text>--------------------------------&#10;</text>`;
+            }
 
+            // ========== ORDER INFO ==========
+            
             // Order Number
-            body += `<text align="center"/>`;
-            body += `<text width="2" height="2"/>`;
-            body += `<text em="true"/>`;
-            body += `<text>#${escapeXML(String(order.order_number || '?'))}&#10;</text>`;
-            body += `<text em="false"/>`;
-            body += `<text width="1" height="1"/>`;
+            if (orderInfo.show_order_number !== false) {
+                body += `<text align="center"/>`;
+                if (orderInfo.order_number_bold !== false) {
+                    body += `<text em="true"/>`;
+                }
+                if (orderInfo.order_number_size === 'large') {
+                    body += `<text width="2" height="2"/>`;
+                } else if (orderInfo.order_number_size === 'medium') {
+                    body += `<text width="1" height="2"/>`;
+                }
+                body += `<text>#${escapeXML(String(order.order_number || '?'))}&#10;</text>`;
+                body += `<text width="1" height="1"/>`;
+                body += `<text em="false"/>`;
+            }
 
             // Date/Time
-            const date = new Date(order.created_at);
-            body += `<text>${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}&#10;</text>`;
+            if (orderInfo.show_date_time !== false) {
+                body += `<text align="center"/>`;
+                const date = new Date(order.created_at);
+                body += `<text>${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}&#10;</text>`;
+            }
 
-            // Customer
             body += `<text align="left"/>`;
-            body += `<text em="true"/>`;
-            body += `<text>Kunde: ${escapeXML(order.customer_name || '')}&#10;</text>`;
-            body += `<text em="false"/>`;
+            
+            // Customer Name
+            if (orderInfo.show_customer_name !== false && order.customer_name) {
+                if (orderInfo.customer_name_bold) {
+                    body += `<text em="true"/>`;
+                }
+                body += `<text>Kunde: ${escapeXML(order.customer_name)}&#10;</text>`;
+                body += `<text em="false"/>`;
+            }
 
-            if (order.customer_phone) {
+            // Customer Phone
+            if (orderInfo.show_customer_phone !== false && order.customer_phone) {
                 body += `<text>Tel: ${escapeXML(order.customer_phone)}&#10;</text>`;
             }
 
-            // Pickup Time
-            body += `<feed unit="24"/>`;
-            body += `<text align="center"/>`;
-            body += `<text width="2" height="2"/>`;
-            body += `<text em="true"/>`;
-            body += `<text>================&#10;</text>`;
-            const pickupTime = order.confirmed_pickup_time || order.pickup_time || 'N/A';
-            body += `<text>ABHOLUNG: ${escapeXML(pickupTime)}&#10;</text>`;
-            body += `<text>================&#10;</text>`;
-            body += `<text em="false"/>`;
-            body += `<text width="1" height="1"/>`;
+            // Pickup Time - HIGHLIGHTED
+            if (orderInfo.show_pickup_time !== false) {
+                body += `<feed unit="24"/>`;
+                body += `<text align="center"/>`;
+                if (orderInfo.pickup_time_bold !== false) {
+                    body += `<text em="true"/>`;
+                }
+                if (orderInfo.pickup_time_size === 'large') {
+                    body += `<text width="2" height="2"/>`;
+                } else if (orderInfo.pickup_time_size === 'medium') {
+                    body += `<text width="1" height="2"/>`;
+                }
+                body += `<text>================&#10;</text>`;
+                const pickupTime = order.confirmed_pickup_time || order.pickup_time || 'N/A';
+                body += `<text>ABHOLUNG: ${escapeXML(pickupTime)}&#10;</text>`;
+                body += `<text>================&#10;</text>`;
+                body += `<text width="1" height="1"/>`;
+                body += `<text em="false"/>`;
+            }
 
+            // Separator before items
+            if (orderInfo.show_separator !== false) {
+                body += `<text align="left"/>`;
+                body += `<text>--------------------------------&#10;</text>`;
+            }
+
+            // ========== ITEMS ==========
             body += `<text align="left"/>`;
-            body += `<text>--------------------------------&#10;</text>`;
-
-            // Items
+            
             for (const item of (order.items || [])) {
-                let itemLine = (item.quantity || 1) + 'x ' + (item.item_name || '');
-                if (item.size_name) itemLine += ' (' + item.size_name + ')';
+                // Build item line
+                let itemLine = '';
+                if (itemsCfg.show_quantity !== false) {
+                    itemLine += (item.quantity || 1) + 'x ';
+                }
+                itemLine += (item.item_name || '');
+                if (itemsCfg.show_size !== false && item.size_name) {
+                    itemLine += ' (' + item.size_name + ')';
+                }
                 
-                const price = (item.total_price || 0).toFixed(2) + ' EUR';
-                const spaces = Math.max(1, 32 - itemLine.length - price.length);
-                body += `<text>${escapeXML(itemLine)}${' '.repeat(spaces)}${price}&#10;</text>`;
+                // Item name styling
+                if (itemsCfg.item_name_bold) {
+                    body += `<text em="true"/>`;
+                }
+                
+                // Price
+                if (itemsCfg.show_item_price !== false) {
+                    const price = (item.total_price || 0).toFixed(2) + 'E';
+                    const spaces = Math.max(1, 32 - itemLine.length - price.length);
+                    body += `<text>${escapeXML(itemLine)}${' '.repeat(spaces)}${price}&#10;</text>`;
+                } else {
+                    body += `<text>${escapeXML(itemLine)}&#10;</text>`;
+                }
+                body += `<text em="false"/>`;
 
-                if (item.options && item.options.length > 0) {
+                // Options/Extras
+                if (itemsCfg.show_options !== false && item.options && item.options.length > 0) {
                     const opts = item.options.map(o => o.option_name || o.name || String(o)).join(', ');
                     body += `<text>  + ${escapeXML(opts)}&#10;</text>`;
                 }
             }
 
-            body += `<text>--------------------------------&#10;</text>`;
+            // Separator after items
+            if (itemsCfg.show_separator !== false) {
+                body += `<text>--------------------------------&#10;</text>`;
+            }
 
-            // Notes
-            if (order.notes) {
-                body += `<text em="true"/>`;
+            // ========== NOTES ==========
+            if (notesCfg.show_notes !== false && order.notes) {
+                if (notesCfg.notes_bold) {
+                    body += `<text em="true"/>`;
+                }
+                if (notesCfg.notes_box) {
+                    body += `<text>================================&#10;</text>`;
+                }
                 body += `<text>* ${escapeXML(order.notes)}&#10;</text>`;
+                if (notesCfg.notes_box) {
+                    body += `<text>================================&#10;</text>`;
+                }
                 body += `<text em="false"/>`;
             }
 
-            // Total
-            body += `<text em="true"/>`;
-            body += `<text height="2"/>`;
-            const totalLine = 'GESAMT:';
-            const totalPrice = (order.total || 0).toFixed(2) + ' EUR';
-            const spaces = Math.max(1, 32 - totalLine.length - totalPrice.length);
-            body += `<text>${totalLine}${' '.repeat(spaces)}${totalPrice}&#10;</text>`;
-            body += `<text height="1"/>`;
-            body += `<text em="false"/>`;
+            // ========== TOTALS ==========
+            if (totalsCfg.show_total !== false) {
+                if (totalsCfg.total_bold !== false) {
+                    body += `<text em="true"/>`;
+                }
+                if (totalsCfg.total_size === 'large') {
+                    body += `<text height="2"/>`;
+                }
+                const totalLine = 'GESAMT:';
+                const totalPrice = (order.total || 0).toFixed(2) + 'E';
+                const spaces = Math.max(1, 32 - totalLine.length - totalPrice.length);
+                body += `<text>${totalLine}${' '.repeat(spaces)}${totalPrice}&#10;</text>`;
+                body += `<text height="1"/>`;
+                body += `<text em="false"/>`;
+            }
 
-            if (order.payment_method) {
+            // Payment Method
+            if (totalsCfg.show_payment_method !== false && order.payment_method) {
                 body += `<text>Zahlung: ${escapeXML(order.payment_method)}&#10;</text>`;
             }
 
-            body += `<text>--------------------------------&#10;</text>`;
+            // Separator
+            if (totalsCfg.show_separator !== false) {
+                body += `<text>--------------------------------&#10;</text>`;
+            }
 
-            // Footer
+            // ========== FOOTER ==========
             body += `<text align="center"/>`;
-            body += `<text>Vielen Dank!&#10;</text>`;
+            
+            if (footerCfg.show_thank_you !== false) {
+                body += `<text>${escapeXML(footerCfg.thank_you_text || 'Vielen Dank!')}&#10;</text>`;
+            }
+
+            if (footerCfg.show_custom_text && footerCfg.custom_text) {
+                body += `<text>${escapeXML(footerCfg.custom_text)}&#10;</text>`;
+            }
 
             // Feed and cut
             body += `<feed unit="100"/>`;
@@ -609,111 +726,6 @@ ${body}
             return xml;
         }
 
-        function buildReceiptXML_OLD(order) {
-            let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
-<text lang="de"/>`;
-
-            // Header
-            xml += `<text align="center"/>`;
-            xml += `<text font="font_a" dw="true" dh="true" em="true"/>`;
-            xml += `<text>${escapeXML(settings?.restaurant_name || 'Little Eat Italy')}&#10;</text>`;
-            xml += `<text dw="false" dh="false" em="false"/>`;
-
-            if (settings?.restaurant_address) {
-                xml += `<text>${escapeXML(settings.restaurant_address)}&#10;</text>`;
-            }
-            if (settings?.restaurant_phone) {
-                xml += `<text>Tel: ${escapeXML(settings.restaurant_phone)}&#10;</text>`;
-            }
-
-            xml += `<text>--------------------------------&#10;</text>`;
-
-            // Order Number
-            xml += `<text align="center"/>`;
-            xml += `<text dw="true" dh="true" em="true"/>`;
-            xml += `<text>#${escapeXML(String(order.order_number || '?'))}&#10;</text>`;
-            xml += `<text dw="false" dh="false" em="false"/>`;
-
-            // Date/Time
-            const date = new Date(order.created_at);
-            xml += `<text>${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}&#10;</text>`;
-
-            // Customer
-            xml += `<text align="left"/>`;
-            xml += `<text em="true"/>`;
-            xml += `<text>Kunde: ${escapeXML(order.customer_name || '')}&#10;</text>`;
-            xml += `<text em="false"/>`;
-
-            if (order.customer_phone) {
-                xml += `<text>Tel: ${escapeXML(order.customer_phone)}&#10;</text>`;
-            }
-
-            // Pickup Time
-            xml += `<feed line="1"/>`;
-            xml += `<text align="center"/>`;
-            xml += `<text dw="true" dh="true" em="true"/>`;
-            xml += `<text>================&#10;</text>`;
-            const pickupTime = order.confirmed_pickup_time || order.pickup_time || 'N/A';
-            xml += `<text>ABHOLUNG: ${escapeXML(pickupTime)}&#10;</text>`;
-            xml += `<text>================&#10;</text>`;
-            xml += `<text dw="false" dh="false" em="false"/>`;
-
-            xml += `<text align="left"/>`;
-            xml += `<text>--------------------------------&#10;</text>`;
-
-            // Items
-            for (const item of (order.items || [])) {
-                let itemLine = (item.quantity || 1) + 'x ' + (item.item_name || '');
-                if (item.size_name) itemLine += ' (' + item.size_name + ')';
-                
-                const price = (item.total_price || 0).toFixed(2) + '€';
-                const spaces = Math.max(1, 32 - itemLine.length - price.length);
-                xml += `<text>${escapeXML(itemLine)}${' '.repeat(spaces)}${price}&#10;</text>`;
-
-                if (item.options && item.options.length > 0) {
-                    const opts = item.options.map(o => o.option_name || o.name || String(o)).join(', ');
-                    xml += `<text>  + ${escapeXML(opts)}&#10;</text>`;
-                }
-            }
-
-            xml += `<text>--------------------------------&#10;</text>`;
-
-            // Notes
-            if (order.notes) {
-                xml += `<text em="true"/>`;
-                xml += `<text>* ${escapeXML(order.notes)}&#10;</text>`;
-                xml += `<text em="false"/>`;
-            }
-
-            // Total
-            xml += `<text em="true" dh="true"/>`;
-            const totalLine = 'GESAMT:';
-            const totalPrice = (order.total || 0).toFixed(2) + '€';
-            const spaces = Math.max(1, 32 - totalLine.length - totalPrice.length);
-            xml += `<text>${totalLine}${' '.repeat(spaces)}${totalPrice}&#10;</text>`;
-            xml += `<text dh="false" em="false"/>`;
-
-            if (order.payment_method) {
-                xml += `<text>Zahlung: ${escapeXML(order.payment_method)}&#10;</text>`;
-            }
-
-            xml += `<text>--------------------------------&#10;</text>`;
-
-            // Footer
-            xml += `<text align="center"/>`;
-            xml += `<text>Vielen Dank!&#10;</text>`;
-
-            // Feed and cut
-            xml += `<feed line="4"/>`;
-            xml += `<cut/>`;
-            xml += `</epos-print>`;
-
-            return xml;
-        }
-        
-        // DELETE OLD FUNCTION - not used
-
         function printReceipt(order) {
             return new Promise((resolve) => {
                 const ip = document.getElementById('printerIP').value;
@@ -721,7 +733,7 @@ ${body}
                 const url = `http://${ip}:${port}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000`;
                 const xml = buildReceiptXML(order);
                 
-                log('Sende an: ' + url);
+                log('Sende an Drucker...');
                 
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', url, true);
@@ -729,12 +741,14 @@ ${body}
                 xhr.timeout = 15000;
                 
                 xhr.onload = function() {
-                    log('Antwort: ' + xhr.status);
                     if (xhr.status >= 200 && xhr.status < 300) {
                         if (xhr.responseText.includes('success="false"')) {
-                            log('Drucker meldet Fehler: ' + xhr.responseText, 'error');
+                            const errorMatch = xhr.responseText.match(/code="([^"]+)"/);
+                            const errorCode = errorMatch ? errorMatch[1] : 'Unbekannt';
+                            log('Drucker Fehler: ' + errorCode, 'error');
                             resolve(false);
                         } else {
+                            log('Erfolgreich gedruckt!', 'success');
                             resolve(true);
                         }
                     } else {
@@ -744,12 +758,12 @@ ${body}
                 };
                 
                 xhr.onerror = function() {
-                    log('Netzwerk-Fehler (könnte trotzdem gedruckt haben)', 'error');
-                    resolve(true); // Optimistic - request might have succeeded
+                    log('Netzwerk-Fehler', 'error');
+                    resolve(false);
                 };
                 
                 xhr.ontimeout = function() {
-                    log('Timeout', 'error');
+                    log('Timeout - keine Antwort', 'error');
                     resolve(false);
                 };
                 
