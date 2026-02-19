@@ -2,42 +2,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { API } from "../App";
 import { toast } from "sonner";
-import { Printer, Wifi, WifiOff, Check, RefreshCw, Smartphone, Settings, AlertCircle, ExternalLink, Volume2, VolumeX } from "lucide-react";
+import { Printer, Wifi, WifiOff, Check, RefreshCw, Settings, CheckCircle, XCircle, Volume2, VolumeX } from "lucide-react";
 
 const POLLING_INTERVAL = 3000;
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
-
-// ESC/POS Commands
-const ESC = 0x1B;
-const GS = 0x1D;
-const COMMANDS = {
-  INIT: [ESC, 0x40], // Initialize printer
-  ALIGN_CENTER: [ESC, 0x61, 0x01],
-  ALIGN_LEFT: [ESC, 0x61, 0x00],
-  ALIGN_RIGHT: [ESC, 0x61, 0x02],
-  BOLD_ON: [ESC, 0x45, 0x01],
-  BOLD_OFF: [ESC, 0x45, 0x00],
-  DOUBLE_HEIGHT: [GS, 0x21, 0x10],
-  DOUBLE_WIDTH: [GS, 0x21, 0x20],
-  DOUBLE_SIZE: [GS, 0x21, 0x30],
-  NORMAL_SIZE: [GS, 0x21, 0x00],
-  UNDERLINE_ON: [ESC, 0x2D, 0x01],
-  UNDERLINE_OFF: [ESC, 0x2D, 0x00],
-  CUT: [GS, 0x56, 0x00], // Full cut
-  PARTIAL_CUT: [GS, 0x56, 0x01],
-  FEED_LINES: (n) => [ESC, 0x64, n],
-  LINE_SPACING: (n) => [ESC, 0x33, n],
-};
-
-// Helper: Convert byte array to Base64
-const arrayToBase64 = (bytes) => {
-  const uint8Array = new Uint8Array(bytes);
-  let binary = '';
-  for (let i = 0; i < uint8Array.length; i++) {
-    binary += String.fromCharCode(uint8Array[i]);
-  }
-  return btoa(binary);
-};
 
 const PrintStationPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -45,16 +13,12 @@ const PrintStationPage = () => {
   const [pinError, setPinError] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [settings, setSettings] = useState(null);
-  const [printQueue, setPrintQueue] = useState([]);
+  const [printerStatus, setPrinterStatus] = useState(null);
+  const [printHistory, setPrintHistory] = useState([]);
   const [printedCount, setPrintedCount] = useState(0);
   const [lastPrintTime, setLastPrintTime] = useState(null);
-  const [isPrinting, setIsPrinting] = useState(false);
-  
-  // RawBT state
-  const [rawbtReady, setRawbtReady] = useState(false);
-  const [autoPrintEnabled, setAutoPrintEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [showSetupGuide, setShowSetupGuide] = useState(false);
+  const [testPrinting, setTestPrinting] = useState(false);
   
   const pollingRef = useRef(null);
   const audioRef = useRef(null);
@@ -67,6 +31,18 @@ const PrintStationPage = () => {
     }
   }, []);
 
+  // Initialize audio
+  useEffect(() => {
+    audioRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleRg1TYyh1K5WARlQoMfbqGIlPnOLrdKvYCAzVIS11bZnJDNYeaXGs3Y0QlhuobSqd0xPW2mEm56Sd1NVYnCAjI2EeWVhZ3B4fnyAgoGEhIKBgYOEhYWEhIOCgoKCgoKBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgX5+");
+  }, []);
+
+  const playNotificationSound = () => {
+    if (soundEnabled && audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(e => console.log("Audio play failed:", e));
+    }
+  };
+
   const verifyToken = async (token) => {
     try {
       await axios.get(`${API}/staff/data`, {
@@ -74,6 +50,7 @@ const PrintStationPage = () => {
       });
       setIsAuthenticated(true);
       fetchSettings();
+      fetchPrinterStatus();
     } catch (e) {
       localStorage.removeItem("print_station_token");
       setIsAuthenticated(false);
@@ -91,11 +68,7 @@ const PrintStationPage = () => {
       setIsAuthenticated(true);
       setPinError("");
       fetchSettings();
-      // Check if RawBT preference was saved
-      const savedRawbt = localStorage.getItem("print_station_rawbt_ready");
-      if (savedRawbt === "true") {
-        setRawbtReady(true);
-      }
+      fetchPrinterStatus();
       toast.success("Angemeldet!");
     } catch (e) {
       setPinError("Falscher PIN");
@@ -111,253 +84,21 @@ const PrintStationPage = () => {
     }
   };
 
-  // Initialize audio for notification
-  useEffect(() => {
-    audioRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleRg1TYyh1K5WARlQoMfbqGIlPnOLrdKvYCAzVIS11bZnJDNYeaXGs3Y0QlhuobSqd0xPW2mEm56Sd1NVYnCAjI2EeWVhZ3B4fnyAgoGEhIKBgYOEhYWEhIOCgoKCgoKBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgX5+");
-  }, []);
-
-  // Play notification sound
-  const playNotificationSound = () => {
-    if (soundEnabled && audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(e => console.log("Audio play failed:", e));
+  const fetchPrinterStatus = async () => {
+    try {
+      const token = localStorage.getItem("print_station_token");
+      const response = await axios.get(`${API}/printer/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPrinterStatus(response.data);
+      setIsConnected(true);
+    } catch (e) {
+      setIsConnected(false);
+      console.error("Failed to fetch printer status:", e);
     }
   };
 
-  // Mark RawBT as ready (user confirms app is installed and configured)
-  const confirmRawbtReady = () => {
-    setRawbtReady(true);
-    localStorage.setItem("print_station_rawbt_ready", "true");
-    toast.success("✅ RawBT bereit!");
-    setShowSetupGuide(false);
-  };
-
-  // Reset RawBT status
-  const resetRawbtStatus = () => {
-    setRawbtReady(false);
-    localStorage.removeItem("print_station_rawbt_ready");
-  };
-
-  // Send data to RawBT printer via URL scheme
-  const sendToPrinter = async (data) => {
-    // Convert byte array to base64
-    const base64Data = arrayToBase64(data);
-    
-    // Build RawBT URL
-    const rawbtUrl = `rawbt:base64,${base64Data}`;
-    
-    // Open RawBT app with print data
-    // Using intent scheme for better reliability
-    const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-    
-    // Try opening via standard link first
-    const link = document.createElement('a');
-    link.href = rawbtUrl;
-    link.click();
-    
-    // Small delay to allow app to process
-    await new Promise(resolve => setTimeout(resolve, 500));
-  };
-
-  // Build ESC/POS receipt
-  const buildReceipt = (order, settings) => {
-    const encoder = new TextEncoder();
-    let data = [];
-    
-    const addText = (text) => {
-      data.push(...encoder.encode(text));
-    };
-    
-    const addCommand = (cmd) => {
-      if (Array.isArray(cmd)) {
-        data.push(...cmd);
-      } else {
-        data.push(cmd);
-      }
-    };
-    
-    const addLine = () => {
-      addText("\n");
-    };
-
-    const t = settings?.receipt_template || {};
-    const h = t.header || {};
-    const o = t.order_info || {};
-    const items = t.items || {};
-    const n = t.notes || {};
-    const tot = t.totals || {};
-    const f = t.footer || {};
-
-    // Initialize
-    addCommand(COMMANDS.INIT);
-    
-    // Header
-    if (h.show_restaurant_name !== false) {
-      addCommand(COMMANDS.ALIGN_CENTER);
-      addCommand(COMMANDS.BOLD_ON);
-      addCommand(h.restaurant_name_size === 'large' ? COMMANDS.DOUBLE_SIZE : COMMANDS.DOUBLE_HEIGHT);
-      addText(settings?.restaurant_name || "Little Eat Italy");
-      addLine();
-      addCommand(COMMANDS.NORMAL_SIZE);
-      addCommand(COMMANDS.BOLD_OFF);
-    }
-    
-    if (h.show_address !== false) {
-      addCommand(COMMANDS.ALIGN_CENTER);
-      addText(settings?.restaurant_address || "");
-      addLine();
-    }
-    
-    if (h.show_phone !== false) {
-      addText(`Tel: ${settings?.restaurant_phone || ""}`);
-      addLine();
-    }
-    
-    if (h.show_separator !== false) {
-      addText("--------------------------------");
-      addLine();
-    }
-
-    // Order number
-    if (o.show_order_number !== false) {
-      addCommand(COMMANDS.ALIGN_CENTER);
-      addCommand(COMMANDS.BOLD_ON);
-      addCommand(COMMANDS.DOUBLE_SIZE);
-      addText(`#${order.order_number}`);
-      addLine();
-      addCommand(COMMANDS.NORMAL_SIZE);
-      addCommand(COMMANDS.BOLD_OFF);
-    }
-
-    // Date/Time
-    if (o.show_date_time !== false) {
-      addCommand(COMMANDS.ALIGN_CENTER);
-      addText(new Date(order.created_at).toLocaleString('de-DE'));
-      addLine();
-    }
-
-    // Customer
-    addCommand(COMMANDS.ALIGN_LEFT);
-    if (o.show_customer_name !== false) {
-      addCommand(o.customer_name_bold ? COMMANDS.BOLD_ON : COMMANDS.BOLD_OFF);
-      addText(`Kunde: ${order.customer_name || ""}`);
-      addLine();
-      addCommand(COMMANDS.BOLD_OFF);
-    }
-
-    if (o.show_customer_phone !== false && order.customer_phone) {
-      addText(`Tel: ${order.customer_phone}`);
-      addLine();
-    }
-
-    // Pickup time - highlighted
-    if (o.show_pickup_time !== false) {
-      addLine();
-      addCommand(COMMANDS.ALIGN_CENTER);
-      addCommand(COMMANDS.BOLD_ON);
-      addCommand(COMMANDS.DOUBLE_SIZE);
-      addText("================");
-      addLine();
-      addText(`ABHOLUNG: ${order.confirmed_pickup_time || order.pickup_time || "N/A"}`);
-      addLine();
-      addText("================");
-      addLine();
-      addCommand(COMMANDS.NORMAL_SIZE);
-      addCommand(COMMANDS.BOLD_OFF);
-    }
-
-    addCommand(COMMANDS.ALIGN_LEFT);
-    addText("--------------------------------");
-    addLine();
-
-    // Items
-    for (const item of (order.items || [])) {
-      addCommand(items.item_name_bold ? COMMANDS.BOLD_ON : COMMANDS.BOLD_OFF);
-      
-      let itemLine = "";
-      if (items.show_quantity !== false) itemLine += `${item.quantity}x `;
-      itemLine += item.item_name || "";
-      if (items.show_size !== false && item.size_name) itemLine += ` (${item.size_name})`;
-      
-      addText(itemLine);
-      
-      if (items.show_item_price !== false) {
-        const price = `${(item.total_price || 0).toFixed(2)}E`;
-        const spaces = Math.max(1, 32 - itemLine.length - price.length);
-        addText(" ".repeat(spaces) + price);
-      }
-      addLine();
-      addCommand(COMMANDS.BOLD_OFF);
-
-      // Options
-      if (items.show_options !== false && item.options?.length > 0) {
-        const opts = item.options.map(opt => opt.option_name || opt.name || opt).join(', ');
-        addText(`  + ${opts}`);
-        addLine();
-      }
-    }
-
-    addText("--------------------------------");
-    addLine();
-
-    // Notes
-    if (n.show_notes !== false && order.notes) {
-      addCommand(n.notes_bold ? COMMANDS.BOLD_ON : COMMANDS.BOLD_OFF);
-      if (n.notes_box) {
-        addText("================================");
-        addLine();
-      }
-      addText(`* ${order.notes}`);
-      addLine();
-      if (n.notes_box) {
-        addText("================================");
-        addLine();
-      }
-      addCommand(COMMANDS.BOLD_OFF);
-    }
-
-    // Total
-    if (tot.show_total !== false) {
-      addCommand(COMMANDS.BOLD_ON);
-      addCommand(tot.total_size === 'large' ? COMMANDS.DOUBLE_HEIGHT : COMMANDS.NORMAL_SIZE);
-      const totalLine = "GESAMT:";
-      const totalPrice = `${(order.total || 0).toFixed(2)}E`;
-      const spaces = Math.max(1, 32 - totalLine.length - totalPrice.length);
-      addText(totalLine + " ".repeat(spaces) + totalPrice);
-      addLine();
-      addCommand(COMMANDS.NORMAL_SIZE);
-      addCommand(COMMANDS.BOLD_OFF);
-    }
-
-    if (tot.show_payment_method !== false && order.payment_method) {
-      addText(`Zahlung: ${order.payment_method}`);
-      addLine();
-    }
-
-    addText("--------------------------------");
-    addLine();
-
-    // Footer
-    if (f.show_thank_you !== false) {
-      addCommand(COMMANDS.ALIGN_CENTER);
-      addText(f.thank_you_text || "Vielen Dank!");
-      addLine();
-    }
-
-    if (f.show_custom_text && f.custom_text) {
-      addText(f.custom_text);
-      addLine();
-    }
-
-    // Feed and cut
-    addCommand(COMMANDS.FEED_LINES(4));
-    addCommand(COMMANDS.PARTIAL_CUT);
-
-    return data;
-  };
-
-  // Poll for print jobs
-  const fetchPrintQueue = useCallback(async () => {
+  const fetchPrintHistory = useCallback(async () => {
     if (!isAuthenticated) return;
     
     try {
@@ -367,210 +108,67 @@ const PrintStationPage = () => {
       });
       
       setIsConnected(true);
-      const jobs = response.data;
       
-      // Check for new jobs - play sound and auto-print if enabled
-      if (jobs.length > 0 && !isPrinting) {
-        // Check if this is a new job (compare with current queue)
-        if (jobs.length > printQueue.length || (printQueue.length === 0 && jobs.length > 0)) {
-          playNotificationSound();
-        }
-        
-        // Auto-print if RawBT is ready and auto-print is enabled
-        if (rawbtReady && autoPrintEnabled) {
-          const job = jobs[0];
-          await processPrintJob(job);
+      // Count completed prints today
+      const today = new Date().toDateString();
+      const todayPrints = response.data.filter(job => 
+        job.status === "completed" && 
+        new Date(job.printed_at).toDateString() === today
+      );
+      
+      const newCount = todayPrints.length;
+      if (newCount > printedCount && printedCount > 0) {
+        playNotificationSound();
+        const lastJob = todayPrints[0];
+        if (lastJob) {
+          setLastPrintTime(new Date(lastJob.printed_at));
         }
       }
+      setPrintedCount(newCount);
       
-      setPrintQueue(jobs);
+      // Get recent print history (last 10)
+      const completedJobs = response.data
+        .filter(j => j.status === "completed")
+        .slice(0, 10);
+      setPrintHistory(completedJobs);
+      
     } catch (e) {
       setIsConnected(false);
-      console.error("Failed to fetch print queue:", e);
+      console.error("Failed to fetch print history:", e);
     }
-  }, [isAuthenticated, isPrinting, rawbtReady, autoPrintEnabled, printQueue.length]);
+  }, [isAuthenticated, printedCount, soundEnabled]);
 
   // Start polling when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      fetchPrintQueue();
-      pollingRef.current = setInterval(fetchPrintQueue, POLLING_INTERVAL);
+      fetchPrintHistory();
+      fetchPrinterStatus();
+      pollingRef.current = setInterval(() => {
+        fetchPrintHistory();
+        fetchPrinterStatus();
+      }, POLLING_INTERVAL);
     }
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [isAuthenticated, fetchPrintQueue]);
+  }, [isAuthenticated, fetchPrintHistory]);
 
-  // Process a print job
-  const processPrintJob = async (job) => {
-    setIsPrinting(true);
-    
+  // Test print
+  const sendTestPrint = async () => {
+    setTestPrinting(true);
     try {
-      // Build and send receipt
-      const receiptData = buildReceipt(job.order_data, settings);
-      await sendToPrinter(receiptData);
-      
-      // Mark job as complete
       const token = localStorage.getItem("print_station_token");
-      await axios.put(`${API}/print-queue/${job.id}/complete`, {}, {
+      await axios.post(`${API}/printer/test`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
-      setPrintedCount(prev => prev + 1);
-      setLastPrintTime(new Date());
-      toast.success(`✅ Bon #${job.order_number} gedruckt!`);
-      
+      toast.success("✅ Testdruck gesendet!");
+      playNotificationSound();
+      fetchPrinterStatus();
     } catch (error) {
-      console.error("Print error:", error);
-      toast.error(`Druckfehler: ${error.message}`);
+      toast.error(error.response?.data?.detail || "Druckfehler");
     } finally {
-      setIsPrinting(false);
+      setTestPrinting(false);
     }
-  };
-
-  // Manual print test
-  const testPrint = async () => {
-    if (!rawbtReady) {
-      toast.error("Bitte erst RawBT einrichten");
-      setShowSetupGuide(true);
-      return;
-    }
-    
-    setIsPrinting(true);
-    try {
-      const testOrder = {
-        order_number: "TEST",
-        customer_name: "Test Kunde",
-        customer_phone: "0000",
-        pickup_time: "JETZT",
-        created_at: new Date().toISOString(),
-        items: [{ quantity: 1, item_name: "Test Pizza", total_price: 10.00 }],
-        total: 10.00,
-        notes: "Das ist ein Testdruck!",
-        payment_method: "Test"
-      };
-      
-      const receiptData = buildReceipt(testOrder, settings);
-      await sendToPrinter(receiptData);
-      toast.success("✅ Druckauftrag gesendet!");
-    } catch (error) {
-      toast.error(`Druckfehler: ${error.message}`);
-    } finally {
-      setIsPrinting(false);
-    }
-  };
-
-  // Setup Guide Component
-  const SetupGuide = () => (
-    <div className="fixed inset-0 bg-black/90 z-50 overflow-auto p-4">
-      <div className="max-w-md mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="font-anton text-xl text-white">RAWBT EINRICHTUNG</h2>
-          <button 
-            onClick={() => setShowSetupGuide(false)}
-            className="text-neutral-400 hover:text-white text-2xl"
-          >
-            ×
-          </button>
-        </div>
-        
-        <div className="space-y-4">
-          {/* Step 1 */}
-          <div className="bg-neutral-900 border border-neutral-700 p-4">
-            <div className="flex items-start gap-3">
-              <span className="bg-green-600 text-white font-bold w-8 h-8 flex items-center justify-center flex-shrink-0">1</span>
-              <div>
-                <h3 className="font-bold text-white mb-2">RawBT App installieren</h3>
-                <p className="text-sm text-neutral-400 mb-3">
-                  Installiere "RawBT Print Service" aus dem Google Play Store auf diesem Gerät.
-                </p>
-                <a 
-                  href="https://play.google.com/store/apps/details?id=ru.a402d.rawbtprinter"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 text-sm"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Play Store öffnen
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 2 */}
-          <div className="bg-neutral-900 border border-neutral-700 p-4">
-            <div className="flex items-start gap-3">
-              <span className="bg-green-600 text-white font-bold w-8 h-8 flex items-center justify-center flex-shrink-0">2</span>
-              <div>
-                <h3 className="font-bold text-white mb-2">Drucker in RawBT verbinden</h3>
-                <ul className="text-sm text-neutral-400 space-y-1">
-                  <li>• Öffne die RawBT App</li>
-                  <li>• Tippe auf "Drucker auswählen"</li>
-                  <li>• Wähle "Bluetooth"</li>
-                  <li>• Wähle "Epson TM-m30II" aus der Liste</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 3 */}
-          <div className="bg-neutral-900 border border-neutral-700 p-4">
-            <div className="flex items-start gap-3">
-              <span className="bg-green-600 text-white font-bold w-8 h-8 flex items-center justify-center flex-shrink-0">3</span>
-              <div>
-                <h3 className="font-bold text-white mb-2">Testdruck in RawBT</h3>
-                <ul className="text-sm text-neutral-400 space-y-1">
-                  <li>• In RawBT auf "Testdruck" tippen</li>
-                  <li>• Prüfen ob der Drucker druckt</li>
-                  <li>• Falls ja: Alles bereit!</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 4 */}
-          <div className="bg-neutral-900 border border-neutral-700 p-4">
-            <div className="flex items-start gap-3">
-              <span className="bg-green-600 text-white font-bold w-8 h-8 flex items-center justify-center flex-shrink-0">4</span>
-              <div>
-                <h3 className="font-bold text-white mb-2">Fertig!</h3>
-                <p className="text-sm text-neutral-400 mb-3">
-                  Wenn der Testdruck funktioniert, ist alles bereit. Die Print-Station öffnet automatisch RawBT wenn ein Bon gedruckt werden soll.
-                </p>
-                <button 
-                  onClick={confirmRawbtReady}
-                  className="w-full bg-green-600 hover:bg-green-500 text-white px-4 py-3 font-bold"
-                >
-                  EINRICHTUNG ABSCHLIESSEN
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-bold text-blue-400 mb-1">So funktioniert's</h4>
-              <p className="text-sm text-neutral-300">
-                Wenn eine Bestellung eingeht, öffnet diese Seite automatisch die RawBT App mit den Druckdaten. RawBT sendet sie dann an deinen Bluetooth-Drucker.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Manual print from queue
-  const printJob = async (job) => {
-    if (!rawbtReady) {
-      toast.error("Bitte erst RawBT einrichten");
-      setShowSetupGuide(true);
-      return;
-    }
-    await processPrintJob(job);
   };
 
   // PIN Login Screen
@@ -634,9 +232,6 @@ const PrintStationPage = () => {
   // Print Station Dashboard
   return (
     <div className="min-h-screen bg-black text-white p-4">
-      {/* Setup Guide Modal */}
-      {showSetupGuide && <SetupGuide />}
-      
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -662,59 +257,46 @@ const PrintStationPage = () => {
         </div>
       </div>
 
-      {/* RawBT Status */}
-      <div className={`p-4 mb-4 border ${rawbtReady ? 'bg-green-500/10 border-green-500' : 'bg-yellow-500/10 border-yellow-500'}`}>
+      {/* Printer Status */}
+      <div className={`p-4 mb-4 border ${printerStatus?.connected ? 'bg-green-500/10 border-green-500' : 'bg-red-500/10 border-red-500'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Smartphone className={`w-6 h-6 ${rawbtReady ? 'text-green-400' : 'text-yellow-400'}`} />
+            {printerStatus?.connected ? (
+              <CheckCircle className="w-6 h-6 text-green-400" />
+            ) : (
+              <XCircle className="w-6 h-6 text-red-400" />
+            )}
             <div>
               <p className="font-anton text-sm">
-                {rawbtReady ? 'RAWBT BEREIT' : 'RAWBT EINRICHTEN'}
+                {printerStatus?.connected ? 'DRUCKER VERBUNDEN' : 'DRUCKER OFFLINE'}
               </p>
               <p className="font-mono text-xs text-neutral-400">
-                {rawbtReady ? 'Automatisches Drucken aktiv' : 'Einrichtung erforderlich'}
+                {printerStatus?.ip ? `${printerStatus.ip}:${printerStatus.port}` : 'Nicht konfiguriert'}
               </p>
             </div>
           </div>
           
-          <div className="flex gap-2">
-            {rawbtReady ? (
-              <>
-                <button
-                  onClick={() => setAutoPrintEnabled(!autoPrintEnabled)}
-                  className={`font-mono text-xs px-3 py-2 ${autoPrintEnabled ? 'bg-green-600' : 'bg-neutral-700'}`}
-                >
-                  {autoPrintEnabled ? 'Auto: AN' : 'Auto: AUS'}
-                </button>
-                <button
-                  onClick={() => setShowSetupGuide(true)}
-                  className="bg-neutral-700 hover:bg-neutral-600 text-white font-mono text-xs px-3 py-2"
-                >
-                  Anleitung
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setShowSetupGuide(true)}
-                className="bg-yellow-600 hover:bg-yellow-500 text-black font-bold font-mono text-xs px-3 py-2"
-              >
-                Einrichten
-              </button>
-            )}
-          </div>
+          <button
+            onClick={fetchPrinterStatus}
+            className="bg-neutral-700 hover:bg-neutral-600 text-white font-mono text-xs px-3 py-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
-      {/* Status Card */}
+      {/* Stats */}
       <div className="bg-neutral-900 border border-neutral-800 p-6 mb-4">
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
-            <p className="font-mono text-xs text-neutral-400 mb-1">WARTESCHLANGE</p>
-            <p className="font-anton text-4xl text-yellow-400">{printQueue.length}</p>
+            <p className="font-mono text-xs text-neutral-400 mb-1">HEUTE GEDRUCKT</p>
+            <p className="font-anton text-4xl text-green-400">{printedCount}</p>
           </div>
           <div>
-            <p className="font-mono text-xs text-neutral-400 mb-1">GEDRUCKT</p>
-            <p className="font-anton text-4xl text-green-400">{printedCount}</p>
+            <p className="font-mono text-xs text-neutral-400 mb-1">STATUS</p>
+            <p className={`font-anton text-lg ${printerStatus?.connected ? 'text-green-400' : 'text-red-400'}`}>
+              {printerStatus?.connected ? 'BEREIT' : 'OFFLINE'}
+            </p>
           </div>
         </div>
         
@@ -727,103 +309,80 @@ const PrintStationPage = () => {
 
       {/* Current Status */}
       <div className={`p-6 text-center border ${
-        !rawbtReady ? 'bg-yellow-500/10 border-yellow-500' :
-        isPrinting ? 'bg-blue-500/20 border-blue-500' : 
-        printQueue.length > 0 ? 'bg-yellow-500/10 border-yellow-500' :
-        'bg-green-500/10 border-green-500'
+        !printerStatus?.enabled ? 'bg-yellow-500/10 border-yellow-500' :
+        printerStatus?.connected ? 'bg-green-500/10 border-green-500' :
+        'bg-red-500/10 border-red-500'
       }`}>
-        {!rawbtReady ? (
+        {!printerStatus?.enabled ? (
           <>
-            <Smartphone className="w-12 h-12 text-yellow-400 mx-auto mb-3" />
-            <p className="font-anton text-xl text-yellow-400">RAWBT EINRICHTEN</p>
+            <Printer className="w-12 h-12 text-yellow-400 mx-auto mb-3" />
+            <p className="font-anton text-xl text-yellow-400">DRUCKER DEAKTIVIERT</p>
             <p className="font-mono text-sm text-neutral-400 mt-2">
-              RawBT App installieren und konfigurieren
+              Bitte in Admin → Drucker aktivieren
             </p>
-            <button
-              onClick={() => setShowSetupGuide(true)}
-              className="mt-4 bg-yellow-600 hover:bg-yellow-500 text-black font-bold font-mono text-sm px-6 py-3"
-            >
-              JETZT EINRICHTEN
-            </button>
           </>
-        ) : isPrinting ? (
-          <>
-            <RefreshCw className="w-12 h-12 text-blue-400 mx-auto mb-3 animate-spin" />
-            <p className="font-anton text-xl text-blue-400">DRUCKT...</p>
-          </>
-        ) : printQueue.length > 0 ? (
-          <>
-            <Printer className="w-12 h-12 text-yellow-400 mx-auto mb-3 animate-pulse" />
-            <p className="font-anton text-xl text-yellow-400">{printQueue.length} BON(S) WARTEN</p>
-            {!autoPrintEnabled && (
-              <p className="font-mono text-xs text-neutral-400 mt-2">Auto-Druck deaktiviert</p>
-            )}
-          </>
-        ) : (
+        ) : printerStatus?.connected ? (
           <>
             <Check className="w-12 h-12 text-green-500 mx-auto mb-3" />
             <p className="font-anton text-xl text-green-500">BEREIT</p>
-            <p className="font-mono text-sm text-neutral-400 mt-2">Warte auf Bestellungen...</p>
+            <p className="font-mono text-sm text-neutral-400 mt-2">
+              Bons werden automatisch gedruckt
+            </p>
+          </>
+        ) : (
+          <>
+            <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+            <p className="font-anton text-xl text-red-400">NICHT ERREICHBAR</p>
+            <p className="font-mono text-sm text-neutral-400 mt-2">
+              Drucker-Verbindung prüfen
+            </p>
           </>
         )}
       </div>
 
-      {/* Print Queue List */}
-      {printQueue.length > 0 && (
-        <div className="mt-4 space-y-2">
-          <p className="font-mono text-xs text-neutral-400">WARTESCHLANGE:</p>
-          {printQueue.map((job) => (
-            <div key={job.id} className="bg-neutral-900 border border-neutral-700 p-3 flex items-center justify-between">
-              <div>
-                <p className="font-anton text-lg text-white">#{job.order_number}</p>
-                <p className="font-mono text-xs text-neutral-400">
-                  {new Date(job.created_at).toLocaleTimeString('de-DE')}
-                </p>
+      {/* Test Print Button */}
+      {printerStatus?.connected && (
+        <button
+          onClick={sendTestPrint}
+          disabled={testPrinting}
+          className="w-full mt-4 bg-green-600 hover:bg-green-500 disabled:bg-neutral-700 text-white font-anton py-3 flex items-center justify-center gap-2"
+        >
+          {testPrinting ? (
+            <RefreshCw className="w-5 h-5 animate-spin" />
+          ) : (
+            <Printer className="w-5 h-5" />
+          )}
+          TESTDRUCK
+        </button>
+      )}
+
+      {/* Recent Print History */}
+      {printHistory.length > 0 && (
+        <div className="mt-4">
+          <p className="font-mono text-xs text-neutral-400 mb-2">LETZTE DRUCKE:</p>
+          <div className="space-y-2 max-h-48 overflow-auto">
+            {printHistory.map((job) => (
+              <div key={job.id} className="bg-neutral-900 border border-neutral-800 p-3 flex items-center justify-between">
+                <div>
+                  <p className="font-anton text-lg text-white">#{job.order_number}</p>
+                  <p className="font-mono text-xs text-neutral-400">
+                    {new Date(job.printed_at).toLocaleTimeString('de-DE')}
+                  </p>
+                </div>
+                <Check className="w-5 h-5 text-green-500" />
               </div>
-              <button
-                onClick={() => printJob(job)}
-                disabled={isPrinting}
-                className="bg-green-600 hover:bg-green-500 disabled:bg-neutral-700 text-white font-mono text-xs px-4 py-2"
-              >
-                Drucken
-              </button>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Test Print Button */}
-      {rawbtReady && (
-        <button
-          onClick={testPrint}
-          disabled={isPrinting}
-          className="w-full mt-4 bg-neutral-800 hover:bg-neutral-700 disabled:bg-neutral-900 text-white font-mono py-3 flex items-center justify-center gap-2"
-        >
-          <Settings className="w-4 h-4" />
-          Testdruck
-        </button>
-      )}
-
-      {/* Instructions */}
+      {/* Info */}
       <div className="mt-4 p-4 bg-neutral-900/50 border border-neutral-800">
         <p className="font-mono text-xs text-neutral-500 text-center">
-          {rawbtReady 
-            ? autoPrintEnabled 
-              ? "Bons werden automatisch an RawBT gesendet."
-              : "Auto-Druck aus. Tippe auf 'Drucken' für jeden Bon."
-            : "RawBT App installieren und einrichten für Bon-Druck."}
+          Bons werden automatisch gedruckt wenn Bestellungen angenommen werden.
+          <br />Diese Seite zeigt den Drucker-Status in Echtzeit.
         </p>
       </div>
-
-      {/* Reset RawBT status (for debugging) */}
-      {rawbtReady && (
-        <button
-          onClick={resetRawbtStatus}
-          className="w-full mt-2 text-neutral-600 hover:text-neutral-400 font-mono text-xs py-2"
-        >
-          RawBT-Status zurücksetzen
-        </button>
-      )}
     </div>
   );
 };
