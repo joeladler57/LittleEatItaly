@@ -43,13 +43,13 @@ const PrintStationPage = () => {
   const [lastPrintTime, setLastPrintTime] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
   
-  // Bluetooth state
-  const [bluetoothDevice, setBluetoothDevice] = useState(null);
-  const [bluetoothConnected, setBluetoothConnected] = useState(false);
-  const [characteristic, setCharacteristic] = useState(null);
+  // RawBT WebSocket state
+  const [rawbtConnected, setRawbtConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
+  const wsRef = useRef(null);
   const pollingRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
 
   // Check authentication on mount
   useEffect(() => {
