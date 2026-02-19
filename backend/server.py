@@ -277,6 +277,51 @@ class PrintJob(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     printed_at: Optional[datetime] = None
 
+# ============ TERMINAL MODELS ============
+
+class TerminalWaiter(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    pin: str  # 4-digit PIN
+    active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class TerminalTable(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    number: str  # "1", "2", "Terrasse 1", etc.
+    description: Optional[str] = None
+    active: bool = True
+
+class TerminalMenuItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    category: str  # "Vorspeise", "Hauptspeise", "Pizza", "Pasta", "Getränke", etc.
+    price: float = 0.0
+    addons: List[Dict] = []  # [{name: "Extra Käse", price: 1.50}, ...]
+    active: bool = True
+    sort_order: int = 0
+
+class TerminalOrderItem(BaseModel):
+    item_id: str
+    item_name: str
+    quantity: int = 1
+    price: float = 0.0
+    addons: List[Dict] = []  # Selected addons
+    course: str = "Hauptspeise"  # "Vorspeise", "Hauptspeise", "Nachspeise"
+    note: Optional[str] = None  # Free text note for this item
+
+class TerminalOrder(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    order_number: int = 0
+    table_number: str
+    waiter_id: str
+    waiter_name: str
+    items: List[Dict] = []
+    total: float = 0.0
+    status: str = "pending"  # pending, printed, completed
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    printed_at: Optional[datetime] = None
+
 # ============ SHOP SETTINGS MODEL ============
 
 class ShopSettings(BaseModel):
