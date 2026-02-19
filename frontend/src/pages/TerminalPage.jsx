@@ -22,6 +22,7 @@ const TerminalPage = () => {
   const [tables, setTables] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [addonGroups, setAddonGroups] = useState([]);
   
   // Order State
   const [selectedTable, setSelectedTable] = useState(null);
