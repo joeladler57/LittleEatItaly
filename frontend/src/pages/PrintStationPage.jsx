@@ -369,10 +369,18 @@ const PrintStationPage = () => {
       setIsConnected(true);
       const jobs = response.data;
       
-      if (jobs.length > 0 && !isPrinting && rawbtConnected) {
-        // New print job! Process it
-        const job = jobs[0];
-        await processPrintJob(job);
+      // Check for new jobs - play sound and auto-print if enabled
+      if (jobs.length > 0 && !isPrinting) {
+        // Check if this is a new job (compare with current queue)
+        if (jobs.length > printQueue.length || (printQueue.length === 0 && jobs.length > 0)) {
+          playNotificationSound();
+        }
+        
+        // Auto-print if RawBT is ready and auto-print is enabled
+        if (rawbtReady && autoPrintEnabled) {
+          const job = jobs[0];
+          await processPrintJob(job);
+        }
       }
       
       setPrintQueue(jobs);
@@ -380,7 +388,7 @@ const PrintStationPage = () => {
       setIsConnected(false);
       console.error("Failed to fetch print queue:", e);
     }
-  }, [isAuthenticated, isPrinting, rawbtConnected]);
+  }, [isAuthenticated, isPrinting, rawbtReady, autoPrintEnabled, printQueue.length]);
 
   // Start polling when authenticated
   useEffect(() => {
