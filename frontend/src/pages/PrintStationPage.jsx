@@ -50,13 +50,14 @@ const PrintStationPage = () => {
   const [lastPrintTime, setLastPrintTime] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
   
-  // RawBT WebSocket state
-  const [rawbtConnected, setRawbtConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
+  // RawBT state
+  const [rawbtReady, setRawbtReady] = useState(false);
+  const [autoPrintEnabled, setAutoPrintEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [showSetupGuide, setShowSetupGuide] = useState(false);
-  const wsRef = useRef(null);
+  
   const pollingRef = useRef(null);
-  const reconnectTimeoutRef = useRef(null);
+  const audioRef = useRef(null);
 
   // Check authentication on mount
   useEffect(() => {
