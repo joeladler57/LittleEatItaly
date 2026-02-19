@@ -98,107 +98,107 @@ const PrintStationPage = () => {
     }
   };
 
-  // Connect to Bluetooth printer
-  const connectBluetooth = async () => {
-    if (!navigator.bluetooth) {
-      toast.error("Bluetooth wird nicht unterstützt");
-      return;
+  // Connect to RawBT WebSocket Server
+  const connectRawBT = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      return; // Already connected
     }
 
     setIsConnecting(true);
     
     try {
-      // Request Bluetooth device - filter for serial port profile
-      const device = await navigator.bluetooth.requestDevice({
-        // Accept all devices and filter manually, as printer might not advertise standard services
-        acceptAllDevices: true,
-        optionalServices: [
-          '000018f0-0000-1000-8000-00805f9b34fb', // Epson specific
-          '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Common serial
-          '0000ff00-0000-1000-8000-00805f9b34fb', // Generic
-          '0000ffe0-0000-1000-8000-00805f9b34fb', // HM-10 style
-          'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // RN4870
-        ]
-      });
-
-      toast.info(`Verbinde mit ${device.name}...`);
+      const ws = new WebSocket(RAWBT_WS_URL);
       
-      device.addEventListener('gattserverdisconnected', () => {
-        setBluetoothConnected(false);
-        setCharacteristic(null);
-        toast.error("Bluetooth getrennt");
-      });
-
-      const server = await device.gatt.connect();
+      ws.onopen = () => {
+        console.log("RawBT WebSocket connected");
+        setRawbtConnected(true);
+        setIsConnecting(false);
+        toast.success("✅ RawBT verbunden!");
+      };
       
-      // Try to find a writable characteristic
-      const services = await server.getPrimaryServices();
-      let writeChar = null;
-      
-      for (const service of services) {
-        try {
-          const characteristics = await service.getCharacteristics();
-          for (const char of characteristics) {
-            if (char.properties.write || char.properties.writeWithoutResponse) {
-              writeChar = char;
-              break;
-            }
-          }
-          if (writeChar) break;
-        } catch (e) {
-          continue;
+      ws.onclose = () => {
+        console.log("RawBT WebSocket closed");
+        setRawbtConnected(false);
+        wsRef.current = null;
+        
+        // Auto-reconnect after 5 seconds if authenticated
+        if (isAuthenticated) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            console.log("Attempting RawBT reconnection...");
+            connectRawBT();
+          }, 5000);
         }
-      }
-
-      if (!writeChar) {
-        throw new Error("Keine Schreib-Charakteristik gefunden");
-      }
-
-      setBluetoothDevice(device);
-      setCharacteristic(writeChar);
-      setBluetoothConnected(true);
-      toast.success(`✅ ${device.name} verbunden!`);
+      };
       
+      ws.onerror = (error) => {
+        console.error("RawBT WebSocket error:", error);
+        setIsConnecting(false);
+        setRawbtConnected(false);
+      };
+      
+      ws.onmessage = (event) => {
+        console.log("RawBT message:", event.data);
+        // Handle any response from RawBT if needed
+      };
+      
+      wsRef.current = ws;
     } catch (error) {
-      console.error("Bluetooth error:", error);
-      if (error.name !== 'NotFoundError') {
-        toast.error(`Bluetooth Fehler: ${error.message}`);
-      }
-    } finally {
+      console.error("Failed to connect to RawBT:", error);
       setIsConnecting(false);
+      setRawbtConnected(false);
     }
+  }, [isAuthenticated]);
+
+  // Disconnect from RawBT
+  const disconnectRawBT = () => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    setRawbtConnected(false);
+    toast.info("RawBT getrennt");
   };
 
-  // Disconnect Bluetooth
-  const disconnectBluetooth = () => {
-    if (bluetoothDevice && bluetoothDevice.gatt.connected) {
-      bluetoothDevice.gatt.disconnect();
+  // Auto-connect to RawBT when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Small delay before attempting connection
+      const timer = setTimeout(() => {
+        connectRawBT();
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-    setBluetoothDevice(null);
-    setCharacteristic(null);
-    setBluetoothConnected(false);
-    toast.info("Bluetooth getrennt");
-  };
+  }, [isAuthenticated, connectRawBT]);
 
-  // Send data to printer
-  const sendToPrinter = async (data) => {
-    if (!characteristic) {
-      throw new Error("Drucker nicht verbunden");
-    }
-
-    const uint8Array = new Uint8Array(data);
-    const chunkSize = 100; // Send in chunks to avoid buffer overflow
-    
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.slice(i, i + chunkSize);
-      if (characteristic.properties.writeWithoutResponse) {
-        await characteristic.writeValueWithoutResponse(chunk);
-      } else {
-        await characteristic.writeValue(chunk);
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
       }
-      // Small delay between chunks
-      await new Promise(resolve => setTimeout(resolve, 50));
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
+
+  // Send data to RawBT printer
+  const sendToPrinter = async (data) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      throw new Error("RawBT nicht verbunden");
     }
+
+    // Convert byte array to base64 for WebSocket transmission
+    const uint8Array = new Uint8Array(data);
+    
+    // Send as binary data
+    wsRef.current.send(uint8Array);
+    
+    // Small delay to ensure data is processed
+    await new Promise(resolve => setTimeout(resolve, 100));
   };
 
   // Build ESC/POS receipt
