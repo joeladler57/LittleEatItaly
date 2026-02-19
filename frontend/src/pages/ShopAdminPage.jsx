@@ -593,116 +593,60 @@ const OrdersSection = ({ orders, onUpdate, settings }) => {
   const [prepTime, setPrepTime] = useState(30);
   const [printing, setPrinting] = useState(null);
 
-  // Print function - uses native browser print with AirPrint/Network printer support
+  // Print function - adds to print queue for print station
   const handlePrintOrder = async (order) => {
     setPrinting(order.id);
     
     try {
-      // Build optimized receipt HTML for thermal printer (80mm)
-      const receiptHtml = buildReceiptHtml(order, settings);
+      const token = localStorage.getItem("admin_token");
       
-      // Open print window optimized for thermal receipt
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=80mm">
-          <title>Bon #${order.order_number}</title>
-          <style>
-            @page { 
-              size: 80mm auto; 
-              margin: 0; 
-            }
-            @media print {
-              html, body { 
-                width: 80mm; 
-                margin: 0; 
-                padding: 0;
-              }
-            }
-            * { 
-              box-sizing: border-box; 
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            body { 
-              font-family: 'Courier New', 'Menlo', monospace; 
-              font-size: 12px; 
-              line-height: 1.3;
-              width: 80mm; 
-              max-width: 80mm;
-              margin: 0 auto; 
-              padding: 5mm;
-              background: white;
-              color: black;
-            }
-            .center { text-align: center; }
-            .bold { font-weight: bold; }
-            .large { font-size: 16px; }
-            .xlarge { font-size: 22px; font-weight: bold; }
-            .separator { 
-              border: none;
-              border-top: 1px dashed #000; 
-              margin: 8px 0; 
-            }
-            .item-row { 
-              display: flex; 
-              justify-content: space-between; 
-              padding: 3px 0; 
-            }
-            .item-name { flex: 1; }
-            .item-price { text-align: right; white-space: nowrap; margin-left: 10px; }
-            .highlight { 
-              background: #000; 
-              color: #fff; 
-              padding: 10px; 
-              text-align: center; 
-              margin: 10px 0;
-              font-size: 18px;
-              font-weight: bold;
-            }
-            .notes-box { 
-              border: 2px solid #000; 
-              padding: 8px; 
-              margin: 10px 0;
-              font-weight: bold;
-            }
-            .total-row {
-              font-size: 18px;
-              font-weight: bold;
-              border-top: 2px solid #000;
-              padding-top: 8px;
-              margin-top: 8px;
-            }
-          </style>
-        </head>
-        <body>
-          ${receiptHtml}
-          <script>
-            // Auto-print when loaded
-            window.onload = function() { 
-              setTimeout(function() {
-                window.print();
-              }, 300);
-            };
-            // Close after print (or cancel)
-            window.onafterprint = function() {
-              window.close();
-            };
-          </script>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-      toast.success("🖨️ Druckdialog wird geöffnet...");
+      // Add to print queue
+      await axios.post(`${API}/print-queue?order_id=${order.id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success("🖨️ An Druck-Station gesendet!");
     } catch (error) {
-      console.error("Print error:", error);
-      toast.error("Drucken fehlgeschlagen");
+      console.error("Print queue error:", error);
+      // Fallback: Open browser print dialog
+      toast.info("Öffne Druckdialog...");
+      openBrowserPrint(order);
     } finally {
       setPrinting(null);
     }
+  };
+
+  // Fallback: Browser print dialog
+  const openBrowserPrint = (order) => {
+    const receiptHtml = buildReceiptHtml(order, settings);
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Bon #${order.order_number}</title>
+        <style>
+          @page { size: 80mm auto; margin: 0; }
+          @media print { html, body { width: 80mm; margin: 0; padding: 0; } }
+          body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0 auto; padding: 5mm; }
+          .center { text-align: center; }
+          .bold { font-weight: bold; }
+          .large { font-size: 16px; }
+          .xlarge { font-size: 22px; font-weight: bold; }
+          .separator { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+          .item-row { display: flex; justify-content: space-between; padding: 3px 0; }
+          .highlight { background: #000; color: #fff; padding: 10px; text-align: center; margin: 10px 0; }
+          .notes-box { border: 2px solid #000; padding: 8px; margin: 10px 0; }
+        </style>
+      </head>
+      <body>
+        ${receiptHtml}
+        <script>window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); }</script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   // Build receipt HTML
