@@ -3906,9 +3906,11 @@ const TerminalSection = ({ onUpdate }) => {
                             onChange={e => setEditingMenuItem({ ...editingMenuItem, category: e.target.value })}
                             className="bg-pizza-black border border-pizza-dark text-pizza-white p-2 rounded-none"
                           >
-                            {categoryNames.map(cat => (
+                            {categoryNames.length > 0 ? categoryNames.map(cat => (
                               <option key={cat} value={cat}>{cat}</option>
-                            ))}
+                            )) : (
+                              <option value="Sonstiges">Sonstiges</option>
+                            )}
                           </select>
                           <Input
                             type="number"
