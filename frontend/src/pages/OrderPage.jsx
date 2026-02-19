@@ -374,7 +374,7 @@ const OrderPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-pizza-black pt-20 pb-32">
+    <div className="min-h-screen bg-pizza-black pt-20 pb-32 overflow-x-hidden">
       {/* Header */}
       <div className="bg-gradient-to-b from-pizza-dark to-pizza-black py-12">
         <div className="max-w-7xl mx-auto px-4">
@@ -391,7 +391,7 @@ const OrderPage = () => {
       {step === "success" ? (
         <SuccessView orderResult={orderResult} settings={settings} />
       ) : (
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 mt-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {/* Menu Section - hidden on mobile during checkout */}
             <div className={`flex-1 ${step === "checkout" ? "hidden lg:block" : ""}`}>
