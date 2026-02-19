@@ -374,7 +374,7 @@ const OrderPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-pizza-black pt-20 pb-32 overflow-x-hidden">
+    <div className="min-h-screen bg-pizza-black pt-20 pb-32">
       {/* Header */}
       <div className="bg-gradient-to-b from-pizza-dark to-pizza-black py-12">
         <div className="max-w-7xl mx-auto px-4">
