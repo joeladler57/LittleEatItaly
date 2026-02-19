@@ -209,8 +209,32 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 3. Erlaube Benachrichtigungen wenn gefragt
 4. Du erhältst jetzt Benachrichtigungen auch bei geschlossenem Browser!
 
+## Druck-Station für Bon-Druck (Dezember 2025)
+**Problem gelöst:** Epson TM-m30II nutzt Bluetooth Classic (3.0), das nicht mit Web Bluetooth API (nur BLE) kompatibel ist. Lösung: RawBT Android App als Brücke.
+
+**So richtest du die Druck-Station ein:**
+1. Öffne `/print-station` auf einem alten Android-Handy
+2. Logge dich mit dem Staff-PIN (1234) ein
+3. Tippe auf "JETZT EINRICHTEN" um die Anleitung zu sehen
+4. Installiere "RawBT Print Service" aus dem Play Store
+5. In RawBT: Bluetooth auswählen → Epson TM-m30II verbinden
+6. Testdruck in RawBT machen
+7. Zurück zur Print-Station: "EINRICHTUNG ABSCHLIESSEN" tippen
+8. Die Station ist bereit - Bons werden automatisch gedruckt!
+
+**Funktionen:**
+- ✅ Automatischer Bon-Druck bei neuen Bestellungen
+- ✅ Manuelle Druck-Buttons für jeden Job in der Warteschlange
+- ✅ Sound-Benachrichtigung bei neuen Jobs
+- ✅ Auto-Druck An/Aus schaltbar
+- ✅ RawBT URL-Schema Integration (rawbt:base64,...)
+
+**URLs:**
+- Print-Station: `/print-station` (Staff-PIN benötigt)
+- Play Store: https://play.google.com/store/apps/details?id=ru.a402d.rawbtprinter
+
 ## Backlog / Zukünftige Features
-- Push-Benachrichtigungen (Web Push API) für Hintergrund-Notifications
+- E-Mail-Benachrichtigungen aktivieren (Resend API-Key benötigt)
 - Statistiken-Dashboard für Bestellungen/Reservierungen
 - Code-Refactoring: `server.py` in separate Router aufteilen
 - Mehrsprachigkeit (DE/EN)
