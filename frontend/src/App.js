@@ -118,7 +118,7 @@ function App() {
 // Separate component to use useLocation
 const AppContent = () => {
   const location = useLocation();
-  const hideNavFooter = location.pathname === '/personal' || location.pathname === '/print-station';
+  const hideNavFooter = location.pathname === '/personal' || location.pathname === '/print-station' || location.pathname === '/terminal';
 
   return (
     <>
