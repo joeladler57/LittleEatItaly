@@ -1,55 +1,84 @@
 <analysis>**original_problem_statement:**
-The user initially requested a modern, graffiti-style website for their Neapolitan pizzeria, Little Eat Italy. The project has since expanded into a full-stack application with online ordering, table reservations, and a staff PWA. The most recent request is to build a new Terminal feature, which will function as an internal ordering system for waiters to take orders at the table, which are then automatically printed for the kitchen.
+The user initially requested a modern, graffiti-style website for their Neapolitan pizzeria, Little Eat Italy. The project has evolved into a full-stack application for online ordering and table reservations.
+
+The most recent work involved several major feature implementations and bug fixes:
+1.  **Waiter Terminal ():** A new internal ordering system for waiters. It required PIN login, table selection, and ordering from a separate in-house menu. Key features requested during development included the ability to assign items to a course (Vorspeise, Hauptspeise) and add free-text notes.
+2.  **Addon Management:** The user requested the ability to manage addons for menu items, similar to the existing online ordering system. This included creating addon groups (e.g., Pizza Toppings) and assigning them to specific menu categories.
+3.  **Data Import:** The user provided CSV files (, ) and requested that both the new Waiter Terminal and the existing online ordering system be populated with this real menu data.
+4.  **Bug Fixes:** The user reported several bugs during the session, including issues with receipt printing, online order submission failures, and UI layout problems on desktop.
 
 **PRODUCT REQUIREMENTS:**
 - **Waiter Terminal ():**
-    - A new, separate URL for waiters.
-    - Each waiter has a unique PIN for login.
-    - Fixed table numbers, configurable in the admin backend.
-    - The system must use a separate, independent Inhouse-Menü (in-house menu).
-    - Waiters can select items, categorize them as Vorspeise (appetizer) or Hauptspeise (main course), and add free-text notes to individual items.
-    - Submitted orders are automatically printed. The printed receipt must contain the table number, items, quantities, and any notes.
-- **Admin Management:**
-    - The admin user must be able to create and manage waiter PINs, table numbers, and the complete in-house menu (categories, items, addons, prices).
+    - Waiter PIN login.
+    - Fixed table numbers.
+    - A separate, independent Inhouse-Menü (in-house menu).
+    - Waiters can select items, categorize them by course (e.g., Vorspeise, Hauptspeise), and add free-text notes.
+    - Waiters can select addons for items (e.g., Extra Cheese).
+    - Submitted orders are automatically printed.
+- **Admin Management ():**
+    - The admin must be able to manage waiter PINs, table numbers, and the complete in-house menu, including categories, items, and addon groups.
+- **Online Ordering System:**
+    - The system should use the real menu data from the provided CSV, excluding drinks.
+    - Addons should be available for relevant items (e.g., Pizza).
 
 **User's preferred language**: German
 
 **what currently exists?**
-The project is a full-stack application using React, FastAPI, and MongoDB. It includes a customer website, an admin dashboard, and a staff PWA. A fully functional automated printing system has been successfully implemented. This system uses a local HTML file () that runs on a dedicated device (an old phone) on the restaurant's local network. This file polls the backend for print jobs and sends them directly to the networked Epson TM-m30II printer using ePOS-Print XML over HTTP, bypassing all previous network and browser security issues.
+A full-stack React/FastAPI/MongoDB application. The core features are a customer-facing online ordering page, a staff PWA, and an admin dashboard. An automated printing system using a local HTML file () is fully functional.
 
-The agent has begun implementing the new Waiter Terminal feature. The backend models and API endpoints have been created in , the print station HTML has been updated to format terminal orders, and a new route and placeholder page () have been created in the frontend.
+The Waiter Terminal feature is now complete, including the frontend UI for waiters and the backend management UI in the admin dashboard. Both the terminal and the main online ordering system have been populated with real menu and addon data from user-provided CSV files. Several critical bugs related to order submission and UI layout have been identified and fixed.
 
 **Last working item**:
-- **Last item agent was working:** The agent was actively building the frontend for the new Waiter Terminal. The basic file structure at  was created, but the UI for waiter login, table selection, menu interaction, and order submission has not yet been built.
+- **Last item agent was working:** The agent was fixing a CSS bug on the online ordering page () where the shopping cart sidebar was cut off on desktop resolutions. The agent identified that  on the  tag in  was the likely cause and removed it.
 - **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** This is a major new feature. Once complete, use the  to conduct a full end-to-end test covering admin configuration, waiter ordering, and successful printing.
+- **Agent Testing Done:** N (The fix has been applied but not visually verified with a final screenshot).
+- **Which testing method agent to use?** screenshot tool
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-None. The critical printing issue was fully resolved in the last session.
+- **Issue 1: (P0) Verify Desktop Cart UI Fix**
+  - **Attempted fixes:** The agent removed  from the  element in .
+  - **Next debug checklist:** Take a screenshot of the  page on a desktop viewport (e.g., 1920x1080 and 1440x900) after adding an item to the cart to confirm the sidebar is fully visible.
+  - **Why fix this issue and what will be achieved with the fix?** The Zur Kasse (Checkout) button is inaccessible on desktop, blocking users from completing orders.
+  - **Status:** IN PROGRESS
+  - **Is recurring issue?** N
+  - **Should Test frontend/backend/both after fix?** Frontend
 
 **In progress Task List**:
-- **Task 1: Complete the Waiter Terminal Feature (P0)**
-  - **Where to resume:** Continue implementing the React components and logic in .
-  - **What will be achieved with this?** A complete, functional waiter ordering interface from login to order submission.
-  - **Status:** IN PROGRESS
-  - **Should Test frontend/backend/both after fix?** Both
-  - **Blocked on something:** This task is blocked until the Admin UI for managing terminal data is also created (see Upcoming Tasks).
+None.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - **Task 1 (P0): Implement Admin UI for Terminal Management:** Build the necessary interface within the existing admin dashboard () to allow the restaurant owner to manage waiters, tables, and the in-house menu. The backend endpoints for this are already complete.
-  - **Task 2 (P1): User Verification:** Once both the terminal and the admin UI are complete, guide the user through testing the entire workflow.
+  - **Task 1 (P0): User Verification:** Guide the user to test the complete end-to-end flows for both the Waiter Terminal and the updated Online Ordering system, now that they are populated with real data and bugs have been fixed.
+  - **Task 2 (P1): Refactor :** The main backend file, , has become excessively large and contains logic for all parts of the application. It needs to be refactored into smaller, more manageable router files (e.g., , , ) to reduce technical debt and improve maintainability.
 - **Future Tasks:**
-  - **Task 1 (P2): Enable Email Notifications:** Guide the user on obtaining a  to activate the pre-built email notification feature.
+  - **Task 1 (P2): Enable Email Notifications:** Guide the user on obtaining a  to activate the pre-built email notification feature for orders.
 
 **Completed work in this session**
-- **Resolved Automated Receipt Printing:** After multiple failed attempts (Web Bluetooth, RawBT app, direct backend printing), a stable solution was implemented. A local HTML file () is now used on a device in the restaurant's Wi-Fi network to poll for jobs and send ePOS-Print XML commands directly to the printer's IP address (on port 80). The user has confirmed this system works perfectly.
-- **Started Waiter Terminal Feature:** Created the foundational backend models and API endpoints in  and the placeholder frontend page for .
+- **Waiter Terminal Feature (DONE):**
+  - Implemented the complete waiter-facing UI at  for login, table selection, and ordering.
+  - Added features for course selection and free-text notes per item.
+- **Terminal Admin UI (DONE):**
+  - Created a Terminal section in the admin dashboard ().
+  - Implemented UI for managing Waiters, Tables, In-house Menu Items, and Addon Groups.
+- **Addon Functionality (DONE):**
+  - Extended the backend and frontend to support addon groups for the terminal menu.
+  - Implemented UI in the admin panel to create addon groups and assign them to categories.
+- **CSV Data Import (DONE):**
+  - Populated the Waiter Terminal menu and the Online Ordering menu with real product data from user-provided CSV files.
+  - Imported and configured all pizza toppings as an addon group.
+- **Bug Fixes (DONE):**
+  - **Online Order Submission:** Fixed a Pydantic validation error in the backend that prevented orders with addons from being submitted.
+  - **Cart Button UX:** Repositioned the toast notification which was blocking the mobile cart button.
+  - **Admin UI Display:** Fixed a bug where the terminal's in-house menu items were not displaying in the admin panel.
+  - **Printing:** Diagnosed and helped the user resolve a client-side configuration issue that was preventing terminal receipts from printing.
 
 **Earlier issues found/mentioned but not fixed**
-None.
+- **Issue 1: Monolithic **
+  - **Debug checklist:** Identify logical sections within  (e.g., auth, admin, orders, terminal, print queue) and create new files in a  directory. Use FastAPI's  to move the endpoints and their dependencies into these new files. Include the new routers in the main  app instance in .
+  - **Why to solve this issue and what will be achieved with this?** The file is over 1500 lines long, making it hard to navigate, debug, and maintain. Refactoring will improve code organization and scalability.
+  - **Should Test frontend/backend/both after fix:** Backend (via API tests/regression testing).
+  - **Is recurring issue?** Y
 
 **Known issue recurrence from previous fork**
 None.
@@ -58,73 +87,83 @@ None.
 
 
 **Key Technical Concepts**
-- **Printing:** Direct client-to-printer communication from a local HTML file using **ePOS-Print XML** via  to the printer's local HTTP endpoint.
-- **Backend:** FastAPI, with new Pydantic models and API routers for the Terminal feature.
+- **Printing:** Direct client-to-printer communication via ePOS-Print XML over HTTP.
+- **Backend:** FastAPI, Pydantic, MongoDB.
+- **Frontend:** React, TailwindCSS, shadcn/ui, lucide-react.
+- **Data Import:** Ad-hoc Python scripts using  and  to populate the database.
 
 **key DB schema**
-- **(New) terminal_waiters:** 
-- **(New) terminal_tables:** 
-- **(New) terminal_menu_categories:** 
-- **(New) terminal_menu_items:** 
-- **(New) terminal_orders:** 
-- **print_queue:** Now handles a new job .
+- **terminal_waiters:** 
+- **terminal_tables:** 
+- **terminal_menu_categories:** 
+- **terminal_menu_items:** 
+- **terminal_addon_groups:** 
+- **orders:**  (Type changed from  to  to fix bug).
+- **print_queue:** Handles jobs of  and .
 
 **changes in tech stack**
-- The entire printing approach has shifted to a client-side, local network solution using a standalone HTML file.
+None.
 
 **All files of reference**
-- : **Primary file for the next task.** Needs to be built.
-- : Needs to be modified to add the Terminal management UI.
-- : Contains all new backend logic for the terminal.
-- : The core of the printing system.
+- : File for the online ordering page, contains the cart UI that was being fixed.
+- : Global stylesheet where the  property was removed.
+- : Contains all backend logic, including the recently fixed Pydantic model.
+- : Contains the heavily modified admin UI for both the main shop and the new terminal.
+- : Contains the completed UI for the waiter terminal.
 
 **Areas that need refactoring**:
-- **:** This file has grown excessively large and is a significant source of technical debt. It should be refactored by splitting the logic into separate router files (Admin, Staff, Print, Terminal) as a high-priority task to maintain code health.
+- **:** This is a critical source of technical debt. It urgently needs to be broken down into multiple router files for better maintainability.
 
 **key api endpoints**
-- **Terminal:**
+- **Terminal Addons (New):**
   - 
   - 
   - 
-- **Admin (for Terminal):**
-  - CRUD endpoints for waiters, tables, and menu items under 
-- **Print Queue (Public):**
-  -  (used by )
+  - 
+- **Orders:**
+  -  (Model was updated to fix a bug)
 
 **Critical Info for New Agent**
-- **Your immediate priority (P0) is to complete the waiter terminal feature.** This involves two main parts: finishing the waiter-facing UI and building the corresponding management UI in the admin dashboard.
-- The printing problem is solved. The solution is the  file. Do not attempt to change this unless absolutely necessary.
-- The  file is critically overdue for refactoring. Consider addressing this after the terminal feature is delivered to improve maintainability.
+- **Your first task is to verify the CSS fix for the desktop cart.** Take a screenshot of the  page with an item in the cart to confirm the layout is correct.
+- After verification, the highest priority is to **request user testing** for all the new features and fixes.
+- The **refactoring of ** is the most significant piece of technical debt and should be proposed as the next major task after user verification is complete.
 - **You must communicate in German.**
 
 **documents and test reports created in this job**
-- 
 -  (updated)
+- 
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **User:** Confirmed that automatic printing from other devices now works.
-- **User:** Requested the new Terminal feature for waiters.
-- **User:** Provided detailed requirements for the terminal: unique waiter PINs, fixed table numbers, a separate in-house menu, specific receipt content, and the ability to add notes and categorize items.
-- **Agent:** Acknowledged the requirements and began implementation of the backend and the placeholder frontend page for the terminal.
+- **User:** prüfe nun die desktop version, dort ist der Warenkorb seitlich rechts abgeschnitten - *Reports the cart UI is cut off on desktop.*
+- **Agent:** Implemented a fix by changing the CSS layout.
+- **User:** beim absenden der bestellung über das online Bestellsystem erscheint ein Fehler am ende - *Reports an error when submitting an online order.*
+- **Agent:** Fixed the backend Pydantic model and a frontend UX issue with an overlapping toast notification.
+- **User:** jetzt nutze die gleichen Produkte für das Bestellsystem... - *Asks to populate the online store with the same CSV data (food only).*
+- **Agent:** Imported the data and fixed issues with addon display.
+- **User:** wenn ich beim Backoffice auf terminal-inhousemenü gehe zeigt er mir nichts - *Reports a bug where the admin UI doesn't show terminal menu items.*
+- **Agent:** Fixed the frontend rendering logic in the admin panel.
+- **User:** nutze die Datei für die addons... - *Provides a CSV with toppings to be used as addons.*
+- **Agent:** Imported the toppings as an addon group.
 
 **Project Health Check:**
-- **Broken:** The new Waiter Terminal feature is non-functional and incomplete.
-- **Mocked:** Email notifications via Resend remain inactive pending an API key.
+- **Broken:** None.
+- **Mocked:** Email notifications (Resend integration is inactive pending API key).
 
 **3rd Party Integrations**
-- **Resend:** Integrated but inactive.
+- **Resend:** Integrated but inactive. Requires .
 - **Epson ePOS-Print:** Actively used for printing via direct HTTP XML requests.
 
 **Testing status**
-- **Testing agent used after significant changes:** NO
-- **Test files created:** None
-- **Known regressions:** None
+- **Testing agent used after significant changes:** YES (Used once after initial terminal feature completion).
+- **Test files created:** None.
+- **Known regressions:** None.
 
 **Credentials to test flow:**
 - **Admin Login:** ,  / 
 - **Staff PIN:** , 
-- **Print Station PIN:**  (for the local HTML file)
+- **Waiter PINs (Example):**  (Marco),  (Lucia)
+- **Print Station PIN:** 
 
 **What agent forgot to execute**
-- The agent has not yet started building the **admin UI** for managing the new terminal's data (waiters, tables, menu). This is a critical dependency for the terminal to be usable.
-- The urgent need to refactor  was identified but not acted upon, increasing technical debt.</analysis>
+- The agent has consistently postponed the crucial refactoring of , which was identified as a source of technical debt early on.
+- The final verification (screenshot) for the desktop cart layout fix was not performed before the session ended.</analysis>
