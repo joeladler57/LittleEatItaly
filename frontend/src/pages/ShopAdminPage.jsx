@@ -2898,6 +2898,8 @@ const TerminalSection = ({ onUpdate }) => {
   const [waiters, setWaiters] = useState([]);
   const [tables, setTables] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
+  const [addonGroups, setAddonGroups] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -2905,11 +2907,14 @@ const TerminalSection = ({ onUpdate }) => {
   const [editingWaiter, setEditingWaiter] = useState(null);
   const [editingTable, setEditingTable] = useState(null);
   const [editingMenuItem, setEditingMenuItem] = useState(null);
+  const [editingAddonGroup, setEditingAddonGroup] = useState(null);
+  const [editingCategory, setEditingCategory] = useState(null);
   
   // New item forms
   const [showAddWaiter, setShowAddWaiter] = useState(false);
   const [showAddTable, setShowAddTable] = useState(false);
   const [showAddMenuItem, setShowAddMenuItem] = useState(false);
+  const [showAddAddonGroup, setShowAddAddonGroup] = useState(false);
   const [newWaiter, setNewWaiter] = useState({ name: "", pin: "" });
   const [newTable, setNewTable] = useState({ number: "", description: "" });
   const [newMenuItem, setNewMenuItem] = useState({ 
@@ -2918,6 +2923,12 @@ const TerminalSection = ({ onUpdate }) => {
     price: 0, 
     addons: [] 
   });
+  const [newAddonGroup, setNewAddonGroup] = useState({
+    name: "",
+    options: [{ name: "", price: 0 }],
+    required: false,
+    multi_select: true
+  });
 
   const fetchData = async () => {
     setLoading(true);
@@ -2925,15 +2936,19 @@ const TerminalSection = ({ onUpdate }) => {
       const token = localStorage.getItem("admin_token");
       const headers = { Authorization: `Bearer ${token}` };
       
-      const [waitersRes, tablesRes, menuRes] = await Promise.all([
+      const [waitersRes, tablesRes, menuRes, addonGroupsRes, categoriesRes] = await Promise.all([
         axios.get(`${API}/terminal/waiters`, { headers }),
         axios.get(`${API}/terminal/tables`),
-        axios.get(`${API}/terminal/menu/all`, { headers })
+        axios.get(`${API}/terminal/menu/all`, { headers }),
+        axios.get(`${API}/terminal/addon-groups`),
+        axios.get(`${API}/terminal/categories`)
       ]);
       
       setWaiters(waitersRes.data);
       setTables(tablesRes.data);
       setMenuItems(menuRes.data);
+      setAddonGroups(addonGroupsRes.data);
+      setCategories(categoriesRes.data);
     } catch (e) {
       console.error("Failed to fetch terminal data:", e);
       toast.error("Fehler beim Laden der Terminal-Daten");
