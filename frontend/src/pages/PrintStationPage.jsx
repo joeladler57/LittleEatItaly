@@ -430,8 +430,9 @@ const PrintStationPage = () => {
 
   // Manual print test
   const testPrint = async () => {
-    if (!rawbtConnected) {
-      toast.error("RawBT nicht verbunden");
+    if (!rawbtReady) {
+      toast.error("Bitte erst RawBT einrichten");
+      setShowSetupGuide(true);
       return;
     }
     
@@ -451,9 +452,9 @@ const PrintStationPage = () => {
       
       const receiptData = buildReceipt(testOrder, settings);
       await sendToPrinter(receiptData);
-      toast.success("✅ Testdruck erfolgreich!");
+      toast.success("✅ Druckauftrag gesendet!");
     } catch (error) {
-      toast.error(`Testdruck Fehler: ${error.message}`);
+      toast.error(`Druckfehler: ${error.message}`);
     } finally {
       setIsPrinting(false);
     }
