@@ -210,31 +210,31 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 4. Du erhältst jetzt Benachrichtigungen auch bei geschlossenem Browser!
 
 ## Druck-Station für Bon-Druck (Dezember 2025)
-**Netzwerk-Drucker direkt angebunden!** Der Epson TM-m30II ist per Netzwerkkabel verbunden und druckt jetzt automatisch.
+**Netzwerk-Drucker über ePOS-Print XML!** Der Epson TM-m30II wird direkt vom Browser angesteuert.
 
-**Drucker-Einstellungen (Admin → DRUCKER):**
-1. IP-Adresse des Druckers eintragen (z.B. 192.168.2.129)
-2. Port: **9100** (Standard für Netzwerk-Thermodrucker)
-3. "Drucker aktivieren" einschalten
-4. "Automatisch drucken bei Annahme" aktivieren
-5. Mit "Verbindung prüfen" testen
-6. Mit "Testdruck" einen Testbon drucken
+**WICHTIG:** Die Print-Station muss auf einem Gerät laufen, das im **gleichen WLAN** wie der Drucker ist (z.B. das alte Android-Handy).
 
-**Funktionsweise:**
-- ✅ Bestellung wird im Personal-Bereich oder Admin angenommen
-- ✅ Backend sendet ESC/POS-Befehle direkt an Drucker (Port 9100)
-- ✅ Bon wird automatisch gedruckt - keine extra App/Gerät nötig!
+**So funktioniert's:**
+1. Öffne `/print-station` auf dem alten Android-Handy (im Restaurant-WLAN)
+2. PIN eingeben (1234)
+3. "Verbinden" tippen
+4. Fertig! Bons werden automatisch gedruckt
 
-**Status-Seite `/print-station`:**
-- Zeigt Drucker-Verbindungsstatus in Echtzeit
-- Zählt gedruckte Bons
-- Testdruck-Button
-- Print-Historie
+**Technische Details:**
+- Kommunikation über ePOS-Print XML API
+- HTTP POST an `http://192.168.2.129:8008/cgi-bin/epos/service.cgi`
+- Das Android-Handy fungiert als Brücke zwischen Cloud und lokalem Drucker
 
-**API-Endpunkte:**
-- `GET /api/printer/status` - Drucker-Status prüfen
-- `POST /api/printer/test` - Testdruck senden
-- `POST /api/printer/print/{order_id}` - Bestellung manuell drucken
+**Einstellungen (Zahnrad-Icon):**
+- IP-Adresse ändern
+- Port ändern (Standard: 8008)
+
+**Funktionen:**
+- ✅ Auto-Druck wenn Bestellung angenommen wird
+- ✅ Manuelle Druck-Buttons
+- ✅ Sound-Benachrichtigung
+- ✅ Warteschlange-Anzeige
+- ✅ Print-Historie
 
 ## Backlog / Zukünftige Features
 - E-Mail-Benachrichtigungen aktivieren (Resend API-Key benötigt)
