@@ -505,6 +505,12 @@
         }
 
         function buildReceiptXML(order) {
+            // Check if this is a terminal order
+            if (order.type === 'terminal') {
+                return buildTerminalReceiptXML(order);
+            }
+            
+            // Regular online order
             // Get template settings
             const template = settings?.receipt_template || {};
             const header = template.header || {};
