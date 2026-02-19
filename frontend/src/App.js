@@ -59,6 +59,7 @@ const AnimatedRoutes = () => {
         <Route path="/admin/shop" element={<PageWrapper><ShopAdminPage /></PageWrapper>} />
         <Route path="/personal" element={<StaffPage />} />
         <Route path="/print-station" element={<PrintStationPage />} />
+        <Route path="/terminal" element={<TerminalPage />} />
       </Routes>
     </AnimatePresence>
   );
