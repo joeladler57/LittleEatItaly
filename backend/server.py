@@ -543,6 +543,267 @@ class SiteContentUpdate(BaseModel):
     footer: Optional[FooterContent] = None
     nav: Optional[NavContent] = None
 
+# ============ NETWORK PRINTER FUNCTIONS ============
+
+# ESC/POS Commands
+ESC = 0x1B
+GS = 0x1D
+ESCPOS_COMMANDS = {
+    "INIT": bytes([ESC, 0x40]),
+    "ALIGN_CENTER": bytes([ESC, 0x61, 0x01]),
+    "ALIGN_LEFT": bytes([ESC, 0x61, 0x00]),
+    "BOLD_ON": bytes([ESC, 0x45, 0x01]),
+    "BOLD_OFF": bytes([ESC, 0x45, 0x00]),
+    "DOUBLE_HEIGHT": bytes([GS, 0x21, 0x10]),
+    "DOUBLE_WIDTH": bytes([GS, 0x21, 0x20]),
+    "DOUBLE_SIZE": bytes([GS, 0x21, 0x30]),
+    "NORMAL_SIZE": bytes([GS, 0x21, 0x00]),
+    "UNDERLINE_ON": bytes([ESC, 0x2D, 0x01]),
+    "UNDERLINE_OFF": bytes([ESC, 0x2D, 0x00]),
+    "CUT": bytes([GS, 0x56, 0x00]),
+    "PARTIAL_CUT": bytes([GS, 0x56, 0x01]),
+}
+
+def escpos_feed_lines(n: int) -> bytes:
+    return bytes([ESC, 0x64, n])
+
+def build_escpos_receipt(order: dict, settings: dict) -> bytes:
+    """Build ESC/POS receipt data from order"""
+    data = bytearray()
+    
+    def add_text(text: str):
+        data.extend(text.encode('cp437', errors='replace'))
+    
+    def add_line():
+        data.extend(b'\n')
+    
+    def add_cmd(cmd: bytes):
+        data.extend(cmd)
+    
+    template = settings.get("receipt_template", {})
+    header = template.get("header", {})
+    order_info = template.get("order_info", {})
+    items_cfg = template.get("items", {})
+    notes_cfg = template.get("notes", {})
+    totals_cfg = template.get("totals", {})
+    footer_cfg = template.get("footer", {})
+    
+    # Initialize printer
+    add_cmd(ESCPOS_COMMANDS["INIT"])
+    
+    # Header - Restaurant Name
+    if header.get("show_restaurant_name", True):
+        add_cmd(ESCPOS_COMMANDS["ALIGN_CENTER"])
+        add_cmd(ESCPOS_COMMANDS["BOLD_ON"])
+        if header.get("restaurant_name_size") == "large":
+            add_cmd(ESCPOS_COMMANDS["DOUBLE_SIZE"])
+        else:
+            add_cmd(ESCPOS_COMMANDS["DOUBLE_HEIGHT"])
+        add_text(settings.get("restaurant_name", "Little Eat Italy"))
+        add_line()
+        add_cmd(ESCPOS_COMMANDS["NORMAL_SIZE"])
+        add_cmd(ESCPOS_COMMANDS["BOLD_OFF"])
+    
+    # Address
+    if header.get("show_address", True):
+        add_cmd(ESCPOS_COMMANDS["ALIGN_CENTER"])
+        add_text(settings.get("restaurant_address", ""))
+        add_line()
+    
+    # Phone
+    if header.get("show_phone", True):
+        add_text(f"Tel: {settings.get('restaurant_phone', '')}")
+        add_line()
+    
+    # Separator
+    if header.get("show_separator", True):
+        add_text("--------------------------------")
+        add_line()
+    
+    # Order Number
+    if order_info.get("show_order_number", True):
+        add_cmd(ESCPOS_COMMANDS["ALIGN_CENTER"])
+        add_cmd(ESCPOS_COMMANDS["BOLD_ON"])
+        add_cmd(ESCPOS_COMMANDS["DOUBLE_SIZE"])
+        add_text(f"#{order.get('order_number', '?')}")
+        add_line()
+        add_cmd(ESCPOS_COMMANDS["NORMAL_SIZE"])
+        add_cmd(ESCPOS_COMMANDS["BOLD_OFF"])
+    
+    # Date/Time
+    if order_info.get("show_date_time", True):
+        add_cmd(ESCPOS_COMMANDS["ALIGN_CENTER"])
+        created_at = order.get("created_at", "")
+        if created_at:
+            try:
+                dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                add_text(dt.strftime("%d.%m.%Y %H:%M"))
+            except:
+                add_text(str(created_at)[:16])
+        add_line()
+    
+    # Customer
+    add_cmd(ESCPOS_COMMANDS["ALIGN_LEFT"])
+    if order_info.get("show_customer_name", True):
+        if order_info.get("customer_name_bold"):
+            add_cmd(ESCPOS_COMMANDS["BOLD_ON"])
+        add_text(f"Kunde: {order.get('customer_name', '')}")
+        add_line()
+        add_cmd(ESCPOS_COMMANDS["BOLD_OFF"])
+    
+    if order_info.get("show_customer_phone", True) and order.get("customer_phone"):
+        add_text(f"Tel: {order.get('customer_phone')}")
+        add_line()
+    
+    # Pickup Time - Highlighted
+    if order_info.get("show_pickup_time", True):
+        add_line()
+        add_cmd(ESCPOS_COMMANDS["ALIGN_CENTER"])
+        add_cmd(ESCPOS_COMMANDS["BOLD_ON"])
+        add_cmd(ESCPOS_COMMANDS["DOUBLE_SIZE"])
+        add_text("================")
+        add_line()
+        pickup_time = order.get("confirmed_pickup_time") or order.get("pickup_time") or "N/A"
+        add_text(f"ABHOLUNG: {pickup_time}")
+        add_line()
+        add_text("================")
+        add_line()
+        add_cmd(ESCPOS_COMMANDS["NORMAL_SIZE"])
+        add_cmd(ESCPOS_COMMANDS["BOLD_OFF"])
+    
+    add_cmd(ESCPOS_COMMANDS["ALIGN_LEFT"])
+    add_text("--------------------------------")
+    add_line()
+    
+    # Items
+    for item in order.get("items", []):
+        if items_cfg.get("item_name_bold"):
+            add_cmd(ESCPOS_COMMANDS["BOLD_ON"])
+        
+        item_line = ""
+        if items_cfg.get("show_quantity", True):
+            item_line += f"{item.get('quantity', 1)}x "
+        item_line += item.get("item_name", "")
+        if items_cfg.get("show_size", True) and item.get("size_name"):
+            item_line += f" ({item.get('size_name')})"
+        
+        add_text(item_line)
+        
+        if items_cfg.get("show_item_price", True):
+            price = f"{item.get('total_price', 0):.2f}E"
+            spaces = max(1, 32 - len(item_line) - len(price))
+            add_text(" " * spaces + price)
+        add_line()
+        add_cmd(ESCPOS_COMMANDS["BOLD_OFF"])
+        
+        # Options/Extras
+        if items_cfg.get("show_options", True) and item.get("options"):
+            opts = ", ".join([opt.get("option_name") or opt.get("name") or str(opt) for opt in item.get("options", [])])
+            if opts:
+                add_text(f"  + {opts}")
+                add_line()
+    
+    add_text("--------------------------------")
+    add_line()
+    
+    # Notes
+    if notes_cfg.get("show_notes", True) and order.get("notes"):
+        if notes_cfg.get("notes_bold"):
+            add_cmd(ESCPOS_COMMANDS["BOLD_ON"])
+        if notes_cfg.get("notes_box"):
+            add_text("================================")
+            add_line()
+        add_text(f"* {order.get('notes')}")
+        add_line()
+        if notes_cfg.get("notes_box"):
+            add_text("================================")
+            add_line()
+        add_cmd(ESCPOS_COMMANDS["BOLD_OFF"])
+    
+    # Total
+    if totals_cfg.get("show_total", True):
+        add_cmd(ESCPOS_COMMANDS["BOLD_ON"])
+        if totals_cfg.get("total_size") == "large":
+            add_cmd(ESCPOS_COMMANDS["DOUBLE_HEIGHT"])
+        total_line = "GESAMT:"
+        total_price = f"{order.get('total', 0):.2f}E"
+        spaces = max(1, 32 - len(total_line) - len(total_price))
+        add_text(total_line + " " * spaces + total_price)
+        add_line()
+        add_cmd(ESCPOS_COMMANDS["NORMAL_SIZE"])
+        add_cmd(ESCPOS_COMMANDS["BOLD_OFF"])
+    
+    if totals_cfg.get("show_payment_method", True) and order.get("payment_method"):
+        add_text(f"Zahlung: {order.get('payment_method')}")
+        add_line()
+    
+    add_text("--------------------------------")
+    add_line()
+    
+    # Footer
+    if footer_cfg.get("show_thank_you", True):
+        add_cmd(ESCPOS_COMMANDS["ALIGN_CENTER"])
+        add_text(footer_cfg.get("thank_you_text", "Vielen Dank!"))
+        add_line()
+    
+    if footer_cfg.get("show_custom_text") and footer_cfg.get("custom_text"):
+        add_text(footer_cfg.get("custom_text"))
+        add_line()
+    
+    # Feed and cut
+    add_cmd(escpos_feed_lines(4))
+    add_cmd(ESCPOS_COMMANDS["PARTIAL_CUT"])
+    
+    return bytes(data)
+
+async def send_to_network_printer(printer_ip: str, printer_port: int, data: bytes, timeout: float = 5.0) -> dict:
+    """Send ESC/POS data to network printer via raw socket (Port 9100)"""
+    try:
+        # Create socket connection
+        loop = asyncio.get_event_loop()
+        
+        def _send():
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(timeout)
+            try:
+                sock.connect((printer_ip, printer_port))
+                sock.sendall(data)
+                return {"success": True, "message": "Printed successfully"}
+            except socket.timeout:
+                return {"success": False, "error": "Connection timeout - printer not responding"}
+            except ConnectionRefusedError:
+                return {"success": False, "error": "Connection refused - check printer IP and port"}
+            except socket.gaierror:
+                return {"success": False, "error": "Invalid IP address"}
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+            finally:
+                sock.close()
+        
+        result = await loop.run_in_executor(None, _send)
+        return result
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+async def print_order_receipt(order: dict, settings: dict) -> dict:
+    """Build and print receipt for an order"""
+    if not settings.get("printer_enabled"):
+        return {"success": False, "error": "Printer not enabled"}
+    
+    printer_ip = settings.get("printer_ip", "")
+    printer_port = settings.get("printer_port", 9100)
+    
+    if not printer_ip:
+        return {"success": False, "error": "Printer IP not configured"}
+    
+    try:
+        receipt_data = build_escpos_receipt(order, settings)
+        result = await send_to_network_printer(printer_ip, printer_port, receipt_data)
+        return result
+    except Exception as e:
+        logging.error(f"Print error: {e}")
+        return {"success": False, "error": str(e)}
+
 # ============ ROUTES ============
 
 @api_router.get("/")
