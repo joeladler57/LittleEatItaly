@@ -391,7 +391,7 @@ const OrderPage = () => {
       {step === "success" ? (
         <SuccessView orderResult={orderResult} settings={settings} />
       ) : (
-        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 mt-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-16 2xl:px-24 mt-8">
           <div className="max-w-[1600px] mx-auto">
             <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {/* Menu Section - hidden on mobile during checkout */}
