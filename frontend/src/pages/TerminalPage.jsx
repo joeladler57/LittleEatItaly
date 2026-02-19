@@ -115,7 +115,8 @@ const TerminalPage = () => {
     setSelectedTable(table);
     setView("menu");
     if (categories.length > 0) {
-      setSelectedCategory(categories[0]);
+      const firstCat = typeof categories[0] === 'string' ? categories[0] : categories[0].name;
+      setSelectedCategory(firstCat);
     }
   };
 
