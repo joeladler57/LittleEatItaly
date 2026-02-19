@@ -652,12 +652,16 @@ const OrderCard = ({ order, onUpdate, shopSettings, printOrder, isPrinting }) =>
     }
   };
 
-  // Manual print function
+  // Manual print function - adds to print queue
   const handleManualPrint = async () => {
-    if (shopSettings?.printer_enabled) {
-      await printOrder(order, shopSettings);
-    } else {
-      toast.error("Drucker nicht konfiguriert");
+    try {
+      const token = localStorage.getItem("staff_token");
+      await axios.post(`${API}/print-queue?order_id=${order.id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("🖨️ An Druck-Station gesendet!");
+    } catch (e) {
+      toast.error("Fehler beim Senden an Drucker");
     }
   };
 
