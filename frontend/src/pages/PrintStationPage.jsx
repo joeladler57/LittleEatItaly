@@ -648,54 +648,57 @@ const PrintStationPage = () => {
             </p>
           </div>
         </div>
-        <div className={`flex items-center gap-2 px-3 py-1 ${isConnected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-          {isConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-          <span className="font-mono text-xs">{isConnected ? 'ONLINE' : 'OFFLINE'}</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className={`p-2 ${soundEnabled ? 'text-green-400' : 'text-neutral-500'}`}
+          >
+            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+          </button>
+          <div className={`flex items-center gap-2 px-3 py-1 ${isConnected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+            {isConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+            <span className="font-mono text-xs">{isConnected ? 'ONLINE' : 'OFFLINE'}</span>
+          </div>
         </div>
       </div>
 
-      {/* RawBT Connection */}
-      <div className={`p-4 mb-4 border ${rawbtConnected ? 'bg-green-500/10 border-green-500' : 'bg-neutral-900 border-neutral-700'}`}>
+      {/* RawBT Status */}
+      <div className={`p-4 mb-4 border ${rawbtReady ? 'bg-green-500/10 border-green-500' : 'bg-yellow-500/10 border-yellow-500'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {rawbtConnected ? (
-              <Smartphone className="w-6 h-6 text-green-400" />
-            ) : (
-              <Smartphone className="w-6 h-6 text-neutral-500" />
-            )}
+            <Smartphone className={`w-6 h-6 ${rawbtReady ? 'text-green-400' : 'text-yellow-400'}`} />
             <div>
               <p className="font-anton text-sm">
-                {rawbtConnected ? 'RAWBT VERBUNDEN' : 'RAWBT APP'}
+                {rawbtReady ? 'RAWBT BEREIT' : 'RAWBT EINRICHTEN'}
               </p>
               <p className="font-mono text-xs text-neutral-400">
-                {rawbtConnected ? 'Drucker bereit' : 'Nicht verbunden'}
+                {rawbtReady ? 'Automatisches Drucken aktiv' : 'Einrichtung erforderlich'}
               </p>
             </div>
           </div>
           
           <div className="flex gap-2">
-            {!rawbtConnected && (
-              <button
-                onClick={() => setShowSetupGuide(true)}
-                className="bg-neutral-700 hover:bg-neutral-600 text-white font-mono text-xs px-3 py-2"
-              >
-                Anleitung
-              </button>
-            )}
-            {rawbtConnected ? (
-              <button
-                onClick={disconnectRawBT}
-                className="bg-red-600 hover:bg-red-500 text-white font-mono text-xs px-3 py-2"
-              >
-                Trennen
-              </button>
+            {rawbtReady ? (
+              <>
+                <button
+                  onClick={() => setAutoPrintEnabled(!autoPrintEnabled)}
+                  className={`font-mono text-xs px-3 py-2 ${autoPrintEnabled ? 'bg-green-600' : 'bg-neutral-700'}`}
+                >
+                  {autoPrintEnabled ? 'Auto: AN' : 'Auto: AUS'}
+                </button>
+                <button
+                  onClick={() => setShowSetupGuide(true)}
+                  className="bg-neutral-700 hover:bg-neutral-600 text-white font-mono text-xs px-3 py-2"
+                >
+                  Anleitung
+                </button>
+              </>
             ) : (
               <button
-                onClick={connectRawBT}
-                disabled={isConnecting}
-                className="bg-green-600 hover:bg-green-500 disabled:bg-neutral-700 text-white font-mono text-xs px-3 py-2"
+                onClick={() => setShowSetupGuide(true)}
+                className="bg-yellow-600 hover:bg-yellow-500 text-black font-bold font-mono text-xs px-3 py-2"
               >
-                {isConnecting ? '...' : 'Verbinden'}
+                Einrichten
               </button>
             )}
           </div>
@@ -724,23 +727,23 @@ const PrintStationPage = () => {
 
       {/* Current Status */}
       <div className={`p-6 text-center border ${
-        !rawbtConnected ? 'bg-yellow-500/10 border-yellow-500' :
+        !rawbtReady ? 'bg-yellow-500/10 border-yellow-500' :
         isPrinting ? 'bg-blue-500/20 border-blue-500' : 
         printQueue.length > 0 ? 'bg-yellow-500/10 border-yellow-500' :
         'bg-green-500/10 border-green-500'
       }`}>
-        {!rawbtConnected ? (
+        {!rawbtReady ? (
           <>
             <Smartphone className="w-12 h-12 text-yellow-400 mx-auto mb-3" />
-            <p className="font-anton text-xl text-yellow-400">RAWBT VERBINDEN</p>
+            <p className="font-anton text-xl text-yellow-400">RAWBT EINRICHTEN</p>
             <p className="font-mono text-sm text-neutral-400 mt-2">
-              RawBT App starten und hier verbinden
+              RawBT App installieren und konfigurieren
             </p>
             <button
               onClick={() => setShowSetupGuide(true)}
-              className="mt-4 bg-yellow-600 hover:bg-yellow-500 text-black font-mono text-sm px-4 py-2"
+              className="mt-4 bg-yellow-600 hover:bg-yellow-500 text-black font-bold font-mono text-sm px-6 py-3"
             >
-              Einrichtung anzeigen
+              JETZT EINRICHTEN
             </button>
           </>
         ) : isPrinting ? (
@@ -752,6 +755,9 @@ const PrintStationPage = () => {
           <>
             <Printer className="w-12 h-12 text-yellow-400 mx-auto mb-3 animate-pulse" />
             <p className="font-anton text-xl text-yellow-400">{printQueue.length} BON(S) WARTEN</p>
+            {!autoPrintEnabled && (
+              <p className="font-mono text-xs text-neutral-400 mt-2">Auto-Druck deaktiviert</p>
+            )}
           </>
         ) : (
           <>
@@ -762,8 +768,32 @@ const PrintStationPage = () => {
         )}
       </div>
 
+      {/* Print Queue List */}
+      {printQueue.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <p className="font-mono text-xs text-neutral-400">WARTESCHLANGE:</p>
+          {printQueue.map((job) => (
+            <div key={job.id} className="bg-neutral-900 border border-neutral-700 p-3 flex items-center justify-between">
+              <div>
+                <p className="font-anton text-lg text-white">#{job.order_number}</p>
+                <p className="font-mono text-xs text-neutral-400">
+                  {new Date(job.created_at).toLocaleTimeString('de-DE')}
+                </p>
+              </div>
+              <button
+                onClick={() => printJob(job)}
+                disabled={isPrinting}
+                className="bg-green-600 hover:bg-green-500 disabled:bg-neutral-700 text-white font-mono text-xs px-4 py-2"
+              >
+                Drucken
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Test Print Button */}
-      {rawbtConnected && (
+      {rawbtReady && (
         <button
           onClick={testPrint}
           disabled={isPrinting}
@@ -777,11 +807,23 @@ const PrintStationPage = () => {
       {/* Instructions */}
       <div className="mt-4 p-4 bg-neutral-900/50 border border-neutral-800">
         <p className="font-mono text-xs text-neutral-500 text-center">
-          {rawbtConnected 
-            ? "✅ RawBT verbunden. Bons werden automatisch gedruckt."
-            : "RawBT App installieren und starten für automatischen Druck."}
+          {rawbtReady 
+            ? autoPrintEnabled 
+              ? "Bons werden automatisch an RawBT gesendet."
+              : "Auto-Druck aus. Tippe auf 'Drucken' für jeden Bon."
+            : "RawBT App installieren und einrichten für Bon-Druck."}
         </p>
       </div>
+
+      {/* Reset RawBT status (for debugging) */}
+      {rawbtReady && (
+        <button
+          onClick={resetRawbtStatus}
+          className="w-full mt-2 text-neutral-600 hover:text-neutral-400 font-mono text-xs py-2"
+        >
+          RawBT-Status zurücksetzen
+        </button>
+      )}
     </div>
   );
 };
