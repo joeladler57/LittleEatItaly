@@ -265,6 +265,17 @@ class Reservation(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# ============ PRINT QUEUE MODEL ============
+
+class PrintJob(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    order_id: str
+    order_number: int
+    order_data: Dict  # Full order data for printing
+    status: str = "pending"  # pending, printing, completed, failed
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    printed_at: Optional[datetime] = None
+
 # ============ SHOP SETTINGS MODEL ============
 
 class ShopSettings(BaseModel):
