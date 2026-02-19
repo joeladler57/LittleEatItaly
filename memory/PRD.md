@@ -50,7 +50,13 @@
 - ✅ **Admin-Verwaltung** (`/admin/shop` → TERMINAL):
   - Kellner: Name + 4-stelliger PIN (muss einzigartig sein)
   - Tische: Nummer + optionale Beschreibung
-  - Inhouse-Menü: Artikel mit Kategorie, Preis, Extras
+  - **Extras/Addons**: Addon-Gruppen erstellen und Kategorien zuweisen
+  - Inhouse-Menü: Artikel mit Kategorie, Preis
+- ✅ **Addon-Gruppen**:
+  - Gruppen wie "Extra Belag", "Extras" erstellen
+  - Optionen mit Name + Preis (z.B. "Extra Käse +1.50€")
+  - Mehrfachauswahl oder Einzelauswahl
+  - Gruppen auf Kategorien zuweisen (z.B. alle Pizzen bekommen "Extra Belag")
 - ✅ **Auto-Druck**: Bestellungen werden automatisch in Druckwarteschlange eingefügt
 
 ### Februar 2026 - Epson TM-30III Bon-Druck (Implementiert ✅)
