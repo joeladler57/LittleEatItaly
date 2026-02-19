@@ -3142,7 +3142,80 @@ const TerminalSection = ({ onUpdate }) => {
     }
   };
 
-  const categories = ["Vorspeise", "Hauptspeise", "Pizza", "Pasta", "Salat", "Nachspeise", "Getränke", "Sonstiges"];
+  // CRUD operations for Addon Groups
+  const createAddonGroup = async () => {
+    if (!newAddonGroup.name) {
+      toast.error("Gruppenname erforderlich");
+      return;
+    }
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.post(`${API}/terminal/addon-groups`, newAddonGroup, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Addon-Gruppe hinzugefügt");
+      setNewAddonGroup({ name: "", options: [{ name: "", price: 0 }], required: false, multi_select: true });
+      setShowAddAddonGroup(false);
+      fetchData();
+    } catch (e) {
+      toast.error("Fehler beim Hinzufügen");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateAddonGroup = async (groupId, data) => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.put(`${API}/terminal/addon-groups/${groupId}`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Addon-Gruppe aktualisiert");
+      setEditingAddonGroup(null);
+      fetchData();
+    } catch (e) {
+      toast.error("Fehler beim Aktualisieren");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteAddonGroup = async (groupId) => {
+    if (!confirm("Addon-Gruppe wirklich löschen?")) return;
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.delete(`${API}/terminal/addon-groups/${groupId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Addon-Gruppe gelöscht");
+      fetchData();
+    } catch (e) {
+      toast.error("Fehler beim Löschen");
+    }
+  };
+
+  // Update Category Addon Groups
+  const updateCategoryAddons = async (categoryName, addonGroupIds) => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.put(`${API}/terminal/categories/${encodeURIComponent(categoryName)}`, 
+        { addon_group_ids: addonGroupIds },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Kategorie aktualisiert");
+      setEditingCategory(null);
+      fetchData();
+    } catch (e) {
+      toast.error("Fehler beim Aktualisieren");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const categoryNames = ["Vorspeise", "Hauptspeise", "Pizza", "Pasta", "Salat", "Nachspeise", "Getränke", "Sonstiges"];
 
   if (loading) {
     return (
