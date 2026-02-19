@@ -586,11 +586,143 @@ const StatCard = ({ icon: Icon, label, value, color, pulse }) => {
 };
 
 // Orders Section
-const OrdersSection = ({ orders, onUpdate }) => {
+const OrdersSection = ({ orders, onUpdate, settings }) => {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [updating, setUpdating] = useState(null);
   const [showPrepTimeModal, setShowPrepTimeModal] = useState(null);
   const [prepTime, setPrepTime] = useState(30);
+  const [printing, setPrinting] = useState(null);
+
+  // Print function
+  const handlePrintOrder = async (order) => {
+    if (!settings?.printer_enabled) {
+      toast.error("Drucker nicht aktiviert");
+      return;
+    }
+    
+    setPrinting(order.id);
+    try {
+      // Build receipt HTML for browser print
+      const receiptHtml = buildReceiptHtml(order, settings);
+      
+      const printWindow = window.open('', '_blank', 'width=400,height=600');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Bon #${order.order_number}</title>
+          <style>
+            @page { margin: 0; size: 80mm auto; }
+            body { 
+              font-family: 'Courier New', monospace; 
+              font-size: 12px; 
+              width: 80mm; 
+              margin: 0 auto; 
+              padding: 10px;
+            }
+            .center { text-align: center; }
+            .bold { font-weight: bold; }
+            .large { font-size: 18px; }
+            .xlarge { font-size: 24px; }
+            .separator { border-top: 1px dashed #000; margin: 8px 0; }
+            .item-row { display: flex; justify-content: space-between; padding: 2px 0; }
+            .highlight { background: #000; color: #fff; padding: 8px; text-align: center; margin: 8px 0; }
+            .notes-box { border: 2px solid #000; padding: 8px; margin: 8px 0; }
+          </style>
+        </head>
+        <body>
+          ${receiptHtml}
+          <script>
+            window.onload = function() { 
+              window.print(); 
+              setTimeout(function() { window.close(); }, 500);
+            }
+          </script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      toast.success("🖨️ Druckdialog geöffnet");
+    } catch (error) {
+      toast.error("Drucken fehlgeschlagen");
+    } finally {
+      setPrinting(null);
+    }
+  };
+
+  // Build receipt HTML
+  const buildReceiptHtml = (order, settings) => {
+    const t = settings?.receipt_template || {};
+    const h = t.header || {};
+    const o = t.order_info || {};
+    const i = t.items || {};
+    const n = t.notes || {};
+    const tot = t.totals || {};
+    const f = t.footer || {};
+
+    let html = '';
+    
+    // Header
+    if (h.show_restaurant_name) {
+      html += `<div class="center ${h.restaurant_name_bold ? 'bold' : ''} ${h.restaurant_name_size === 'large' ? 'xlarge' : h.restaurant_name_size === 'medium' ? 'large' : ''}">${settings?.restaurant_name || 'Restaurant'}</div>`;
+    }
+    if (h.show_address) html += `<div class="center">${settings?.restaurant_address || ''}</div>`;
+    if (h.show_phone) html += `<div class="center">Tel: ${settings?.restaurant_phone || ''}</div>`;
+    if (h.show_separator) html += '<div class="separator"></div>';
+
+    // Order Info
+    if (o.show_order_number) {
+      html += `<div class="center ${o.order_number_bold ? 'bold' : ''} ${o.order_number_size === 'large' ? 'xlarge' : 'large'}">#${order.order_number}</div>`;
+    }
+    if (o.show_date_time) html += `<div class="center">${new Date(order.created_at).toLocaleString('de-DE')}</div>`;
+    if (o.show_customer_name) html += `<div class="${o.customer_name_bold ? 'bold' : ''}">Kunde: ${order.customer_name}</div>`;
+    if (o.show_customer_phone) html += `<div>Tel: ${order.customer_phone}</div>`;
+    if (o.show_pickup_time) {
+      html += `<div class="highlight ${o.pickup_time_bold ? 'bold' : ''} ${o.pickup_time_size === 'large' ? 'xlarge' : ''}">ABHOLUNG: ${order.pickup_time || order.confirmed_pickup_time || 'N/A'}</div>`;
+    }
+    if (o.show_separator) html += '<div class="separator"></div>';
+
+    // Items
+    for (const item of (order.items || [])) {
+      let itemName = '';
+      if (i.show_quantity) itemName += `${item.quantity}x `;
+      itemName += item.item_name;
+      if (i.show_size && item.size_name) itemName += ` (${item.size_name})`;
+      
+      html += `<div class="item-row"><span class="${i.item_name_bold ? 'bold' : ''}">${itemName}</span>`;
+      if (i.show_item_price) html += `<span>${item.total_price?.toFixed(2) || '0.00'}€</span>`;
+      html += '</div>';
+      
+      if (i.show_options && item.options?.length > 0) {
+        html += `<div style="margin-left: 20px; font-size: 10px;">+ ${item.options.map(opt => opt.option_name || opt).join(', ')}</div>`;
+      }
+    }
+    if (i.show_separator) html += '<div class="separator"></div>';
+
+    // Notes
+    if (n.show_notes && order.notes) {
+      html += `<div class="${n.notes_box ? 'notes-box' : ''} ${n.notes_bold ? 'bold' : ''}">📝 ${order.notes}</div>`;
+    }
+
+    // Totals
+    if (tot.show_total) {
+      html += `<div class="item-row ${tot.total_bold ? 'bold' : ''} ${tot.total_size === 'large' ? 'xlarge' : ''}"><span>GESAMT:</span><span>${order.total?.toFixed(2) || '0.00'}€</span></div>`;
+    }
+    if (tot.show_payment_method) {
+      html += `<div>Zahlung: ${order.payment_method || 'Bar'}</div>`;
+    }
+    if (tot.show_separator) html += '<div class="separator"></div>';
+
+    // Footer
+    if (f.show_thank_you) {
+      html += `<div class="center">${f.thank_you_text || 'Vielen Dank!'}</div>`;
+    }
+    if (f.show_custom_text && f.custom_text) {
+      html += `<div class="center">${f.custom_text}</div>`;
+    }
+
+    return html;
+  };
 
   const updateStatus = async (orderId, status, prepTimeMinutes = null) => {
     setUpdating(orderId);
