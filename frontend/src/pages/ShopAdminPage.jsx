@@ -2268,7 +2268,7 @@ const PrinterSection = ({ settings, onUpdate }) => {
           <div className="space-y-4">
             <ToggleSwitch 
               checked={formData.printer_enabled} 
-              onChange={() => setFormData(prev => ({...prev, printer_enabled: !prev.printer_enabled}))}
+              onChange={(val) => setFormData(prev => ({...prev, printer_enabled: val}))}
               label="Drucker aktivieren"
             />
 
