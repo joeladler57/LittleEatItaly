@@ -1,73 +1,52 @@
 <analysis>**original_problem_statement:**
-The user wants to build a modern, urban, graffiti-style website for their Neapolitan pizzeria, Little Eat Italy. The initial project involved creating a static site with CMS capabilities. The scope has significantly expanded to include a custom-built, integrated system for online ordering (takeaway only) and table reservations, designed to function similarly to platforms like GloriaFood.
+The user initially requested a modern, graffiti-style website for their Neapolitan pizzeria, Little Eat Italy. The project has since expanded into a full-stack application with online ordering, table reservations, and a staff PWA. The most recent request is to build a new Terminal feature, which will function as an internal ordering system for waiters to take orders at the table, which are then automatically printed for the kitchen.
 
 **PRODUCT REQUIREMENTS:**
-- **Phase 1-6 (Completed):** Initial website build, localization, CMS, admin dashboard, legal pages, and various UI adjustments.
-- **Phase 7 (Completed):** Integration of a menu page using the GlobalFood API. (This is now being superseded by the custom system).
-- **Phase 8 (In Progress):** Build a complete, custom ordering and reservation system with the following features:
-    - Customer-facing pages for ordering from a dynamic menu and booking a table.
-    - An extensive admin dashboard (app) for manually managing the menu, viewing and accepting/rejecting new orders and reservations.
-    - Configurable shop settings, including lead times, opening hours, and holidays.
-    - For as soon as possible orders, the admin must be able to specify a preparation time upon acceptance, which is then emailed to the customer.
-    - Email confirmations for customers (requires a Resend API key).
-    - Payments are cash on pickup only.
+- **Waiter Terminal ():**
+    - A new, separate URL for waiters.
+    - Each waiter has a unique PIN for login.
+    - Fixed table numbers, configurable in the admin backend.
+    - The system must use a separate, independent Inhouse-Menü (in-house menu).
+    - Waiters can select items, categorize them as Vorspeise (appetizer) or Hauptspeise (main course), and add free-text notes to individual items.
+    - Submitted orders are automatically printed. The printed receipt must contain the table number, items, quantities, and any notes.
+- **Admin Management:**
+    - The admin user must be able to create and manage waiter PINs, table numbers, and the complete in-house menu (categories, items, addons, prices).
 
 **User's preferred language**: German
 
 **what currently exists?**
-A full-stack application (React/FastAPI) for the Little Eat Italy pizzeria. The frontend features a homepage, a legacy menu page (from GlobalFood), and an Impressum. Crucially, it now includes a complete, custom-built ordering () and reservation () system. The backend serves all website content via a CMS and includes all the necessary API endpoints to power the new ordering/reservation system. A comprehensive admin area exists at  for general content management and a new, dedicated Shop Management section at  for handling orders, reservations, the menu, and shop settings.
+The project is a full-stack application using React, FastAPI, and MongoDB. It includes a customer website, an admin dashboard, and a staff PWA. A fully functional automated printing system has been successfully implemented. This system uses a local HTML file () that runs on a dedicated device (an old phone) on the restaurant's local network. This file polls the backend for print jobs and sends them directly to the networked Epson TM-m30II printer using ePOS-Print XML over HTTP, bypassing all previous network and browser security issues.
+
+The agent has begun implementing the new Waiter Terminal feature. The backend models and API endpoints have been created in , the print station HTML has been updated to format terminal orders, and a new route and placeholder page () have been created in the frontend.
 
 **Last working item**:
-- **Last item agent was working:** The agent was implementing significant fixes and enhancements to the newly created ordering and reservation system based on user feedback. The user reported that date/time pickers were not working, requested an as soon as possible (schnellstmöglich) option for orders, and needed the ability to configure business hours and holidays to constrain available slots. The agent has written extensive code on both the frontend and backend to address these points.
+- **Last item agent was working:** The agent was actively building the frontend for the new Waiter Terminal. The basic file structure at  was created, but the UI for waiter login, table selection, menu interaction, and order submission has not yet been built.
 - **Status:** IN PROGRESS
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** both
+- **Which testing method agent to use?** This is a major new feature. Once complete, use the  to conduct a full end-to-end test covering admin configuration, waiter ordering, and successful printing.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1:** (P0) Test and Validate the Order & Reservation System Fixes.
-
-  - **Issues Detail:**
-    - **Issue 1: Test and Validate the Order & Reservation System Fixes**
-      - **Attempted fixes:** The agent has completed a large-scale implementation to fix the reported issues. This includes:
-        - Reworking  and  to correctly calculate and display available time slots based on new backend settings.
-        - Adding an ASAP option to the .
-        - Creating a new backend endpoint () and a corresponding modal in  for admins to input a preparation time when confirming an ASAP order.
-        - Expanding the  settings tab to allow granular control over daily opening hours and closed days (holidays).
-      - **Next debug checklist:**
-        1.  Verify the backend service is running correctly after the recent restart.
-        2.  Test the  settings page: Can opening hours and closed days be saved and retrieved?
-        3.  Test the  page: Does the date/time picker now correctly show available slots, respecting the new settings?
-        4.  Test the  page: Does the time picker work correctly? Can an ASAP order be placed?
-        5.  Test the admin order flow: When an ASAP order appears in , does accepting it prompt for a preparation time? Does submitting it work?
-      - **Why fix this issue and what will be achieved with the fix?** The core functionality of the new custom ordering/reservation system is currently broken or incomplete. These fixes are essential to make the system usable and meet the user's primary requirements.
-      - **Status:** IN PROGRESS
-      - **Is recurring issue?** N
-      - **Should Test frontend/backend/both after fix?** both
-      - **Blocked on other issue:** None
+None. The critical printing issue was fully resolved in the last session.
 
 **In progress Task List**:
-- **Task 1:** Complete and Test the Ordering & Reservation System Enhancements
-  - **Where to resume:** The agent has just restarted the backend service. The immediate next step is to begin a comprehensive testing cycle of all the new fixes and features, following the checklist outlined in Pending/In progress Issue list. Start with the customer-facing pages (, ) and then verify the admin workflow ().
-  - **What will be achieved with this?** A fully functional, user-configurable ordering and reservation system that aligns with the user's detailed specifications.
+- **Task 1: Complete the Waiter Terminal Feature (P0)**
+  - **Where to resume:** Continue implementing the React components and logic in .
+  - **What will be achieved with this?** A complete, functional waiter ordering interface from login to order submission.
   - **Status:** IN PROGRESS
-  - **Should Test frontend/backend/both after fix?** both
-  - **Blocked on something:** No
+  - **Should Test frontend/backend/both after fix?** Both
+  - **Blocked on something:** This task is blocked until the Admin UI for managing terminal data is also created (see Upcoming Tasks).
 
 **Upcoming and Future Tasks**
+- **Upcoming Tasks:**
+  - **Task 1 (P0): Implement Admin UI for Terminal Management:** Build the necessary interface within the existing admin dashboard () to allow the restaurant owner to manage waiters, tables, and the in-house menu. The backend endpoints for this are already complete.
+  - **Task 2 (P1): User Verification:** Once both the terminal and the admin UI are complete, guide the user through testing the entire workflow.
 - **Future Tasks:**
-  - **Task 1 (P1): Enable Email Notifications:** The backend infrastructure for sending emails via Resend is in place but is non-operational because it lacks an API key. The agent needs to guide the user on how to obtain a  and add it to the  file.
+  - **Task 1 (P2): Enable Email Notifications:** Guide the user on obtaining a  to activate the pre-built email notification feature.
 
 **Completed work in this session**
-- **Custom Ordering & Reservation System (V1):** Built the entire system from scratch, including backend models (Menu, Orders, Reservations, Settings), all required API endpoints, and frontend pages for ordering (), reservations (), and a complete admin interface ().
-- **Dynamic Contact Information:** Updated all contact details (address, phone, email, opening hours) and made them editable from the admin dashboard.
-- **UI/UX Updates:**
-    - Removed a previously implemented Instagram feed slider per user request.
-    - Updated various homepage text elements and button links as requested.
-    - Added a Bestellen zum Abholen button to the menu page.
-    - Correctly linked homepage buttons to the new internal ordering/reservation pages.
-- **Editable Social Media Links:** Made footer social media links manageable from the admin panel.
-- **GlobalFood Menu Integration:** Completed the integration (though this is now being replaced by the custom menu).
+- **Resolved Automated Receipt Printing:** After multiple failed attempts (Web Bluetooth, RawBT app, direct backend printing), a stable solution was implemented. A local HTML file () is now used on a device in the restaurant's Wi-Fi network to poll for jobs and send ePOS-Print XML commands directly to the printer's IP address (on port 80). The user has confirmed this system works perfectly.
+- **Started Waiter Terminal Feature:** Created the foundational backend models and API endpoints in  and the placeholder frontend page for .
 
 **Earlier issues found/mentioned but not fixed**
 None.
@@ -79,74 +58,73 @@ None.
 
 
 **Key Technical Concepts**
-- **Backend:** FastAPI, MongoDB, Pydantic, JWT for auth.
-- **Frontend:** React, TailwindCSS,  API, , .
-- **Integrations:** Resend (for emails, pending API key).
-- **Architecture:** Decoupled full-stack application.
+- **Printing:** Direct client-to-printer communication from a local HTML file using **ePOS-Print XML** via  to the printer's local HTTP endpoint.
+- **Backend:** FastAPI, with new Pydantic models and API routers for the Terminal feature.
 
 **key DB schema**
-- , ,  (for general CMS).
-- ,  (for the custom menu).
-- ,  (for the booking system).
--  (stores opening hours, holidays, lead time).
+- **(New) terminal_waiters:** 
+- **(New) terminal_tables:** 
+- **(New) terminal_menu_categories:** 
+- **(New) terminal_menu_items:** 
+- **(New) terminal_orders:** 
+- **print_queue:** Now handles a new job .
 
 **changes in tech stack**
-- **Added backend dependency:** 
-- **Added frontend dependencies:** , 
+- The entire printing approach has shifted to a client-side, local network solution using a standalone HTML file.
 
 **All files of reference**
-- : Heavily modified with all logic for the new shop system.
-- : Recently rewritten to fix date/time selection.
-- : Recently rewritten to add time selection and an ASAP option.
-- : Recently rewritten to add order confirmation logic and advanced settings.
-- : The target file for the user's .
+- : **Primary file for the next task.** Needs to be built.
+- : Needs to be modified to add the Terminal management UI.
+- : Contains all new backend logic for the terminal.
+- : The core of the printing system.
 
 **Areas that need refactoring**:
-- **:** This file has become a monolith containing all application logic (content, auth, shop system). It urgently needs to be broken down into a proper FastAPI structure with separate routers and models (e.g., , ).
-- **:** This component is very large. The logic for each tab (Orders, Reservations, Menu, Settings) should be extracted into its own sub-component to improve readability and maintainability.
+- **:** This file has grown excessively large and is a significant source of technical debt. It should be refactored by splitting the logic into separate router files (Admin, Staff, Print, Terminal) as a high-priority task to maintain code health.
 
 **key api endpoints**
-- All existing endpoints for content and auth.
-- A new suite of endpoints under  for managing the entire ordering and reservation lifecycle.
-- ****: A new endpoint that allows an admin to confirm an ASAP order and provide a preparation time in minutes.
+- **Terminal:**
+  - 
+  - 
+  - 
+- **Admin (for Terminal):**
+  - CRUD endpoints for waiters, tables, and menu items under 
+- **Print Queue (Public):**
+  -  (used by )
 
 **Critical Info for New Agent**
-- Your immediate and highest priority is to thoroughly test the fixes and new features for the ordering and reservation system. Follow the checklist in the **Pending/In progress Issue list**.
-- The user is highly engaged and specific. Ensure the system's logic around opening hours, closed days, and the ASAP order flow is robust and matches their requirements exactly.
-- Email notifications are a key part of the user's request but are currently non-functional. After stabilizing the current features, the next step will be to guide the user to provide their Resend API key.
+- **Your immediate priority (P0) is to complete the waiter terminal feature.** This involves two main parts: finishing the waiter-facing UI and building the corresponding management UI in the admin dashboard.
+- The printing problem is solved. The solution is the  file. Do not attempt to change this unless absolutely necessary.
+- The  file is critically overdue for refactoring. Consider addressing this after the terminal feature is delivered to improve maintainability.
+- **You must communicate in German.**
 
 **documents and test reports created in this job**
 - 
+-  (updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1. **user:** Build me a custom ordering and reservation system like GloriaFood. (Chat 130)
-2. **user:** It should have manual acceptance, a manageable menu, configurable lead time, and email confirmations. (Chat 133)
-3. **agent:** Okay, planning to build the system and will use Resend for emails. (Chat 134)
-4. (Agent implements the entire system V1).
-5. **user:** The date/time pickers on the reservation and order pages don't work. I also need an ASAP option for orders, and when I accept it, I need to specify a prep time that gets emailed to the customer. I also need to manage opening hours and holidays. (Chat 208)
-6. **agent:** Understood. I will fix the date/time issues, add the ASAP flow, and build the settings for opening hours. (Chat 209)
-7. (Agent implements all the requested fixes and features across frontend and backend).
-8. **agent:** Restarting the backend now to apply changes. (Chat 257)
-9. **agent:** The reservation page now works with 30 date options. Now testing the order page. (Chat 261)
-- The agent was in the middle of testing its fixes when the session ended.
+- **User:** Confirmed that automatic printing from other devices now works.
+- **User:** Requested the new Terminal feature for waiters.
+- **User:** Provided detailed requirements for the terminal: unique waiter PINs, fixed table numbers, a separate in-house menu, specific receipt content, and the ability to add notes and categorize items.
+- **Agent:** Acknowledged the requirements and began implementation of the backend and the placeholder frontend page for the terminal.
 
 **Project Health Check:**
-- **Broken:** The custom ordering and reservation system is in an unverified state. The extensive changes made to fix user-reported bugs have not been tested.
-- **Mocked:** Email notifications are currently mocked and will not send without a valid .
+- **Broken:** The new Waiter Terminal feature is non-functional and incomplete.
+- **Mocked:** Email notifications via Resend remain inactive pending an API key.
 
 **3rd Party Integrations**
-- **GlobalFood API:** Legacy integration, being phased out.
-- **Resend:** Integrated for email notifications, but requires a user-provided API key to be functional.
+- **Resend:** Integrated but inactive.
+- **Epson ePOS-Print:** Actively used for printing via direct HTTP XML requests.
 
 **Testing status**
-- **Testing agent used after significant changes:** NO (Agent just finished a massive implementation and hasn't tested it yet).
-- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Testing agent used after significant changes:** NO
 - **Test files created:** None
-- **Known regressions:** None identified, but the risk is high due to the scale of recent changes.
+- **Known regressions:** None
 
 **Credentials to test flow:**
-- **Admin Login:** username: , password: 
+- **Admin Login:** ,  / 
+- **Staff PIN:** , 
+- **Print Station PIN:**  (for the local HTML file)
 
 **What agent forgot to execute**
-- The agent did not get to test the large set of fixes it implemented for the ordering and reservation system. This is the critical next step.
-- The agent has not yet prompted the user for the  required to make email notifications functional. This should be done after the core system is stable.</analysis>
+- The agent has not yet started building the **admin UI** for managing the new terminal's data (waiters, tables, menu). This is a critical dependency for the terminal to be usable.
+- The urgent need to refactor  was identified but not acted upon, increasing technical debt.</analysis>
