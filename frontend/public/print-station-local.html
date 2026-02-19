@@ -492,6 +492,124 @@
         }
 
         function buildReceiptXML(order) {
+            let body = '';
+
+            // Header
+            body += `<text align="center"/>`;
+            body += `<text width="2" height="2"/>`;
+            body += `<text em="true"/>`;
+            body += `<text>${escapeXML(settings?.restaurant_name || 'Little Eat Italy')}&#10;</text>`;
+            body += `<text em="false"/>`;
+            body += `<text width="1" height="1"/>`;
+
+            if (settings?.restaurant_address) {
+                body += `<text>${escapeXML(settings.restaurant_address)}&#10;</text>`;
+            }
+            if (settings?.restaurant_phone) {
+                body += `<text>Tel: ${escapeXML(settings.restaurant_phone)}&#10;</text>`;
+            }
+
+            body += `<text>--------------------------------&#10;</text>`;
+
+            // Order Number
+            body += `<text align="center"/>`;
+            body += `<text width="2" height="2"/>`;
+            body += `<text em="true"/>`;
+            body += `<text>#${escapeXML(String(order.order_number || '?'))}&#10;</text>`;
+            body += `<text em="false"/>`;
+            body += `<text width="1" height="1"/>`;
+
+            // Date/Time
+            const date = new Date(order.created_at);
+            body += `<text>${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}&#10;</text>`;
+
+            // Customer
+            body += `<text align="left"/>`;
+            body += `<text em="true"/>`;
+            body += `<text>Kunde: ${escapeXML(order.customer_name || '')}&#10;</text>`;
+            body += `<text em="false"/>`;
+
+            if (order.customer_phone) {
+                body += `<text>Tel: ${escapeXML(order.customer_phone)}&#10;</text>`;
+            }
+
+            // Pickup Time
+            body += `<feed unit="24"/>`;
+            body += `<text align="center"/>`;
+            body += `<text width="2" height="2"/>`;
+            body += `<text em="true"/>`;
+            body += `<text>================&#10;</text>`;
+            const pickupTime = order.confirmed_pickup_time || order.pickup_time || 'N/A';
+            body += `<text>ABHOLUNG: ${escapeXML(pickupTime)}&#10;</text>`;
+            body += `<text>================&#10;</text>`;
+            body += `<text em="false"/>`;
+            body += `<text width="1" height="1"/>`;
+
+            body += `<text align="left"/>`;
+            body += `<text>--------------------------------&#10;</text>`;
+
+            // Items
+            for (const item of (order.items || [])) {
+                let itemLine = (item.quantity || 1) + 'x ' + (item.item_name || '');
+                if (item.size_name) itemLine += ' (' + item.size_name + ')';
+                
+                const price = (item.total_price || 0).toFixed(2) + ' EUR';
+                const spaces = Math.max(1, 32 - itemLine.length - price.length);
+                body += `<text>${escapeXML(itemLine)}${' '.repeat(spaces)}${price}&#10;</text>`;
+
+                if (item.options && item.options.length > 0) {
+                    const opts = item.options.map(o => o.option_name || o.name || String(o)).join(', ');
+                    body += `<text>  + ${escapeXML(opts)}&#10;</text>`;
+                }
+            }
+
+            body += `<text>--------------------------------&#10;</text>`;
+
+            // Notes
+            if (order.notes) {
+                body += `<text em="true"/>`;
+                body += `<text>* ${escapeXML(order.notes)}&#10;</text>`;
+                body += `<text em="false"/>`;
+            }
+
+            // Total
+            body += `<text em="true"/>`;
+            body += `<text height="2"/>`;
+            const totalLine = 'GESAMT:';
+            const totalPrice = (order.total || 0).toFixed(2) + ' EUR';
+            const spaces = Math.max(1, 32 - totalLine.length - totalPrice.length);
+            body += `<text>${totalLine}${' '.repeat(spaces)}${totalPrice}&#10;</text>`;
+            body += `<text height="1"/>`;
+            body += `<text em="false"/>`;
+
+            if (order.payment_method) {
+                body += `<text>Zahlung: ${escapeXML(order.payment_method)}&#10;</text>`;
+            }
+
+            body += `<text>--------------------------------&#10;</text>`;
+
+            // Footer
+            body += `<text align="center"/>`;
+            body += `<text>Vielen Dank!&#10;</text>`;
+
+            // Feed and cut
+            body += `<feed unit="100"/>`;
+            body += `<cut type="feed"/>`;
+
+            // Wrap in SOAP envelope
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+<s:Body>
+<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+${body}
+</epos-print>
+</s:Body>
+</s:Envelope>`;
+
+            return xml;
+        }
+
+        function buildReceiptXML_OLD(order) {
             let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
 <text lang="de"/>`;
