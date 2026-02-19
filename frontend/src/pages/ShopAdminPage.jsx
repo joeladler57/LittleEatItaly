@@ -530,7 +530,7 @@ const ShopAdminPage = () => {
 
           {/* Orders Tab */}
           <TabsContent value="orders">
-            <OrdersSection orders={orders} onUpdate={fetchAllData} />
+            <OrdersSection orders={orders} onUpdate={fetchAllData} settings={settings} />
           </TabsContent>
 
           {/* Reservations Tab */}
