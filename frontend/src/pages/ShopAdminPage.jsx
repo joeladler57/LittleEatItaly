@@ -2892,4 +2892,682 @@ const PrinterSection = ({ settings, onUpdate }) => {
   );
 };
 
+// Terminal Section - Manage waiters, tables, and terminal menu
+const TerminalSection = ({ onUpdate }) => {
+  const [activeSubTab, setActiveSubTab] = useState("waiters");
+  const [waiters, setWaiters] = useState([]);
+  const [tables, setTables] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
+  // Edit states
+  const [editingWaiter, setEditingWaiter] = useState(null);
+  const [editingTable, setEditingTable] = useState(null);
+  const [editingMenuItem, setEditingMenuItem] = useState(null);
+  
+  // New item forms
+  const [showAddWaiter, setShowAddWaiter] = useState(false);
+  const [showAddTable, setShowAddTable] = useState(false);
+  const [showAddMenuItem, setShowAddMenuItem] = useState(false);
+  const [newWaiter, setNewWaiter] = useState({ name: "", pin: "" });
+  const [newTable, setNewTable] = useState({ number: "", description: "" });
+  const [newMenuItem, setNewMenuItem] = useState({ 
+    name: "", 
+    category: "Hauptspeise", 
+    price: 0, 
+    addons: [] 
+  });
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      const headers = { Authorization: `Bearer ${token}` };
+      
+      const [waitersRes, tablesRes, menuRes] = await Promise.all([
+        axios.get(`${API}/terminal/waiters`, { headers }),
+        axios.get(`${API}/terminal/tables`),
+        axios.get(`${API}/terminal/menu/all`, { headers })
+      ]);
+      
+      setWaiters(waitersRes.data);
+      setTables(tablesRes.data);
+      setMenuItems(menuRes.data);
+    } catch (e) {
+      console.error("Failed to fetch terminal data:", e);
+      toast.error("Fehler beim Laden der Terminal-Daten");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // CRUD operations for Waiters
+  const createWaiter = async () => {
+    if (!newWaiter.name || newWaiter.pin.length !== 4) {
+      toast.error("Name und 4-stelliger PIN erforderlich");
+      return;
+    }
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.post(`${API}/terminal/waiters`, newWaiter, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Kellner hinzugefügt");
+      setNewWaiter({ name: "", pin: "" });
+      setShowAddWaiter(false);
+      fetchData();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Fehler beim Hinzufügen");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateWaiter = async (waiterId, data) => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.put(`${API}/terminal/waiters/${waiterId}`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Kellner aktualisiert");
+      setEditingWaiter(null);
+      fetchData();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Fehler beim Aktualisieren");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteWaiter = async (waiterId) => {
+    if (!confirm("Kellner wirklich löschen?")) return;
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.delete(`${API}/terminal/waiters/${waiterId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Kellner gelöscht");
+      fetchData();
+    } catch (e) {
+      toast.error("Fehler beim Löschen");
+    }
+  };
+
+  // CRUD operations for Tables
+  const createTable = async () => {
+    if (!newTable.number) {
+      toast.error("Tischnummer erforderlich");
+      return;
+    }
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.post(`${API}/terminal/tables`, newTable, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Tisch hinzugefügt");
+      setNewTable({ number: "", description: "" });
+      setShowAddTable(false);
+      fetchData();
+    } catch (e) {
+      toast.error("Fehler beim Hinzufügen");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateTable = async (tableId, data) => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.put(`${API}/terminal/tables/${tableId}`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Tisch aktualisiert");
+      setEditingTable(null);
+      fetchData();
+    } catch (e) {
+      toast.error("Fehler beim Aktualisieren");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteTable = async (tableId) => {
+    if (!confirm("Tisch wirklich löschen?")) return;
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.delete(`${API}/terminal/tables/${tableId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Tisch gelöscht");
+      fetchData();
+    } catch (e) {
+      toast.error("Fehler beim Löschen");
+    }
+  };
+
+  // CRUD operations for Menu Items
+  const createMenuItem = async () => {
+    if (!newMenuItem.name) {
+      toast.error("Artikelname erforderlich");
+      return;
+    }
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.post(`${API}/terminal/menu`, newMenuItem, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Artikel hinzugefügt");
+      setNewMenuItem({ name: "", category: "Hauptspeise", price: 0, addons: [] });
+      setShowAddMenuItem(false);
+      fetchData();
+    } catch (e) {
+      toast.error("Fehler beim Hinzufügen");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateMenuItem = async (itemId, data) => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.put(`${API}/terminal/menu/${itemId}`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Artikel aktualisiert");
+      setEditingMenuItem(null);
+      fetchData();
+    } catch (e) {
+      toast.error("Fehler beim Aktualisieren");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteMenuItem = async (itemId) => {
+    if (!confirm("Artikel wirklich löschen?")) return;
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.delete(`${API}/terminal/menu/${itemId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Artikel gelöscht");
+      fetchData();
+    } catch (e) {
+      toast.error("Fehler beim Löschen");
+    }
+  };
+
+  // Bulk create tables
+  const bulkCreateTables = async (count) => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      for (let i = 1; i <= count; i++) {
+        await axios.post(`${API}/terminal/tables`, { number: String(i) }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+      toast.success(`${count} Tische erstellt`);
+      fetchData();
+    } catch (e) {
+      toast.error("Fehler beim Erstellen");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const categories = ["Vorspeise", "Hauptspeise", "Pizza", "Pasta", "Salat", "Nachspeise", "Getränke", "Sonstiges"];
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <RefreshCw className="w-8 h-8 text-pizza-red animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Info Box */}
+      <div className="bg-green-900/20 border border-green-500/30 p-4">
+        <h3 className="font-anton text-lg text-green-400 mb-2">KELLNER-TERMINAL</h3>
+        <p className="font-mono text-sm text-neutral-400">
+          Das Terminal ist unter <span className="text-green-400">/terminal</span> erreichbar. 
+          Kellner melden sich mit ihrem 4-stelligen PIN an, wählen einen Tisch und nehmen Bestellungen auf.
+          Diese werden automatisch auf dem Bon-Drucker gedruckt.
+        </p>
+      </div>
+
+      {/* Sub-Tabs */}
+      <div className="flex gap-2 border-b border-pizza-dark pb-2 overflow-x-auto">
+        {[
+          { id: "waiters", label: "Kellner", icon: Users, count: waiters.length },
+          { id: "tables", label: "Tische", icon: Hash, count: tables.length },
+          { id: "menu", label: "Inhouse-Menü", icon: UtensilsCrossed, count: menuItems.length }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveSubTab(tab.id)}
+            className={`px-4 py-2 font-mono text-sm flex items-center gap-2 whitespace-nowrap ${
+              activeSubTab === tab.id 
+                ? 'bg-pizza-red text-white' 
+                : 'bg-pizza-dark text-neutral-400 hover:text-white'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+            <span className="bg-black/30 px-1.5 py-0.5 text-xs">{tab.count}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Waiters Tab */}
+      {activeSubTab === "waiters" && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-anton text-xl text-pizza-white">KELLNER VERWALTEN</h3>
+            <Button
+              onClick={() => setShowAddWaiter(true)}
+              className="bg-pizza-red hover:bg-red-700 text-white font-mono rounded-none"
+            >
+              <Plus className="w-4 h-4 mr-2" /> KELLNER HINZUFÜGEN
+            </Button>
+          </div>
+
+          {/* Add Waiter Form */}
+          {showAddWaiter && (
+            <div className="bg-pizza-dark border border-pizza-red p-4">
+              <h4 className="font-anton text-lg text-pizza-white mb-4">NEUER KELLNER</h4>
+              <div className="grid sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <Label className="font-mono text-sm text-neutral-400">Name *</Label>
+                  <Input
+                    value={newWaiter.name}
+                    onChange={e => setNewWaiter({ ...newWaiter, name: e.target.value })}
+                    placeholder="z.B. Marco"
+                    className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="font-mono text-sm text-neutral-400">PIN (4 Ziffern) *</Label>
+                  <Input
+                    value={newWaiter.pin}
+                    onChange={e => setNewWaiter({ ...newWaiter, pin: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                    placeholder="z.B. 1234"
+                    maxLength={4}
+                    className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1 font-mono"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={createWaiter} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-mono rounded-none">
+                  {saving ? "Speichern..." : "Hinzufügen"}
+                </Button>
+                <Button onClick={() => setShowAddWaiter(false)} variant="outline" className="border-pizza-dark text-pizza-white rounded-none">
+                  Abbrechen
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Waiters List */}
+          {waiters.length === 0 ? (
+            <div className="bg-pizza-dark border border-pizza-dark p-8 text-center">
+              <Users className="w-12 h-12 text-pizza-dark mx-auto mb-2" />
+              <p className="font-mono text-neutral-400">Keine Kellner vorhanden</p>
+              <p className="font-mono text-xs text-neutral-500 mt-1">Füge Kellner hinzu um das Terminal zu nutzen</p>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {waiters.map(waiter => (
+                <div key={waiter.id} className="bg-pizza-dark border border-pizza-dark p-4">
+                  {editingWaiter?.id === waiter.id ? (
+                    <div className="space-y-3">
+                      <Input
+                        value={editingWaiter.name}
+                        onChange={e => setEditingWaiter({ ...editingWaiter, name: e.target.value })}
+                        className="bg-pizza-black border-pizza-dark text-pizza-white rounded-none"
+                      />
+                      <Input
+                        value={editingWaiter.pin}
+                        onChange={e => setEditingWaiter({ ...editingWaiter, pin: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                        maxLength={4}
+                        className="bg-pizza-black border-pizza-dark text-pizza-white rounded-none font-mono"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={editingWaiter.active}
+                          onCheckedChange={checked => setEditingWaiter({ ...editingWaiter, active: checked })}
+                        />
+                        <span className="font-mono text-sm text-neutral-400">Aktiv</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={() => updateWaiter(waiter.id, editingWaiter)} size="sm" className="bg-green-600 hover:bg-green-700 rounded-none">
+                          <Save className="w-4 h-4" />
+                        </Button>
+                        <Button onClick={() => setEditingWaiter(null)} size="sm" variant="outline" className="border-pizza-dark rounded-none">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${waiter.active ? 'bg-green-500' : 'bg-neutral-500'}`} />
+                          <span className="font-anton text-lg text-pizza-white">{waiter.name}</span>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button onClick={() => setEditingWaiter(waiter)} size="sm" variant="outline" className="border-pizza-dark text-pizza-white rounded-none h-8 w-8 p-0">
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button onClick={() => deleteWaiter(waiter.id)} size="sm" variant="outline" className="border-red-500 text-red-500 rounded-none h-8 w-8 p-0">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="font-mono text-sm text-neutral-400">
+                        PIN: <span className="text-pizza-red">{waiter.pin}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tables Tab */}
+      {activeSubTab === "tables" && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap justify-between items-center gap-2">
+            <h3 className="font-anton text-xl text-pizza-white">TISCHE VERWALTEN</h3>
+            <div className="flex gap-2">
+              {tables.length === 0 && (
+                <Button
+                  onClick={() => bulkCreateTables(20)}
+                  disabled={saving}
+                  variant="outline"
+                  className="border-green-500 text-green-400 hover:bg-green-500/10 font-mono rounded-none"
+                >
+                  20 TISCHE ERSTELLEN
+                </Button>
+              )}
+              <Button
+                onClick={() => setShowAddTable(true)}
+                className="bg-pizza-red hover:bg-red-700 text-white font-mono rounded-none"
+              >
+                <Plus className="w-4 h-4 mr-2" /> TISCH HINZUFÜGEN
+              </Button>
+            </div>
+          </div>
+
+          {/* Add Table Form */}
+          {showAddTable && (
+            <div className="bg-pizza-dark border border-pizza-red p-4">
+              <h4 className="font-anton text-lg text-pizza-white mb-4">NEUER TISCH</h4>
+              <div className="grid sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <Label className="font-mono text-sm text-neutral-400">Tischnummer *</Label>
+                  <Input
+                    value={newTable.number}
+                    onChange={e => setNewTable({ ...newTable, number: e.target.value })}
+                    placeholder="z.B. 1, 2, Terrasse 1"
+                    className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="font-mono text-sm text-neutral-400">Beschreibung (optional)</Label>
+                  <Input
+                    value={newTable.description}
+                    onChange={e => setNewTable({ ...newTable, description: e.target.value })}
+                    placeholder="z.B. Am Fenster"
+                    className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={createTable} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-mono rounded-none">
+                  {saving ? "Speichern..." : "Hinzufügen"}
+                </Button>
+                <Button onClick={() => setShowAddTable(false)} variant="outline" className="border-pizza-dark text-pizza-white rounded-none">
+                  Abbrechen
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Tables Grid */}
+          {tables.length === 0 ? (
+            <div className="bg-pizza-dark border border-pizza-dark p-8 text-center">
+              <Hash className="w-12 h-12 text-pizza-dark mx-auto mb-2" />
+              <p className="font-mono text-neutral-400">Keine Tische vorhanden</p>
+              <p className="font-mono text-xs text-neutral-500 mt-1">Füge Tische hinzu oder erstelle 20 auf einmal</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+              {tables.map(table => (
+                <div 
+                  key={table.id} 
+                  className={`aspect-square border flex flex-col items-center justify-center p-2 cursor-pointer transition-colors ${
+                    table.active 
+                      ? 'bg-pizza-dark border-pizza-dark hover:border-pizza-red' 
+                      : 'bg-neutral-800 border-neutral-700 opacity-50'
+                  }`}
+                  onClick={() => setEditingTable(table)}
+                >
+                  <span className="font-anton text-lg text-pizza-white">{table.number}</span>
+                  {table.description && (
+                    <span className="font-mono text-xs text-neutral-500 truncate w-full text-center">{table.description}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Edit Table Modal */}
+          {editingTable && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setEditingTable(null)}>
+              <div className="bg-pizza-dark border border-pizza-dark p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                <h4 className="font-anton text-lg text-pizza-white mb-4">TISCH BEARBEITEN</h4>
+                <div className="space-y-4 mb-4">
+                  <div>
+                    <Label className="font-mono text-sm text-neutral-400">Tischnummer</Label>
+                    <Input
+                      value={editingTable.number}
+                      onChange={e => setEditingTable({ ...editingTable, number: e.target.value })}
+                      className="bg-pizza-black border-pizza-dark text-pizza-white rounded-none mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-mono text-sm text-neutral-400">Beschreibung</Label>
+                    <Input
+                      value={editingTable.description || ""}
+                      onChange={e => setEditingTable({ ...editingTable, description: e.target.value })}
+                      className="bg-pizza-black border-pizza-dark text-pizza-white rounded-none mt-1"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={editingTable.active}
+                      onCheckedChange={checked => setEditingTable({ ...editingTable, active: checked })}
+                    />
+                    <span className="font-mono text-sm text-neutral-400">Aktiv</span>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={() => updateTable(editingTable.id, editingTable)} disabled={saving} className="flex-1 bg-green-600 hover:bg-green-700 rounded-none">
+                    Speichern
+                  </Button>
+                  <Button onClick={() => deleteTable(editingTable.id)} variant="outline" className="border-red-500 text-red-500 rounded-none">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Menu Tab */}
+      {activeSubTab === "menu" && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="font-anton text-xl text-pizza-white">INHOUSE-MENÜ</h3>
+              <p className="font-mono text-xs text-neutral-500">Separates Menü für Terminal-Bestellungen</p>
+            </div>
+            <Button
+              onClick={() => setShowAddMenuItem(true)}
+              className="bg-pizza-red hover:bg-red-700 text-white font-mono rounded-none"
+            >
+              <Plus className="w-4 h-4 mr-2" /> ARTIKEL HINZUFÜGEN
+            </Button>
+          </div>
+
+          {/* Add Menu Item Form */}
+          {showAddMenuItem && (
+            <div className="bg-pizza-dark border border-pizza-red p-4">
+              <h4 className="font-anton text-lg text-pizza-white mb-4">NEUER ARTIKEL</h4>
+              <div className="grid sm:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <Label className="font-mono text-sm text-neutral-400">Name *</Label>
+                  <Input
+                    value={newMenuItem.name}
+                    onChange={e => setNewMenuItem({ ...newMenuItem, name: e.target.value })}
+                    placeholder="z.B. Margherita"
+                    className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="font-mono text-sm text-neutral-400">Kategorie</Label>
+                  <select
+                    value={newMenuItem.category}
+                    onChange={e => setNewMenuItem({ ...newMenuItem, category: e.target.value })}
+                    className="w-full bg-pizza-black border border-pizza-dark text-pizza-white p-2 rounded-none mt-1"
+                  >
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label className="font-mono text-sm text-neutral-400">Preis (€)</Label>
+                  <Input
+                    type="number"
+                    step="0.50"
+                    value={newMenuItem.price}
+                    onChange={e => setNewMenuItem({ ...newMenuItem, price: parseFloat(e.target.value) || 0 })}
+                    className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white rounded-none mt-1"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={createMenuItem} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-mono rounded-none">
+                  {saving ? "Speichern..." : "Hinzufügen"}
+                </Button>
+                <Button onClick={() => setShowAddMenuItem(false)} variant="outline" className="border-pizza-dark text-pizza-white rounded-none">
+                  Abbrechen
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Menu Items by Category */}
+          {menuItems.length === 0 ? (
+            <div className="bg-pizza-dark border border-pizza-dark p-8 text-center">
+              <UtensilsCrossed className="w-12 h-12 text-pizza-dark mx-auto mb-2" />
+              <p className="font-mono text-neutral-400">Keine Artikel vorhanden</p>
+              <p className="font-mono text-xs text-neutral-500 mt-1">Füge Artikel für das Terminal-Menü hinzu</p>
+            </div>
+          ) : (
+            categories.filter(cat => menuItems.some(item => item.category === cat)).map(category => (
+              <div key={category} className="bg-pizza-dark border border-pizza-dark">
+                <div className="p-3 border-b border-pizza-black">
+                  <h4 className="font-anton text-lg text-pizza-white">{category.toUpperCase()}</h4>
+                </div>
+                <div className="p-2">
+                  {menuItems.filter(item => item.category === category).map(item => (
+                    <div
+                      key={item.id}
+                      className={`flex items-center justify-between p-3 border-b border-pizza-black/50 last:border-0 ${
+                        !item.active ? 'opacity-50' : ''
+                      }`}
+                    >
+                      {editingMenuItem?.id === item.id ? (
+                        <div className="flex-1 grid sm:grid-cols-4 gap-2 items-center">
+                          <Input
+                            value={editingMenuItem.name}
+                            onChange={e => setEditingMenuItem({ ...editingMenuItem, name: e.target.value })}
+                            className="bg-pizza-black border-pizza-dark text-pizza-white rounded-none"
+                          />
+                          <select
+                            value={editingMenuItem.category}
+                            onChange={e => setEditingMenuItem({ ...editingMenuItem, category: e.target.value })}
+                            className="bg-pizza-black border border-pizza-dark text-pizza-white p-2 rounded-none"
+                          >
+                            {categories.map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </select>
+                          <Input
+                            type="number"
+                            step="0.50"
+                            value={editingMenuItem.price}
+                            onChange={e => setEditingMenuItem({ ...editingMenuItem, price: parseFloat(e.target.value) || 0 })}
+                            className="bg-pizza-black border-pizza-dark text-pizza-white rounded-none"
+                          />
+                          <div className="flex gap-2">
+                            <Button onClick={() => updateMenuItem(item.id, editingMenuItem)} size="sm" className="bg-green-600 hover:bg-green-700 rounded-none">
+                              <Save className="w-4 h-4" />
+                            </Button>
+                            <Button onClick={() => setEditingMenuItem(null)} size="sm" variant="outline" className="border-pizza-dark rounded-none">
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full ${item.active ? 'bg-green-500' : 'bg-neutral-500'}`} />
+                            <span className="font-mono text-pizza-white">{item.name}</span>
+                            {item.addons?.length > 0 && (
+                              <span className="font-mono text-xs text-neutral-500">+{item.addons.length} Extras</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono text-pizza-red">{item.price.toFixed(2)}€</span>
+                            <Button onClick={() => setEditingMenuItem(item)} size="sm" variant="outline" className="border-pizza-dark text-pizza-white rounded-none h-8 w-8 p-0">
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button onClick={() => deleteMenuItem(item.id)} size="sm" variant="outline" className="border-red-500 text-red-500 rounded-none h-8 w-8 p-0">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default ShopAdminPage;
