@@ -411,7 +411,7 @@ const PrintStationPage = () => {
       setIsConnected(true);
       const jobs = response.data;
       
-      if (jobs.length > 0 && !isPrinting && bluetoothConnected) {
+      if (jobs.length > 0 && !isPrinting && rawbtConnected) {
         // New print job! Process it
         const job = jobs[0];
         await processPrintJob(job);
@@ -422,7 +422,7 @@ const PrintStationPage = () => {
       setIsConnected(false);
       console.error("Failed to fetch print queue:", e);
     }
-  }, [isAuthenticated, isPrinting, bluetoothConnected]);
+  }, [isAuthenticated, isPrinting, rawbtConnected]);
 
   // Start polling when authenticated
   useEffect(() => {
