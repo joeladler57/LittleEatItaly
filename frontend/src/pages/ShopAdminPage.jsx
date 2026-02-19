@@ -2225,37 +2225,17 @@ const PrinterSection = ({ settings, onUpdate }) => {
     payment_method: "Kartenzahlung"
   };
 
-  // Native checkbox toggle - works in all browsers including Safari
-  const ToggleSwitch = ({ checked, onChange, label }) => {
-    const id = `toggle-${label.replace(/\s+/g, '-').toLowerCase()}`;
-    return (
-      <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          id={id}
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          className="sr-only peer"
-        />
-        <label
-          htmlFor={id}
-          className="relative w-12 h-7 bg-neutral-600 rounded-full cursor-pointer transition-colors peer-checked:bg-green-500 peer-focus:ring-2 peer-focus:ring-green-300"
-        >
-          <span 
-            className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-200 ${
-              checked ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          />
-        </label>
-        <label 
-          htmlFor={id}
-          className="font-mono text-sm text-neutral-300 hover:text-white cursor-pointer select-none"
-        >
-          {label}
-        </label>
-      </div>
-    );
-  };
+  // Using Shadcn Switch component - fully tested and Safari compatible
+  const ToggleSwitch = ({ checked, onChange, label }) => (
+    <div className="flex items-center gap-3">
+      <Switch
+        checked={checked}
+        onCheckedChange={onChange}
+        className="data-[state=checked]:bg-green-500"
+      />
+      <span className="font-mono text-sm text-neutral-300">{label}</span>
+    </div>
+  );
 
   const SizeSelect = ({ value, onChange }) => (
     <select 
