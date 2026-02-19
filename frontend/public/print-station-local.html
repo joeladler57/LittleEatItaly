@@ -732,6 +732,132 @@ ${body}
             return xml;
         }
 
+        // Build receipt for terminal orders (Kellner-Bestellung)
+        function buildTerminalReceiptXML(order) {
+            let body = '';
+            
+            // ========== HEADER - TISCH GROSS ==========
+            body += `<text align="center"/>`;
+            body += `<text width="2" height="2"/>`;
+            body += `<text em="true"/>`;
+            body += `<text>TISCH ${escapeXML(order.table_number)}&#10;</text>`;
+            body += `<text width="1" height="1"/>`;
+            body += `<text em="false"/>`;
+            
+            // Order Number and Time
+            body += `<text>Bon #${order.order_number}&#10;</text>`;
+            const date = new Date(order.created_at);
+            body += `<text>${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})} Uhr&#10;</text>`;
+            
+            // Waiter
+            if (order.waiter_name) {
+                body += `<text>Kellner: ${escapeXML(order.waiter_name)}&#10;</text>`;
+            }
+            
+            body += `<text>================================&#10;</text>`;
+            
+            // ========== GROUP BY COURSE ==========
+            const courses = ['Vorspeise', 'Hauptspeise', 'Nachspeise', 'Getränke'];
+            const itemsByCourse = {};
+            
+            for (const item of (order.items || [])) {
+                const course = item.course || 'Hauptspeise';
+                if (!itemsByCourse[course]) {
+                    itemsByCourse[course] = [];
+                }
+                itemsByCourse[course].push(item);
+            }
+            
+            // Print each course
+            for (const course of courses) {
+                const items = itemsByCourse[course];
+                if (!items || items.length === 0) continue;
+                
+                // Course header
+                body += `<text align="center"/>`;
+                body += `<text em="true"/>`;
+                body += `<text>--- ${escapeXML(course.toUpperCase())} ---&#10;</text>`;
+                body += `<text em="false"/>`;
+                body += `<text align="left"/>`;
+                
+                // Items in this course
+                for (const item of items) {
+                    // Quantity and Name
+                    body += `<text em="true"/>`;
+                    body += `<text>${item.quantity || 1}x ${escapeXML(item.item_name || '')}&#10;</text>`;
+                    body += `<text em="false"/>`;
+                    
+                    // Addons
+                    if (item.addons && item.addons.length > 0) {
+                        for (const addon of item.addons) {
+                            body += `<text>   + ${escapeXML(addon.name || addon.option_name || '')}&#10;</text>`;
+                        }
+                    }
+                    
+                    // Item note (Freitext)
+                    if (item.note) {
+                        body += `<text em="true"/>`;
+                        body += `<text>   * ${escapeXML(item.note)}&#10;</text>`;
+                        body += `<text em="false"/>`;
+                    }
+                }
+                
+                body += `<text>&#10;</text>`;
+            }
+            
+            // Check for items without standard course
+            const otherItems = (order.items || []).filter(item => 
+                !courses.includes(item.course || 'Hauptspeise')
+            );
+            if (otherItems.length > 0) {
+                body += `<text align="center"/>`;
+                body += `<text em="true"/>`;
+                body += `<text>--- SONSTIGES ---&#10;</text>`;
+                body += `<text em="false"/>`;
+                body += `<text align="left"/>`;
+                
+                for (const item of otherItems) {
+                    body += `<text em="true"/>`;
+                    body += `<text>${item.quantity || 1}x ${escapeXML(item.item_name || '')}&#10;</text>`;
+                    body += `<text em="false"/>`;
+                    
+                    if (item.addons && item.addons.length > 0) {
+                        for (const addon of item.addons) {
+                            body += `<text>   + ${escapeXML(addon.name || '')}&#10;</text>`;
+                        }
+                    }
+                    
+                    if (item.note) {
+                        body += `<text em="true"/>`;
+                        body += `<text>   * ${escapeXML(item.note)}&#10;</text>`;
+                        body += `<text em="false"/>`;
+                    }
+                }
+            }
+            
+            body += `<text>================================&#10;</text>`;
+            
+            // Time stamp at bottom
+            body += `<text align="center"/>`;
+            body += `<text>${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE')}&#10;</text>`;
+            
+            // Feed and cut
+            body += `<feed unit="100"/>`;
+            body += `<cut type="feed"/>`;
+
+            // Wrap in SOAP envelope
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+<s:Body>
+<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+${body}
+</epos-print>
+</s:Body>
+</s:Envelope>`;
+
+            return xml;
+        }
+
         function printReceipt(order) {
             return new Promise((resolve) => {
                 const ip = document.getElementById('printerIP').value;
