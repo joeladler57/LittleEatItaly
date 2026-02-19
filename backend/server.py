@@ -795,6 +795,17 @@ async def update_staff_order_status(
     if status == "confirmed":
         updated_order = await db.orders.find_one({"id": order_id}, {"_id": 0})
         asyncio.create_task(send_order_status_email(updated_order, settings, "confirmed", pickup_time))
+        
+        # Auto-add to print queue if printer is enabled
+        if settings.get("printer_enabled") and settings.get("auto_print_on_accept"):
+            job = PrintJob(
+                order_id=order_id,
+                order_number=updated_order.get("order_number", 0),
+                order_data=updated_order
+            )
+            job_dict = job.model_dump()
+            job_dict["created_at"] = job_dict["created_at"].isoformat()
+            await db.print_queue.insert_one(job_dict)
     
     return {"message": f"Status updated to {status}", "pickup_time": pickup_time}
 
