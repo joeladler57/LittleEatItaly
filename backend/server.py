@@ -1393,16 +1393,97 @@ async def delete_terminal_menu_item(item_id: str, role: str = Depends(verify_adm
     await db.terminal_menu.delete_one({"id": item_id})
     return {"message": "Menu item deleted"}
 
+# --- Terminal Addon Groups ---
+@api_router.get("/terminal/addon-groups")
+async def get_terminal_addon_groups():
+    """Get all terminal addon groups"""
+    groups = await db.terminal_addon_groups.find({}, {"_id": 0}).sort("sort_order", 1).to_list(100)
+    return groups
+
+@api_router.post("/terminal/addon-groups")
+async def create_terminal_addon_group(data: dict, role: str = Depends(verify_admin_token)):
+    """Create a new addon group"""
+    group = {
+        "id": str(uuid4()),
+        "name": data.get("name", ""),
+        "options": data.get("options", []),  # [{name, price}]
+        "required": data.get("required", False),
+        "multi_select": data.get("multi_select", True),
+        "sort_order": data.get("sort_order", 0),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.terminal_addon_groups.insert_one(group)
+    return {"message": "Addon group created", "group_id": group["id"]}
+
+@api_router.put("/terminal/addon-groups/{group_id}")
+async def update_terminal_addon_group(group_id: str, data: dict, role: str = Depends(verify_admin_token)):
+    """Update an addon group"""
+    update_data = {}
+    for k in ["name", "options", "required", "multi_select", "sort_order"]:
+        if k in data:
+            update_data[k] = data[k]
+    await db.terminal_addon_groups.update_one({"id": group_id}, {"$set": update_data})
+    return {"message": "Addon group updated"}
+
+@api_router.delete("/terminal/addon-groups/{group_id}")
+async def delete_terminal_addon_group(group_id: str, role: str = Depends(verify_admin_token)):
+    """Delete an addon group"""
+    await db.terminal_addon_groups.delete_one({"id": group_id})
+    # Remove from all categories
+    await db.terminal_categories.update_many({}, {"$pull": {"addon_group_ids": group_id}})
+    return {"message": "Addon group deleted"}
+
 # --- Terminal Menu Categories ---
 @api_router.get("/terminal/categories")
 async def get_terminal_categories():
-    """Get unique categories from terminal menu"""
+    """Get unique categories from terminal menu with addon groups"""
+    # Get defined categories from DB
+    db_categories = await db.terminal_categories.find({}, {"_id": 0}).sort("sort_order", 1).to_list(100)
+    db_cat_names = [c["name"] for c in db_categories]
+    
+    # Get categories from menu items
+    items = await db.terminal_menu.find({"active": True}, {"category": 1}).to_list(500)
+    item_categories = list(set([item.get("category", "Sonstiges") for item in items]))
+    
+    # Merge: DB categories first, then auto-detected ones
+    order = ["Vorspeise", "Hauptspeise", "Pizza", "Pasta", "Salat", "Nachspeise", "Getränke", "Sonstiges"]
+    
+    result = []
+    for cat in db_categories:
+        result.append(cat)
+    
+    for cat_name in item_categories:
+        if cat_name not in db_cat_names:
+            result.append({"name": cat_name, "addon_group_ids": [], "sort_order": order.index(cat_name) if cat_name in order else 999})
+    
+    result.sort(key=lambda x: x.get("sort_order", order.index(x["name"]) if x["name"] in order else 999))
+    return result
+
+@api_router.get("/terminal/categories/names")
+async def get_terminal_category_names():
+    """Get just category names for simple lists"""
     items = await db.terminal_menu.find({"active": True}, {"category": 1}).to_list(500)
     categories = list(set([item.get("category", "Sonstiges") for item in items]))
-    # Sort with predefined order
     order = ["Vorspeise", "Hauptspeise", "Pizza", "Pasta", "Salat", "Nachspeise", "Getränke", "Sonstiges"]
     categories.sort(key=lambda x: order.index(x) if x in order else 999)
     return categories
+
+@api_router.put("/terminal/categories/{category_name}")
+async def update_terminal_category(category_name: str, data: dict, role: str = Depends(verify_admin_token)):
+    """Update a category's addon groups"""
+    existing = await db.terminal_categories.find_one({"name": category_name})
+    if existing:
+        await db.terminal_categories.update_one(
+            {"name": category_name},
+            {"$set": {"addon_group_ids": data.get("addon_group_ids", [])}}
+        )
+    else:
+        await db.terminal_categories.insert_one({
+            "name": category_name,
+            "addon_group_ids": data.get("addon_group_ids", []),
+            "sort_order": data.get("sort_order", 0)
+        })
+    return {"message": "Category updated"}
 
 # --- Terminal Orders ---
 async def get_next_terminal_order_number():
