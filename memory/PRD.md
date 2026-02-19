@@ -299,8 +299,23 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 - ✅ Warteschlange-Anzeige
 - ✅ Print-Historie
 
+## Kellner-Terminal einrichten
+**So richtest du das Terminal für Kellner ein:**
+1. Gehe zu `/admin/shop` → TERMINAL
+2. **Kellner hinzufügen**: Name + 4-stelliger PIN für jeden Kellner
+3. **Tische hinzufügen**: Tischnummern (1, 2, ... oder "Terrasse 1", etc.)
+4. **Inhouse-Menü pflegen**: Alle Artikel die per Terminal bestellt werden können
+
+**Für Kellner:**
+1. Öffne `/terminal` auf dem Tablet/Handy
+2. PIN eingeben (z.B. 1111 für Marco)
+3. Tisch wählen
+4. Artikel antippen, Anzahl und Gang wählen
+5. "BON DRUCKEN" drücken → Bestellung geht an die Küche
+
 ## Backlog / Zukünftige Features
 - E-Mail-Benachrichtigungen aktivieren (Resend API-Key benötigt)
 - Statistiken-Dashboard für Bestellungen/Reservierungen
 - Code-Refactoring: `server.py` in separate Router aufteilen
 - Mehrsprachigkeit (DE/EN)
+- Terminal: Extras/Addons pro Artikel konfigurieren
