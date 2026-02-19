@@ -544,6 +544,11 @@ const ShopAdminPage = () => {
             <MenuSection menu={menu} onUpdate={fetchAllData} />
           </TabsContent>
 
+          {/* Terminal Tab */}
+          <TabsContent value="terminal">
+            <TerminalSection onUpdate={fetchAllData} />
+          </TabsContent>
+
           {/* Printer Tab */}
           <TabsContent value="printer">
             <PrinterSection settings={settings} onUpdate={fetchAllData} />
