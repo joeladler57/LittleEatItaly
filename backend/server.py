@@ -1174,6 +1174,22 @@ async def complete_print_job(job_id: str, role: str = Depends(verify_staff_token
         raise HTTPException(status_code=404, detail="Print job not found")
     return {"message": "Print job completed"}
 
+@api_router.put("/print-queue/{job_id}/status")
+async def update_print_job_status(job_id: str, status_data: dict):
+    """Update print job status - public endpoint for print station"""
+    status = status_data.get("status", "completed")
+    update_data = {"status": status}
+    if status == "completed":
+        update_data["printed_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.print_queue.update_one(
+        {"id": job_id},
+        {"$set": update_data}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Print job not found")
+    return {"message": f"Print job status updated to {status}"}
+
 @api_router.delete("/print-queue/{job_id}")
 async def delete_print_job(job_id: str, role: str = Depends(verify_staff_token)):
     """Delete a print job"""
