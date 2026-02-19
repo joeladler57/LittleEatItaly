@@ -3870,13 +3870,13 @@ const TerminalSection = ({ onUpdate }) => {
               <p className="font-mono text-xs text-neutral-500 mt-1">Füge Artikel für das Terminal-Menü hinzu</p>
             </div>
           ) : (
-            categories.filter(cat => menuItems.some(item => item.category === cat)).map(category => (
-              <div key={category} className="bg-pizza-dark border border-pizza-dark">
+            categoryNames.filter(catName => menuItems.some(item => item.category === catName)).map(catName => (
+              <div key={catName} className="bg-pizza-dark border border-pizza-dark">
                 <div className="p-3 border-b border-pizza-black">
-                  <h4 className="font-anton text-lg text-pizza-white">{category.toUpperCase()}</h4>
+                  <h4 className="font-anton text-lg text-pizza-white">{catName.toUpperCase()}</h4>
                 </div>
                 <div className="p-2">
-                  {menuItems.filter(item => item.category === category).map(item => (
+                  {menuItems.filter(item => item.category === catName).map(item => (
                     <div
                       key={item.id}
                       className={`flex items-center justify-between p-3 border-b border-pizza-black/50 last:border-0 ${
@@ -3895,7 +3895,7 @@ const TerminalSection = ({ onUpdate }) => {
                             onChange={e => setEditingMenuItem({ ...editingMenuItem, category: e.target.value })}
                             className="bg-pizza-black border border-pizza-dark text-pizza-white p-2 rounded-none"
                           >
-                            {categories.map(cat => (
+                            {categoryNames.map(cat => (
                               <option key={cat} value={cat}>{cat}</option>
                             ))}
                           </select>
