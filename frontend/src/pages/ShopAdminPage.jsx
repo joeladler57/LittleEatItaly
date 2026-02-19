@@ -2488,8 +2488,53 @@ const PrinterSection = ({ settings, onUpdate }) => {
                 />
 
                 <p className="font-mono text-xs text-neutral-500 mt-2">
-                  Epson TM-30III: Standard-Port ist 8008 für ePOS
+                  Netzwerk-Drucker (Epson TM-m30II): Standard-Port ist 9100
                 </p>
+
+                {/* Connection Test Buttons */}
+                <div className="flex gap-2 mt-4">
+                  <Button
+                    onClick={checkPrinterStatus}
+                    disabled={checkingStatus || !formData.printer_ip}
+                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white"
+                  >
+                    {checkingStatus ? (
+                      <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                    )}
+                    Verbindung prüfen
+                  </Button>
+                  <Button
+                    onClick={sendTestPrint}
+                    disabled={testPrinting || !formData.printer_ip}
+                    className="flex-1 bg-green-600 hover:bg-green-500 text-white"
+                  >
+                    {testPrinting ? (
+                      <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Printer className="w-4 h-4 mr-2" />
+                    )}
+                    Testdruck
+                  </Button>
+                </div>
+
+                {/* Status Display */}
+                {printerStatus && (
+                  <div className={`mt-3 p-3 border ${printerStatus.connected ? 'bg-green-500/10 border-green-500' : 'bg-red-500/10 border-red-500'}`}>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${printerStatus.connected ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <span className="font-mono text-sm">
+                        {printerStatus.connected ? 'Verbunden' : 'Nicht erreichbar'}
+                      </span>
+                    </div>
+                    {printerStatus.ip && (
+                      <p className="font-mono text-xs text-neutral-400 mt-1">
+                        {printerStatus.ip}:{printerStatus.port}
+                      </p>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>
