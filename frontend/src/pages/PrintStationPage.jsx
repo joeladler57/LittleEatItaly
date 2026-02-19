@@ -2,38 +2,72 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { API } from "../App";
 import { toast } from "sonner";
-import { Printer, Wifi, WifiOff, Check, RefreshCw, Settings, CheckCircle, XCircle, Volume2, VolumeX } from "lucide-react";
+import { Printer, Wifi, WifiOff, Check, RefreshCw, Settings, CheckCircle, XCircle, Volume2, VolumeX, AlertCircle } from "lucide-react";
 
 const POLLING_INTERVAL = 3000;
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
+
+// Default printer settings
+const DEFAULT_PRINTER_IP = "192.168.2.129";
+const DEFAULT_PRINTER_PORT = 8008;
 
 const PrintStationPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState("");
-  const [isConnected, setIsConnected] = useState(false);
   const [settings, setSettings] = useState(null);
-  const [printerStatus, setPrinterStatus] = useState(null);
-  const [printHistory, setPrintHistory] = useState([]);
+  const [printerConnected, setPrinterConnected] = useState(false);
+  const [printerIP, setPrinterIP] = useState(DEFAULT_PRINTER_IP);
+  const [printerPort, setPrinterPort] = useState(DEFAULT_PRINTER_PORT);
+  const [printQueue, setPrintQueue] = useState([]);
   const [printedCount, setPrintedCount] = useState(0);
   const [lastPrintTime, setLastPrintTime] = useState(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [testPrinting, setTestPrinting] = useState(false);
+  const [autoPrintEnabled, setAutoPrintEnabled] = useState(true);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [sdkLoaded, setSdkLoaded] = useState(false);
   
   const pollingRef = useRef(null);
   const audioRef = useRef(null);
+  const eposDeviceRef = useRef(null);
+  const printerRef = useRef(null);
 
-  // Check authentication on mount
+  // Load Epson ePOS SDK
   useEffect(() => {
-    const token = localStorage.getItem("print_station_token");
-    if (token) {
-      verifyToken(token);
-    }
+    const script = document.createElement('script');
+    script.src = 'https://download4.epson.biz/sec_pubs/pos/epos_sdk_js/epos-2.27.0.js';
+    script.async = true;
+    script.onload = () => {
+      console.log('Epson ePOS SDK loaded');
+      setSdkLoaded(true);
+    };
+    script.onerror = () => {
+      console.error('Failed to load Epson SDK, trying alternative...');
+      // Try loading from local or alternative source
+      setSdkLoaded(false);
+    };
+    document.head.appendChild(script);
+    
+    return () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
   }, []);
 
   // Initialize audio
   useEffect(() => {
     audioRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleRg1TYyh1K5WARlQoMfbqGIlPnOLrdKvYCAzVIS11bZnJDNYeaXGs3Y0QlhuobSqd0xPW2mEm56Sd1NVYnCAjI2EeWVhZ3B4fnyAgoGEhIKBgYOEhYWEhIOCgoKCgoKBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgX5+");
+  }, []);
+
+  // Load saved printer settings
+  useEffect(() => {
+    const savedIP = localStorage.getItem("printer_ip");
+    const savedPort = localStorage.getItem("printer_port");
+    if (savedIP) setPrinterIP(savedIP);
+    if (savedPort) setPrinterPort(parseInt(savedPort));
   }, []);
 
   const playNotificationSound = () => {
@@ -43,6 +77,14 @@ const PrintStationPage = () => {
     }
   };
 
+  // Check authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem("print_station_token");
+    if (token) {
+      verifyToken(token);
+    }
+  }, []);
+
   const verifyToken = async (token) => {
     try {
       await axios.get(`${API}/staff/data`, {
@@ -50,7 +92,6 @@ const PrintStationPage = () => {
       });
       setIsAuthenticated(true);
       fetchSettings();
-      fetchPrinterStatus();
     } catch (e) {
       localStorage.removeItem("print_station_token");
       setIsAuthenticated(false);
@@ -68,7 +109,6 @@ const PrintStationPage = () => {
       setIsAuthenticated(true);
       setPinError("");
       fetchSettings();
-      fetchPrinterStatus();
       toast.success("Angemeldet!");
     } catch (e) {
       setPinError("Falscher PIN");
@@ -79,26 +119,342 @@ const PrintStationPage = () => {
     try {
       const response = await axios.get(`${API}/shop/settings`);
       setSettings(response.data);
+      // Use settings from server if available
+      if (response.data.printer_ip) {
+        setPrinterIP(response.data.printer_ip);
+        localStorage.setItem("printer_ip", response.data.printer_ip);
+      }
+      if (response.data.printer_port) {
+        setPrinterPort(response.data.printer_port);
+        localStorage.setItem("printer_port", response.data.printer_port.toString());
+      }
     } catch (e) {
       console.error("Failed to fetch settings:", e);
     }
   };
 
-  const fetchPrinterStatus = async () => {
+  // Connect to Epson printer via ePOS SDK
+  const connectPrinter = useCallback(async () => {
+    if (!sdkLoaded) {
+      toast.error("Epson SDK wird noch geladen...");
+      return;
+    }
+
+    if (!window.epson) {
+      toast.error("Epson SDK nicht verfügbar");
+      return;
+    }
+
+    setIsConnecting(true);
+
     try {
-      const token = localStorage.getItem("print_station_token");
-      const response = await axios.get(`${API}/printer/status`, {
-        headers: { Authorization: `Bearer ${token}` }
+      // Disconnect existing connection
+      if (eposDeviceRef.current) {
+        try {
+          eposDeviceRef.current.disconnect();
+        } catch (e) {}
+      }
+
+      const eposDevice = new window.epson.ePOSDevice();
+      eposDeviceRef.current = eposDevice;
+
+      eposDevice.connect(printerIP, printerPort, (result) => {
+        setIsConnecting(false);
+        
+        if (result === 'OK' || result === 'SSL_CONNECT_OK') {
+          console.log('Connected to Epson printer');
+          
+          // Create printer device
+          eposDevice.createDevice('local_printer', eposDevice.DEVICE_TYPE_PRINTER, 
+            { crypto: false, buffer: false },
+            (deviceObj, code) => {
+              if (code === 'OK') {
+                printerRef.current = deviceObj;
+                setPrinterConnected(true);
+                toast.success("✅ Drucker verbunden!");
+                
+                // Set up disconnect handler
+                deviceObj.ondisconnect = () => {
+                  setPrinterConnected(false);
+                  toast.error("Drucker getrennt");
+                };
+              } else {
+                console.error('Failed to create printer device:', code);
+                toast.error(`Drucker-Gerät Fehler: ${code}`);
+                setPrinterConnected(false);
+              }
+            }
+          );
+        } else {
+          console.error('Connection failed:', result);
+          toast.error(`Verbindung fehlgeschlagen: ${result}`);
+          setPrinterConnected(false);
+        }
       });
-      setPrinterStatus(response.data);
-      setIsConnected(true);
-    } catch (e) {
-      setIsConnected(false);
-      console.error("Failed to fetch printer status:", e);
+    } catch (error) {
+      setIsConnecting(false);
+      console.error('Printer connection error:', error);
+      toast.error(`Verbindungsfehler: ${error.message}`);
+      setPrinterConnected(false);
+    }
+  }, [printerIP, printerPort, sdkLoaded]);
+
+  // Disconnect printer
+  const disconnectPrinter = () => {
+    if (eposDeviceRef.current) {
+      try {
+        if (printerRef.current) {
+          eposDeviceRef.current.deleteDevice(printerRef.current, () => {});
+        }
+        eposDeviceRef.current.disconnect();
+      } catch (e) {}
+    }
+    printerRef.current = null;
+    eposDeviceRef.current = null;
+    setPrinterConnected(false);
+    toast.info("Drucker getrennt");
+  };
+
+  // Save printer settings
+  const savePrinterSettings = () => {
+    localStorage.setItem("printer_ip", printerIP);
+    localStorage.setItem("printer_port", printerPort.toString());
+    toast.success("Einstellungen gespeichert!");
+    setShowSettings(false);
+    // Reconnect with new settings
+    if (printerConnected) {
+      disconnectPrinter();
     }
   };
 
-  const fetchPrintHistory = useCallback(async () => {
+  // Print receipt using Epson SDK
+  const printReceipt = async (order) => {
+    if (!printerRef.current) {
+      toast.error("Drucker nicht verbunden");
+      return false;
+    }
+
+    const printer = printerRef.current;
+
+    try {
+      // Get template from settings
+      const template = settings?.receipt_template || {};
+      const header = template.header || {};
+      const orderInfo = template.order_info || {};
+      const itemsCfg = template.items || {};
+      const notesCfg = template.notes || {};
+      const totalsCfg = template.totals || {};
+      const footerCfg = template.footer || {};
+
+      // Initialize
+      printer.addTextAlign(printer.ALIGN_CENTER);
+
+      // Header - Restaurant Name
+      if (header.show_restaurant_name !== false) {
+        printer.addTextStyle(false, false, true, printer.COLOR_1);
+        printer.addTextSize(2, 2);
+        printer.addText((settings?.restaurant_name || 'Little Eat Italy') + '\n');
+        printer.addTextSize(1, 1);
+        printer.addTextStyle(false, false, false, printer.COLOR_1);
+      }
+
+      // Address
+      if (header.show_address !== false && settings?.restaurant_address) {
+        printer.addText(settings.restaurant_address + '\n');
+      }
+
+      // Phone
+      if (header.show_phone !== false && settings?.restaurant_phone) {
+        printer.addText('Tel: ' + settings.restaurant_phone + '\n');
+      }
+
+      // Separator
+      if (header.show_separator !== false) {
+        printer.addText('--------------------------------\n');
+      }
+
+      // Order Number
+      if (orderInfo.show_order_number !== false) {
+        printer.addTextStyle(false, false, true, printer.COLOR_1);
+        printer.addTextSize(2, 2);
+        printer.addText('#' + (order.order_number || '?') + '\n');
+        printer.addTextSize(1, 1);
+        printer.addTextStyle(false, false, false, printer.COLOR_1);
+      }
+
+      // Date/Time
+      if (orderInfo.show_date_time !== false) {
+        const date = new Date(order.created_at);
+        printer.addText(date.toLocaleDateString('de-DE') + ' ' + date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'}) + '\n');
+      }
+
+      // Customer
+      printer.addTextAlign(printer.ALIGN_LEFT);
+      if (orderInfo.show_customer_name !== false) {
+        printer.addTextStyle(false, false, true, printer.COLOR_1);
+        printer.addText('Kunde: ' + (order.customer_name || '') + '\n');
+        printer.addTextStyle(false, false, false, printer.COLOR_1);
+      }
+
+      if (orderInfo.show_customer_phone !== false && order.customer_phone) {
+        printer.addText('Tel: ' + order.customer_phone + '\n');
+      }
+
+      // Pickup Time - HIGHLIGHTED
+      if (orderInfo.show_pickup_time !== false) {
+        printer.addFeedLine(1);
+        printer.addTextAlign(printer.ALIGN_CENTER);
+        printer.addTextStyle(false, false, true, printer.COLOR_1);
+        printer.addTextSize(2, 2);
+        printer.addText('================\n');
+        const pickupTime = order.confirmed_pickup_time || order.pickup_time || 'N/A';
+        printer.addText('ABHOLUNG: ' + pickupTime + '\n');
+        printer.addText('================\n');
+        printer.addTextSize(1, 1);
+        printer.addTextStyle(false, false, false, printer.COLOR_1);
+      }
+
+      printer.addTextAlign(printer.ALIGN_LEFT);
+      printer.addText('--------------------------------\n');
+
+      // Items
+      for (const item of (order.items || [])) {
+        let itemLine = '';
+        if (itemsCfg.show_quantity !== false) {
+          itemLine += (item.quantity || 1) + 'x ';
+        }
+        itemLine += item.item_name || '';
+        if (itemsCfg.show_size !== false && item.size_name) {
+          itemLine += ' (' + item.size_name + ')';
+        }
+
+        if (itemsCfg.item_name_bold) {
+          printer.addTextStyle(false, false, true, printer.COLOR_1);
+        }
+        printer.addText(itemLine);
+        
+        if (itemsCfg.show_item_price !== false) {
+          const price = (item.total_price || 0).toFixed(2) + '€';
+          const spaces = Math.max(1, 32 - itemLine.length - price.length);
+          printer.addText(' '.repeat(spaces) + price);
+        }
+        printer.addText('\n');
+        printer.addTextStyle(false, false, false, printer.COLOR_1);
+
+        // Options
+        if (itemsCfg.show_options !== false && item.options && item.options.length > 0) {
+          const opts = item.options.map(o => o.option_name || o.name || o).join(', ');
+          printer.addText('  + ' + opts + '\n');
+        }
+      }
+
+      printer.addText('--------------------------------\n');
+
+      // Notes
+      if (notesCfg.show_notes !== false && order.notes) {
+        if (notesCfg.notes_bold) {
+          printer.addTextStyle(false, false, true, printer.COLOR_1);
+        }
+        if (notesCfg.notes_box) {
+          printer.addText('================================\n');
+        }
+        printer.addText('* ' + order.notes + '\n');
+        if (notesCfg.notes_box) {
+          printer.addText('================================\n');
+        }
+        printer.addTextStyle(false, false, false, printer.COLOR_1);
+      }
+
+      // Total
+      if (totalsCfg.show_total !== false) {
+        printer.addTextStyle(false, false, true, printer.COLOR_1);
+        if (totalsCfg.total_size === 'large') {
+          printer.addTextSize(1, 2);
+        }
+        const totalLine = 'GESAMT:';
+        const totalPrice = (order.total || 0).toFixed(2) + '€';
+        const spaces = Math.max(1, 32 - totalLine.length - totalPrice.length);
+        printer.addText(totalLine + ' '.repeat(spaces) + totalPrice + '\n');
+        printer.addTextSize(1, 1);
+        printer.addTextStyle(false, false, false, printer.COLOR_1);
+      }
+
+      if (totalsCfg.show_payment_method !== false && order.payment_method) {
+        printer.addText('Zahlung: ' + order.payment_method + '\n');
+      }
+
+      printer.addText('--------------------------------\n');
+
+      // Footer
+      if (footerCfg.show_thank_you !== false) {
+        printer.addTextAlign(printer.ALIGN_CENTER);
+        printer.addText((footerCfg.thank_you_text || 'Vielen Dank!') + '\n');
+      }
+
+      if (footerCfg.show_custom_text && footerCfg.custom_text) {
+        printer.addText(footerCfg.custom_text + '\n');
+      }
+
+      // Feed and cut
+      printer.addFeedLine(4);
+      printer.addCut(printer.CUT_FEED);
+
+      // Send to printer
+      return new Promise((resolve) => {
+        printer.send();
+        printer.onreceive = (response) => {
+          if (response.success) {
+            console.log('Print successful');
+            resolve(true);
+          } else {
+            console.error('Print failed:', response.code);
+            toast.error(`Druckfehler: ${response.code}`);
+            resolve(false);
+          }
+        };
+        printer.onerror = (error) => {
+          console.error('Print error:', error);
+          toast.error('Druckfehler');
+          resolve(false);
+        };
+      });
+    } catch (error) {
+      console.error('Print error:', error);
+      toast.error(`Druckfehler: ${error.message}`);
+      return false;
+    }
+  };
+
+  // Process print job
+  const processPrintJob = async (job) => {
+    if (isPrinting) return;
+    
+    setIsPrinting(true);
+    try {
+      const success = await printReceipt(job.order_data || job);
+      
+      if (success) {
+        // Mark job as completed in backend
+        const token = localStorage.getItem("print_station_token");
+        await axios.put(`${API}/print-queue/${job.id}/status`, 
+          { status: "completed" },
+          { headers: { Authorization: `Bearer ${token}` }}
+        );
+        
+        setPrintedCount(prev => prev + 1);
+        setLastPrintTime(new Date());
+        toast.success(`✅ Bon #${job.order_number} gedruckt!`);
+      }
+    } catch (error) {
+      console.error('Process print job error:', error);
+      toast.error('Fehler beim Verarbeiten');
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
+  // Poll for print jobs
+  const fetchPrintQueue = useCallback(async () => {
     if (!isAuthenticated) return;
     
     try {
@@ -107,67 +463,69 @@ const PrintStationPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      setIsConnected(true);
+      const pendingJobs = response.data.filter(j => j.status === 'pending');
       
-      // Count completed prints today
-      const today = new Date().toDateString();
-      const todayPrints = response.data.filter(job => 
-        job.status === "completed" && 
-        new Date(job.printed_at).toDateString() === today
-      );
-      
-      const newCount = todayPrints.length;
-      if (newCount > printedCount && printedCount > 0) {
+      // Check for new jobs
+      if (pendingJobs.length > 0 && pendingJobs.length > printQueue.length) {
         playNotificationSound();
-        const lastJob = todayPrints[0];
-        if (lastJob) {
-          setLastPrintTime(new Date(lastJob.printed_at));
-        }
       }
-      setPrintedCount(newCount);
       
-      // Get recent print history (last 10)
-      const completedJobs = response.data
-        .filter(j => j.status === "completed")
-        .slice(0, 10);
-      setPrintHistory(completedJobs);
+      setPrintQueue(pendingJobs);
+      
+      // Auto-print if enabled and connected
+      if (autoPrintEnabled && printerConnected && pendingJobs.length > 0 && !isPrinting) {
+        await processPrintJob(pendingJobs[0]);
+      }
       
     } catch (e) {
-      setIsConnected(false);
-      console.error("Failed to fetch print history:", e);
+      console.error("Failed to fetch print queue:", e);
     }
-  }, [isAuthenticated, printedCount, soundEnabled]);
+  }, [isAuthenticated, printerConnected, autoPrintEnabled, isPrinting, printQueue.length]);
 
   // Start polling when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      fetchPrintHistory();
-      fetchPrinterStatus();
-      pollingRef.current = setInterval(() => {
-        fetchPrintHistory();
-        fetchPrinterStatus();
-      }, POLLING_INTERVAL);
+      fetchPrintQueue();
+      pollingRef.current = setInterval(fetchPrintQueue, POLLING_INTERVAL);
     }
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [isAuthenticated, fetchPrintHistory]);
+  }, [isAuthenticated, fetchPrintQueue]);
 
   // Test print
   const sendTestPrint = async () => {
-    setTestPrinting(true);
+    if (!printerConnected) {
+      toast.error("Drucker nicht verbunden");
+      return;
+    }
+    
+    setIsPrinting(true);
     try {
-      const token = localStorage.getItem("print_station_token");
-      await axios.post(`${API}/printer/test`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success("✅ Testdruck gesendet!");
-      playNotificationSound();
-      fetchPrinterStatus();
+      const testOrder = {
+        order_number: "TEST",
+        customer_name: "Test Kunde",
+        customer_phone: "0000-0000000",
+        pickup_time: "JETZT",
+        created_at: new Date().toISOString(),
+        items: [
+          { quantity: 1, item_name: "Test Pizza Margherita", size_name: "32cm", total_price: 10.00 },
+          { quantity: 2, item_name: "Coca Cola", size_name: "0.5L", total_price: 6.00 }
+        ],
+        total: 16.00,
+        notes: "Das ist ein Testdruck!",
+        payment_method: "Bar"
+      };
+      
+      const success = await printReceipt(testOrder);
+      if (success) {
+        toast.success("✅ Testdruck erfolgreich!");
+        playNotificationSound();
+      }
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Druckfehler");
+      toast.error(`Testdruck Fehler: ${error.message}`);
     } finally {
-      setTestPrinting(false);
+      setIsPrinting(false);
     }
   };
 
@@ -229,9 +587,59 @@ const PrintStationPage = () => {
     );
   }
 
+  // Settings Modal
+  const SettingsModal = () => (
+    <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+      <div className="bg-neutral-900 border border-neutral-700 p-6 w-full max-w-sm">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-anton text-xl text-white">DRUCKER-EINSTELLUNGEN</h2>
+          <button onClick={() => setShowSettings(false)} className="text-neutral-400 hover:text-white text-2xl">×</button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="font-mono text-xs text-neutral-400 block mb-1">IP-ADRESSE</label>
+            <input
+              type="text"
+              value={printerIP}
+              onChange={(e) => setPrinterIP(e.target.value)}
+              className="w-full bg-black border border-neutral-700 text-white font-mono p-3"
+              placeholder="192.168.2.129"
+            />
+          </div>
+
+          <div>
+            <label className="font-mono text-xs text-neutral-400 block mb-1">PORT</label>
+            <input
+              type="number"
+              value={printerPort}
+              onChange={(e) => setPrinterPort(parseInt(e.target.value) || 8008)}
+              className="w-full bg-black border border-neutral-700 text-white font-mono p-3"
+              placeholder="8008"
+            />
+          </div>
+
+          <p className="font-mono text-xs text-neutral-500">
+            Epson TM-m30II: Standard-Port ist 8008
+          </p>
+
+          <button
+            onClick={savePrinterSettings}
+            className="w-full bg-green-600 hover:bg-green-500 text-white font-anton py-3"
+          >
+            SPEICHERN
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   // Print Station Dashboard
   return (
     <div className="min-h-screen bg-black text-white p-4">
+      {/* Settings Modal */}
+      {showSettings && <SettingsModal />}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -250,53 +658,89 @@ const PrintStationPage = () => {
           >
             {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
           </button>
-          <div className={`flex items-center gap-2 px-3 py-1 ${isConnected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-            {isConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-            <span className="font-mono text-xs">{isConnected ? 'ONLINE' : 'OFFLINE'}</span>
-          </div>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-2 text-neutral-400 hover:text-white"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
-      {/* Printer Status */}
-      <div className={`p-4 mb-4 border ${printerStatus?.connected ? 'bg-green-500/10 border-green-500' : 'bg-red-500/10 border-red-500'}`}>
+      {/* SDK Status */}
+      {!sdkLoaded && (
+        <div className="p-4 mb-4 border bg-yellow-500/10 border-yellow-500">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-6 h-6 text-yellow-400" />
+            <div>
+              <p className="font-anton text-sm">EPSON SDK WIRD GELADEN...</p>
+              <p className="font-mono text-xs text-neutral-400">Bitte warten</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Printer Connection */}
+      <div className={`p-4 mb-4 border ${printerConnected ? 'bg-green-500/10 border-green-500' : 'bg-neutral-900 border-neutral-700'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {printerStatus?.connected ? (
+            {printerConnected ? (
               <CheckCircle className="w-6 h-6 text-green-400" />
             ) : (
-              <XCircle className="w-6 h-6 text-red-400" />
+              <XCircle className="w-6 h-6 text-neutral-500" />
             )}
             <div>
               <p className="font-anton text-sm">
-                {printerStatus?.connected ? 'DRUCKER VERBUNDEN' : 'DRUCKER OFFLINE'}
+                {printerConnected ? 'DRUCKER VERBUNDEN' : 'DRUCKER VERBINDEN'}
               </p>
               <p className="font-mono text-xs text-neutral-400">
-                {printerStatus?.ip ? `${printerStatus.ip}:${printerStatus.port}` : 'Nicht konfiguriert'}
+                {printerIP}:{printerPort}
               </p>
             </div>
           </div>
           
-          <button
-            onClick={fetchPrinterStatus}
-            className="bg-neutral-700 hover:bg-neutral-600 text-white font-mono text-xs px-3 py-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
+          {printerConnected ? (
+            <button
+              onClick={disconnectPrinter}
+              className="bg-red-600 hover:bg-red-500 text-white font-mono text-xs px-3 py-2"
+            >
+              Trennen
+            </button>
+          ) : (
+            <button
+              onClick={connectPrinter}
+              disabled={isConnecting || !sdkLoaded}
+              className="bg-green-600 hover:bg-green-500 disabled:bg-neutral-700 text-white font-mono text-xs px-3 py-2"
+            >
+              {isConnecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Verbinden'}
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Auto-Print Toggle */}
+      {printerConnected && (
+        <div className="p-3 mb-4 border border-neutral-700 bg-neutral-900 flex items-center justify-between">
+          <span className="font-mono text-sm">Auto-Druck</span>
+          <button
+            onClick={() => setAutoPrintEnabled(!autoPrintEnabled)}
+            className={`px-3 py-1 font-mono text-xs ${autoPrintEnabled ? 'bg-green-600' : 'bg-neutral-700'}`}
+          >
+            {autoPrintEnabled ? 'AN' : 'AUS'}
+          </button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="bg-neutral-900 border border-neutral-800 p-6 mb-4">
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
-            <p className="font-mono text-xs text-neutral-400 mb-1">HEUTE GEDRUCKT</p>
-            <p className="font-anton text-4xl text-green-400">{printedCount}</p>
+            <p className="font-mono text-xs text-neutral-400 mb-1">WARTESCHLANGE</p>
+            <p className="font-anton text-4xl text-yellow-400">{printQueue.length}</p>
           </div>
           <div>
-            <p className="font-mono text-xs text-neutral-400 mb-1">STATUS</p>
-            <p className={`font-anton text-lg ${printerStatus?.connected ? 'text-green-400' : 'text-red-400'}`}>
-              {printerStatus?.connected ? 'BEREIT' : 'OFFLINE'}
-            </p>
+            <p className="font-mono text-xs text-neutral-400 mb-1">GEDRUCKT</p>
+            <p className="font-anton text-4xl text-green-400">{printedCount}</p>
           </div>
         </div>
         
@@ -309,78 +753,89 @@ const PrintStationPage = () => {
 
       {/* Current Status */}
       <div className={`p-6 text-center border ${
-        !printerStatus?.enabled ? 'bg-yellow-500/10 border-yellow-500' :
-        printerStatus?.connected ? 'bg-green-500/10 border-green-500' :
-        'bg-red-500/10 border-red-500'
+        !printerConnected ? 'bg-yellow-500/10 border-yellow-500' :
+        isPrinting ? 'bg-blue-500/20 border-blue-500' : 
+        printQueue.length > 0 ? 'bg-yellow-500/10 border-yellow-500' :
+        'bg-green-500/10 border-green-500'
       }`}>
-        {!printerStatus?.enabled ? (
+        {!printerConnected ? (
           <>
             <Printer className="w-12 h-12 text-yellow-400 mx-auto mb-3" />
-            <p className="font-anton text-xl text-yellow-400">DRUCKER DEAKTIVIERT</p>
+            <p className="font-anton text-xl text-yellow-400">DRUCKER VERBINDEN</p>
             <p className="font-mono text-sm text-neutral-400 mt-2">
-              Bitte in Admin → Drucker aktivieren
+              Oben auf "Verbinden" tippen
             </p>
           </>
-        ) : printerStatus?.connected ? (
+        ) : isPrinting ? (
           <>
-            <Check className="w-12 h-12 text-green-500 mx-auto mb-3" />
-            <p className="font-anton text-xl text-green-500">BEREIT</p>
-            <p className="font-mono text-sm text-neutral-400 mt-2">
-              Bons werden automatisch gedruckt
-            </p>
+            <RefreshCw className="w-12 h-12 text-blue-400 mx-auto mb-3 animate-spin" />
+            <p className="font-anton text-xl text-blue-400">DRUCKT...</p>
+          </>
+        ) : printQueue.length > 0 ? (
+          <>
+            <Printer className="w-12 h-12 text-yellow-400 mx-auto mb-3 animate-pulse" />
+            <p className="font-anton text-xl text-yellow-400">{printQueue.length} BON(S) WARTEN</p>
+            {!autoPrintEnabled && (
+              <p className="font-mono text-xs text-neutral-400 mt-2">Auto-Druck deaktiviert</p>
+            )}
           </>
         ) : (
           <>
-            <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-            <p className="font-anton text-xl text-red-400">NICHT ERREICHBAR</p>
-            <p className="font-mono text-sm text-neutral-400 mt-2">
-              Drucker-Verbindung prüfen
-            </p>
+            <Check className="w-12 h-12 text-green-500 mx-auto mb-3" />
+            <p className="font-anton text-xl text-green-500">BEREIT</p>
+            <p className="font-mono text-sm text-neutral-400 mt-2">Warte auf Bestellungen...</p>
           </>
         )}
       </div>
 
-      {/* Test Print Button */}
-      {printerStatus?.connected && (
-        <button
-          onClick={sendTestPrint}
-          disabled={testPrinting}
-          className="w-full mt-4 bg-green-600 hover:bg-green-500 disabled:bg-neutral-700 text-white font-anton py-3 flex items-center justify-center gap-2"
-        >
-          {testPrinting ? (
-            <RefreshCw className="w-5 h-5 animate-spin" />
-          ) : (
-            <Printer className="w-5 h-5" />
-          )}
-          TESTDRUCK
-        </button>
+      {/* Print Queue */}
+      {printQueue.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <p className="font-mono text-xs text-neutral-400">WARTESCHLANGE:</p>
+          {printQueue.map((job) => (
+            <div key={job.id} className="bg-neutral-900 border border-neutral-700 p-3 flex items-center justify-between">
+              <div>
+                <p className="font-anton text-lg text-white">#{job.order_number}</p>
+                <p className="font-mono text-xs text-neutral-400">
+                  {new Date(job.created_at).toLocaleTimeString('de-DE')}
+                </p>
+              </div>
+              <button
+                onClick={() => processPrintJob(job)}
+                disabled={isPrinting || !printerConnected}
+                className="bg-green-600 hover:bg-green-500 disabled:bg-neutral-700 text-white font-mono text-xs px-4 py-2"
+              >
+                Drucken
+              </button>
+            </div>
+          ))}
+        </div>
       )}
 
-      {/* Recent Print History */}
-      {printHistory.length > 0 && (
-        <div className="mt-4">
-          <p className="font-mono text-xs text-neutral-400 mb-2">LETZTE DRUCKE:</p>
-          <div className="space-y-2 max-h-48 overflow-auto">
-            {printHistory.map((job) => (
-              <div key={job.id} className="bg-neutral-900 border border-neutral-800 p-3 flex items-center justify-between">
-                <div>
-                  <p className="font-anton text-lg text-white">#{job.order_number}</p>
-                  <p className="font-mono text-xs text-neutral-400">
-                    {new Date(job.printed_at).toLocaleTimeString('de-DE')}
-                  </p>
-                </div>
-                <Check className="w-5 h-5 text-green-500" />
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Test Print Button */}
+      {printerConnected && (
+        <button
+          onClick={sendTestPrint}
+          disabled={isPrinting}
+          className="w-full mt-4 bg-neutral-800 hover:bg-neutral-700 disabled:bg-neutral-900 text-white font-mono py-3 flex items-center justify-center gap-2"
+        >
+          {isPrinting ? (
+            <RefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <Printer className="w-4 h-4" />
+          )}
+          Testdruck
+        </button>
       )}
 
       {/* Info */}
       <div className="mt-4 p-4 bg-neutral-900/50 border border-neutral-800">
         <p className="font-mono text-xs text-neutral-500 text-center">
-          Bons werden automatisch gedruckt wenn Bestellungen angenommen werden.
-          <br />Diese Seite zeigt den Drucker-Status in Echtzeit.
+          {printerConnected 
+            ? autoPrintEnabled 
+              ? "Bons werden automatisch gedruckt wenn Bestellungen angenommen werden."
+              : "Auto-Druck aus. Tippe auf 'Drucken' für jeden Bon."
+            : "Mit Drucker verbinden um automatisch zu drucken."}
         </p>
       </div>
     </div>
