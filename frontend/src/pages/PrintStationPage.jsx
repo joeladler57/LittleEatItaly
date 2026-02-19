@@ -502,12 +502,12 @@ const PrintStationPage = () => {
             <div className="flex items-start gap-3">
               <span className="bg-green-600 text-white font-bold w-8 h-8 flex items-center justify-center flex-shrink-0">2</span>
               <div>
-                <h3 className="font-bold text-white mb-2">Drucker in RawBT einrichten</h3>
+                <h3 className="font-bold text-white mb-2">Drucker in RawBT verbinden</h3>
                 <ul className="text-sm text-neutral-400 space-y-1">
-                  <li>• Öffne RawBT App</li>
-                  <li>• Wähle "Bluetooth" als Verbindungstyp</li>
-                  <li>• Wähle deinen Epson TM-m30II aus der Liste</li>
-                  <li>• Teste mit "Test drucken"</li>
+                  <li>• Öffne die RawBT App</li>
+                  <li>• Tippe auf "Drucker auswählen"</li>
+                  <li>• Wähle "Bluetooth"</li>
+                  <li>• Wähle "Epson TM-m30II" aus der Liste</li>
                 </ul>
               </div>
             </div>
@@ -518,11 +518,11 @@ const PrintStationPage = () => {
             <div className="flex items-start gap-3">
               <span className="bg-green-600 text-white font-bold w-8 h-8 flex items-center justify-center flex-shrink-0">3</span>
               <div>
-                <h3 className="font-bold text-white mb-2">WebSocket Server aktivieren</h3>
+                <h3 className="font-bold text-white mb-2">Testdruck in RawBT</h3>
                 <ul className="text-sm text-neutral-400 space-y-1">
-                  <li>• In RawBT: Einstellungen → "WebSocket Server"</li>
-                  <li>• Server aktivieren (Port 40213)</li>
-                  <li>• RawBT im Hintergrund laufen lassen</li>
+                  <li>• In RawBT auf "Testdruck" tippen</li>
+                  <li>• Prüfen ob der Drucker druckt</li>
+                  <li>• Falls ja: Alles bereit!</li>
                 </ul>
               </div>
             </div>
@@ -533,31 +533,28 @@ const PrintStationPage = () => {
             <div className="flex items-start gap-3">
               <span className="bg-green-600 text-white font-bold w-8 h-8 flex items-center justify-center flex-shrink-0">4</span>
               <div>
-                <h3 className="font-bold text-white mb-2">Diese Seite neu laden</h3>
+                <h3 className="font-bold text-white mb-2">Fertig!</h3>
                 <p className="text-sm text-neutral-400 mb-3">
-                  Wenn RawBT läuft, verbindet sich die Print-Station automatisch.
+                  Wenn der Testdruck funktioniert, ist alles bereit. Die Print-Station öffnet automatisch RawBT wenn ein Bon gedruckt werden soll.
                 </p>
                 <button 
-                  onClick={() => {
-                    setShowSetupGuide(false);
-                    connectRawBT();
-                  }}
-                  className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 text-sm"
+                  onClick={confirmRawbtReady}
+                  className="w-full bg-green-600 hover:bg-green-500 text-white px-4 py-3 font-bold"
                 >
-                  Jetzt verbinden
+                  EINRICHTUNG ABSCHLIESSEN
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500">
+        <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500">
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h4 className="font-bold text-yellow-400 mb-1">Wichtig</h4>
+              <h4 className="font-bold text-blue-400 mb-1">So funktioniert's</h4>
               <p className="text-sm text-neutral-300">
-                RawBT muss im Hintergrund laufen und der Drucker muss via Bluetooth verbunden sein, damit automatisches Drucken funktioniert.
+                Wenn eine Bestellung eingeht, öffnet diese Seite automatisch die RawBT App mit den Druckdaten. RawBT sendet sie dann an deinen Bluetooth-Drucker.
               </p>
             </div>
           </div>
@@ -565,6 +562,16 @@ const PrintStationPage = () => {
       </div>
     </div>
   );
+
+  // Manual print from queue
+  const printJob = async (job) => {
+    if (!rawbtReady) {
+      toast.error("Bitte erst RawBT einrichten");
+      setShowSetupGuide(true);
+      return;
+    }
+    await processPrintJob(job);
+  };
 
   // PIN Login Screen
   if (!isAuthenticated) {
