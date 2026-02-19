@@ -506,6 +506,7 @@ const OrderPage = () => {
             </div>
           </div>
         </div>
+        </div>
       )}
 
       {/* Mobile Cart Button */}
