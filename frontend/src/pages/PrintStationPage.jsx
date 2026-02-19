@@ -2,13 +2,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { API } from "../App";
 import { toast } from "sonner";
-import { Printer, Wifi, WifiOff, Check, RefreshCw, Smartphone, Settings, AlertCircle, ExternalLink } from "lucide-react";
+import { Printer, Wifi, WifiOff, Check, RefreshCw, Smartphone, Settings, AlertCircle, ExternalLink, Volume2, VolumeX } from "lucide-react";
 
 const POLLING_INTERVAL = 3000;
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
-
-// RawBT WebSocket Configuration
-const RAWBT_WS_URL = "ws://127.0.0.1:40213/";
 
 // ESC/POS Commands
 const ESC = 0x1B;
@@ -30,6 +27,16 @@ const COMMANDS = {
   PARTIAL_CUT: [GS, 0x56, 0x01],
   FEED_LINES: (n) => [ESC, 0x64, n],
   LINE_SPACING: (n) => [ESC, 0x33, n],
+};
+
+// Helper: Convert byte array to Base64
+const arrayToBase64 = (bytes) => {
+  const uint8Array = new Uint8Array(bytes);
+  let binary = '';
+  for (let i = 0; i < uint8Array.length; i++) {
+    binary += String.fromCharCode(uint8Array[i]);
+  }
+  return btoa(binary);
 };
 
 const PrintStationPage = () => {
