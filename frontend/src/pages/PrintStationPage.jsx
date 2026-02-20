@@ -596,6 +596,7 @@ const PrintStationPage = () => {
             <img src={CHEF_ICON} alt="Logo" className="w-20 h-20 mx-auto mb-4" />
             <h1 className="font-anton text-2xl text-white">DRUCK-STATION</h1>
             <p className="font-mono text-sm text-neutral-400 mt-2">PIN eingeben zum Verbinden</p>
+            <p className="font-mono text-xs text-green-500 mt-1">v{PRINT_STATION_VERSION}</p>
           </div>
 
           <div className="flex justify-center gap-2 mb-6">
