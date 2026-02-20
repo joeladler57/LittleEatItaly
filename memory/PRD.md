@@ -386,11 +386,26 @@ POST /api/staff/loyalty/add-points # Punkte gutschreiben
 GET  /api/staff/loyalty/search     # Kunde suchen
 ```
 
+### Dezember 2025 - Backend-Refaktorisierung (Abgeschlossen ✅)
+- ✅ **Code-Aufteilung**: 
+  - `backend/routers/customers.py` - Kundenverwaltung, Registrierung, Login, Profil
+  - `backend/routers/loyalty.py` - Treuepunkte-System, QR-Code, Prämien
+  - `backend/routers/shared.py` - Gemeinsame Modelle und Auth-Funktionen
+- ✅ **Ergebnis**: 
+  - 320 Zeilen duplizierter Code aus `server.py` entfernt
+  - `server.py` von 3098 auf 2778 Zeilen reduziert
+  - Alle Funktionen werden jetzt über Imports verwendet
+- ✅ **Getestet**: 
+  - 29/29 pytest Tests bestanden
+  - 10/10 Integration-Tests bestanden (100%)
+  - Alle API-Endpoints funktionieren korrekt
+
 ## Backlog / Zukünftige Features
 - E-Mail-Benachrichtigungen aktivieren (Resend API-Key benötigt)
 - Statistiken-Dashboard für Bestellungen/Reservierungen
-- Code-Refactoring: `server.py` in separate Router aufteilen (über 3000 Zeilen!)
+- Weitere Refaktorisierung: Terminal, Admin, Orders Endpoints in eigene Router
+- Prämien-Einlösung im Frontend fertigstellen ("EINLÖSEN" Button)
+- Staff QR-Code-Scanner im Frontend implementieren
 - Mehrsprachigkeit (DE/EN)
-- Terminal: Extras/Addons pro Artikel konfigurieren
 
 
