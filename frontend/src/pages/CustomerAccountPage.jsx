@@ -97,6 +97,8 @@ const CustomerAccountPage = () => {
       localStorage.setItem("customer_token", res.data.access_token);
       toast.success("Konto erfolgreich erstellt!");
       fetchCustomerData(res.data.access_token);
+      // Show push opt-in after successful registration
+      setTimeout(() => setShowPushOptIn(true), 1500);
     } catch (e) {
       toast.error(e.response?.data?.detail || "Registrierung fehlgeschlagen");
     }
