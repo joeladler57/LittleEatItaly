@@ -7,12 +7,13 @@ import { toast } from "sonner";
 import {
   ShoppingBag, CalendarDays, Check, X, Clock, Phone, User, Mail,
   ChevronDown, ChevronUp, Volume2, VolumeX, Bell, BellOff, LogOut,
-  RefreshCw, Utensils, CheckCircle2, CircleDashed, Send, BellRing, Plus, Users, Printer, Star, Search, QrCode
+  RefreshCw, Utensils, CheckCircle2, CircleDashed, Send, BellRing, Plus, Users, Printer, Star, Search, QrCode, Camera, StopCircle
 } from "lucide-react";
 import { useNotificationSound } from "../hooks/useNotificationSound";
 import { usePushNotifications } from "../hooks/usePushNotifications";
 import { registerServiceWorker } from "../hooks/usePWA";
 import { usePrinter } from "../hooks/usePrinter";
+import BarcodeScanner from "react-qr-barcode-scanner";
 
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
 const POLLING_INTERVAL = 4000;
