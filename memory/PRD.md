@@ -260,6 +260,19 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 4. 🟢 Impressum mit echten Firmendaten ergänzen (über Admin)
 5. 🟢 Weitere Menü-Artikel hinzufügen (über Shop Admin)
 
+## Recently Added Features
+
+### Februar 2026 - Reservierungs-Display für Tablets ✅
+- **URL:** `/display`
+- **Features:**
+  - Staff-PIN-Authentifizierung
+  - Tablet-optimiertes Hochformat-Layout
+  - Zeigt nur heutige Reservierungen
+  - Sortiert nach Uhrzeit
+  - Status-Buttons: Grün (Angekommen), Gelb (Abgesagt), Rot (Nicht erschienen)
+  - Automatische Aktualisierung alle 30 Sekunden
+  - Statistik-Leiste (Offen/Angekommen)
+
 ## Mitarbeiter-App einrichten
 **So richtest du die Personal-App für Mitarbeiter ein:**
 1. Gehe zu `/admin/shop` → EINSTELLUNGEN
