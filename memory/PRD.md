@@ -400,6 +400,22 @@ GET  /api/staff/loyalty/search     # Kunde suchen
   - 10/10 Integration-Tests bestanden (100%)
   - Alle API-Endpoints funktionieren korrekt
 
+### Februar 2026 - Wallet Integration für Bonuskarte (Implementiert ✅)
+- ✅ **Apple Wallet Button**:
+  - Schön gestalteter Button mit Apple-Logo
+  - Zeigt informative Toast-Nachricht wenn nicht konfiguriert
+  - Vorbereitet für volle Integration (benötigt Apple Developer Account)
+- ✅ **Google Wallet Button**:
+  - Schön gestalteter Button mit Google-Logo
+  - Zeigt informative Toast-Nachricht wenn nicht konfiguriert
+  - Vorbereitet für volle Integration (benötigt Google Cloud Account)
+- ✅ **Alternative Optionen (sofort nutzbar)**:
+  - "QR-CODE ALS BILD SPEICHERN" - Lädt QR-Code als PNG mit Branding herunter
+  - "ZUR STARTSEITE HINZUFÜGEN" - Zeigt iOS/Android-spezifische PWA-Anleitungen
+- ✅ **Backend API** `/api/customers/me/wallet-pass?type=apple|google`:
+  - Gibt 501 zurück mit hilfreicher Nachricht
+  - Vorbereitet für wallet_settings in DB
+
 ### Februar 2026 - Staff QR-Scanner (Implementiert ✅)
 - ✅ **Kamera-basierter QR-Scanner** (`/personal` > BONUSPUNKTE > QR-CODE):
   - "KAMERA STARTEN" Button aktiviert die Smartphone-Kamera
