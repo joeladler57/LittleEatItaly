@@ -555,6 +555,11 @@ const ShopAdminPage = () => {
             <PrinterSection settings={settings} onUpdate={fetchAllData} />
           </TabsContent>
 
+          {/* Loyalty Tab */}
+          <TabsContent value="loyalty">
+            <LoyaltySection />
+          </TabsContent>
+
           {/* Settings Tab */}
           <TabsContent value="settings">
             <SettingsSection settings={settings} onUpdate={fetchAllData} />
