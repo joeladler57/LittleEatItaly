@@ -343,6 +343,10 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 - ✅ Sound-Benachrichtigung
 - ✅ Warteschlange-Anzeige
 - ✅ Print-Historie
+- ✅ **Reservierungsliste drucken** (seit Feb 2026):
+  - Auf `/display` → Drucker-Icon klicken
+  - Liste wird zur Druckwarteschlange hinzugefügt
+  - PrintStation erkennt und druckt formatierte Liste
 
 ## Kellner-Terminal einrichten
 **So richtest du das Terminal für Kellner ein:**
