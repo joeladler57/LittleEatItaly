@@ -156,7 +156,7 @@ Heute erzählen diese Wände unsere Geschichte. Wir sind nicht nur eine Pizzeria
             >
               <div className="relative overflow-hidden">
                 <motion.img
-                  src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=85&w=800&auto=format&fit=crop"
+                  src={storyImage}
                   alt="Pizza making"
                   className="w-full h-[500px] object-cover"
                   whileHover={{ scale: 1.05 }}
