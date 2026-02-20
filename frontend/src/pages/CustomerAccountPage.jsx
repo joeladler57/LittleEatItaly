@@ -179,6 +179,138 @@ const CustomerAccountPage = () => {
     }
   };
 
+  // Wallet Functions
+  const handleAddToWallet = async (walletType) => {
+    try {
+      const token = localStorage.getItem("customer_token");
+      const response = await axios.get(`${API}/customers/me/wallet-pass?type=${walletType}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.pass_url) {
+        // Redirect to wallet pass URL
+        window.location.href = response.data.pass_url;
+      } else if (response.data.message) {
+        toast.info(response.data.message);
+      }
+    } catch (e) {
+      if (e.response?.status === 501) {
+        // Feature not fully configured - show instructions
+        if (walletType === 'apple') {
+          toast.info(
+            "Apple Wallet wird bald verfügbar sein! Nutze vorerst 'QR-Code als Bild speichern'.",
+            { duration: 5000 }
+          );
+        } else {
+          toast.info(
+            "Google Wallet wird bald verfügbar sein! Nutze vorerst 'Zur Startseite hinzufügen'.",
+            { duration: 5000 }
+          );
+        }
+      } else {
+        toast.error("Wallet-Funktion nicht verfügbar");
+      }
+    }
+  };
+
+  const handleSaveQRCode = () => {
+    const qrCodeSvg = document.getElementById("loyalty-qr-code");
+    if (!qrCodeSvg) {
+      toast.error("QR-Code nicht gefunden");
+      return;
+    }
+
+    // Create canvas from SVG
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const svgData = new XMLSerializer().serializeToString(qrCodeSvg);
+    const img = new Image();
+    
+    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    
+    img.onload = () => {
+      // Add padding for better visibility
+      const padding = 40;
+      canvas.width = img.width + padding * 2;
+      canvas.height = img.height + padding * 2 + 60;
+      
+      // White background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw QR code
+      ctx.drawImage(img, padding, padding);
+      
+      // Add text
+      ctx.fillStyle = "#000000";
+      ctx.font = "bold 14px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Little Eat Italy", canvas.width / 2, canvas.height - 40);
+      ctx.font = "12px Arial";
+      ctx.fillText(`${customer?.name || "Bonuskarte"}`, canvas.width / 2, canvas.height - 20);
+      
+      // Download
+      const link = document.createElement("a");
+      link.download = `bonuskarte-${customer?.name?.replace(/\s/g, "-") || "qr"}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      
+      URL.revokeObjectURL(url);
+      toast.success("QR-Code gespeichert!");
+    };
+    
+    img.src = url;
+  };
+
+  const handleAddToHomeScreen = () => {
+    // Check if PWA install prompt is available
+    if (window.deferredPrompt) {
+      window.deferredPrompt.prompt();
+      window.deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          toast.success("App wird zur Startseite hinzugefügt!");
+        }
+        window.deferredPrompt = null;
+      });
+    } else {
+      // Show manual instructions
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+      
+      if (isIOS) {
+        toast.info(
+          <div className="space-y-2">
+            <p className="font-bold">Zur Startseite hinzufügen (iOS):</p>
+            <ol className="list-decimal list-inside text-sm">
+              <li>Tippe auf das Teilen-Symbol ⬆️</li>
+              <li>Scrolle und tippe "Zum Home-Bildschirm"</li>
+              <li>Tippe "Hinzufügen"</li>
+            </ol>
+          </div>,
+          { duration: 8000 }
+        );
+      } else if (isAndroid) {
+        toast.info(
+          <div className="space-y-2">
+            <p className="font-bold">Zur Startseite hinzufügen (Android):</p>
+            <ol className="list-decimal list-inside text-sm">
+              <li>Tippe auf das Menü ⋮</li>
+              <li>Wähle "Zum Startbildschirm hinzufügen"</li>
+              <li>Tippe "Hinzufügen"</li>
+            </ol>
+          </div>,
+          { duration: 8000 }
+        );
+      } else {
+        toast.info(
+          "Öffne diese Seite auf deinem Smartphone und füge sie zur Startseite hinzu für schnellen Zugriff!",
+          { duration: 5000 }
+        );
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-pizza-black flex items-center justify-center">
