@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { API } from "../App";
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import { toast } from "sonner";
 import {
-  Users, Clock, Check, X, Ban, LogOut, RefreshCw
+  Users, Clock, Check, X, Ban, LogOut, RefreshCw, Edit3, Save
 } from "lucide-react";
 
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
@@ -18,6 +19,8 @@ const DisplayPage = () => {
   const [pinError, setPinError] = useState("");
   const [reservations, setReservations] = useState([]);
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [editingNoteValue, setEditingNoteValue] = useState("");
   const pollingRef = useRef(null);
 
   // Check for existing token on mount
