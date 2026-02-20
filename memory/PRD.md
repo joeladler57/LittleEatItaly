@@ -400,6 +400,22 @@ GET  /api/staff/loyalty/search     # Kunde suchen
   - 10/10 Integration-Tests bestanden (100%)
   - Alle API-Endpoints funktionieren korrekt
 
+### Februar 2026 - Push Opt-In & Über Uns Bearbeitung (Implementiert ✅)
+- ✅ **Push Opt-In Modal** nach wichtigen Aktionen:
+  - Nach Registrierung eines neuen Kundenkontos
+  - Nach erfolgreicher Bestellung
+  - Nach erfolgreicher Reservierung
+  - Ansprechendes Design mit Pizza-Icon und Vorteilen
+  - "JA, BENACHRICHTIGE MICH!" und "Nein danke" Buttons
+- ✅ **"Über uns" Bearbeitung im Admin-Dashboard**:
+  - Neuer "ÜBER UNS" Tab hinzugefügt
+  - **Geschichte**: Titel, Text (mehrzeilig), Bild-URL
+  - **Statistiken**: 4 bearbeitbare Werte (Gründungsjahr, Teigzeit, Ofentemp., etc.)
+  - **Philosophie**: 3 Sektionen mit Titel und Beschreibung
+  - **Zitat**: Text und Autor
+- ✅ **AboutPage dynamisch**: Lädt Inhalte aus Backend `/api/content`
+- ✅ **Testing:** 17/17 Frontend-Tests bestanden (100%)
+
 ### Februar 2026 - Push-Benachrichtigungen (Implementiert ✅)
 - ✅ **PUSH Tab im Admin-Dashboard** (`/admin/shop`):
   - Statistiken: Gesamt Abonnenten, Mit Konto, Anonym
