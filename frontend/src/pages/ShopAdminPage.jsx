@@ -512,6 +512,7 @@ const ShopAdminPage = () => {
               { id: "terminal", label: "TERMINAL", icon: Tablet },
               { id: "printer", label: "DRUCKER", icon: Printer },
               { id: "loyalty", label: "BONUSPUNKTE", icon: Star },
+              { id: "push", label: "PUSH", icon: Bell },
               { id: "settings", label: "EINSTELLUNGEN", icon: Settings },
             ].map((tab) => (
               <TabsTrigger
