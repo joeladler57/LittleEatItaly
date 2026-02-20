@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Printer, Wifi, WifiOff, Check, RefreshCw, Settings, CheckCircle, XCircle, Volume2, VolumeX } from "lucide-react";
 
 // Version for cache busting - Update this when making changes
-const PRINT_STATION_VERSION = "2.1.0";
+const PRINT_STATION_VERSION = "2.2.0";
 
 const POLLING_INTERVAL = 3000;
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
