@@ -646,6 +646,120 @@ async def verify_customer_token(credentials: HTTPAuthorizationCredentials = Depe
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+# ============ LOYALTY FUNCTIONS ============
+
+async def get_loyalty_settings() -> dict:
+    """Get loyalty program settings"""
+    settings = await db.loyalty_settings.find_one({"id": "loyalty_settings"}, {"_id": 0})
+    if not settings:
+        # Return default settings
+        default_settings = {
+            "id": "loyalty_settings",
+            "enabled": True,
+            "points_per_euro": 1.0,
+            "min_purchase_for_points": 0.0,
+            "points_expiry_months": 12,
+            "welcome_bonus_points": 10,
+            "rewards": [
+                {"id": str(uuid.uuid4()), "name": "Gratis Softdrink", "description": "Wähle ein Softdrink deiner Wahl", "points_required": 30, "category": "drink", "is_active": True, "sort_order": 1},
+                {"id": str(uuid.uuid4()), "name": "Gratis Dessert", "description": "Wähle ein Dessert deiner Wahl", "points_required": 50, "category": "food", "is_active": True, "sort_order": 2},
+                {"id": str(uuid.uuid4()), "name": "5€ Rabatt", "description": "5€ Rabatt auf deine nächste Bestellung", "points_required": 80, "category": "discount", "is_active": True, "sort_order": 3},
+                {"id": str(uuid.uuid4()), "name": "Gratis Pizza", "description": "Wähle eine Pizza bis 15€", "points_required": 150, "category": "food", "is_active": True, "sort_order": 4}
+            ]
+        }
+        await db.loyalty_settings.insert_one(default_settings)
+        return default_settings
+    return settings
+
+async def calculate_points_for_purchase(amount: float) -> int:
+    """Calculate points earned for a purchase amount"""
+    settings = await get_loyalty_settings()
+    if not settings.get("enabled", True):
+        return 0
+    if amount < settings.get("min_purchase_for_points", 0):
+        return 0
+    points_per_euro = settings.get("points_per_euro", 1.0)
+    return int(amount * points_per_euro)
+
+async def add_points_to_customer(customer_id: str, points: int, point_type: str, description: str, order_id: str = None, staff_id: str = None):
+    """Add points to customer account"""
+    if points == 0:
+        return
+    
+    settings = await get_loyalty_settings()
+    expiry_months = settings.get("points_expiry_months", 12)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=expiry_months * 30)
+    
+    transaction = {
+        "id": str(uuid.uuid4()),
+        "amount": points,
+        "type": point_type,
+        "description": description,
+        "order_id": order_id,
+        "staff_id": staff_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at": expires_at.isoformat()
+    }
+    
+    await db.customers.update_one(
+        {"id": customer_id},
+        {
+            "$inc": {"loyalty_points": points, "lifetime_points": max(0, points)},
+            "$push": {"points_history": {"$each": [transaction], "$slice": -100}},  # Keep last 100 transactions
+            "$set": {"updated_at": datetime.now(timezone.utc)}
+        }
+    )
+    
+    # Also save to points_transactions collection for detailed tracking
+    transaction["customer_id"] = customer_id
+    await db.points_transactions.insert_one(transaction)
+
+async def redeem_points(customer_id: str, points: int, reward_name: str) -> bool:
+    """Redeem points for a reward"""
+    customer = await db.customers.find_one({"id": customer_id})
+    if not customer or customer.get("loyalty_points", 0) < points:
+        return False
+    
+    await add_points_to_customer(
+        customer_id=customer_id,
+        points=-points,
+        point_type="redeemed",
+        description=f"Eingelöst: {reward_name}"
+    )
+    return True
+
+async def expire_old_points():
+    """Background task to expire old points (should be run periodically)"""
+    # Find transactions that are expired but not yet processed
+    now = datetime.now(timezone.utc)
+    # This is a simplified version - in production, you'd want more sophisticated point expiry tracking
+    pass
+
+def generate_customer_qr_data(customer_id: str) -> str:
+    """Generate QR code data for customer loyalty card"""
+    # Include customer ID and a simple checksum for verification
+    import hashlib
+    checksum = hashlib.sha256(f"{customer_id}{JWT_SECRET[:8]}".encode()).hexdigest()[:8]
+    return f"LEI-LOYALTY:{customer_id}:{checksum}"
+
+def verify_customer_qr_data(qr_data: str) -> Optional[str]:
+    """Verify QR code data and return customer ID if valid"""
+    import hashlib
+    try:
+        if not qr_data.startswith("LEI-LOYALTY:"):
+            return None
+        parts = qr_data.split(":")
+        if len(parts) != 3:
+            return None
+        customer_id = parts[1]
+        checksum = parts[2]
+        expected_checksum = hashlib.sha256(f"{customer_id}{JWT_SECRET[:8]}".encode()).hexdigest()[:8]
+        if checksum != expected_checksum:
+            return None
+        return customer_id
+    except:
+        return None
+
 # ============ CMS CONTENT MODELS ============
 
 class ActionButton(BaseModel):
