@@ -826,23 +826,37 @@ const PrintStationPage = () => {
       {printQueue.length > 0 && (
         <div className="mt-4 space-y-2">
           <p className="font-mono text-xs text-neutral-400">WARTESCHLANGE:</p>
-          {printQueue.map((job) => (
-            <div key={job.id} className="bg-neutral-900 border border-neutral-700 p-3 flex items-center justify-between">
-              <div>
-                <p className="font-anton text-lg text-white">#{job.order_number}</p>
-                <p className="font-mono text-xs text-neutral-400">
-                  {new Date(job.created_at).toLocaleTimeString('de-DE')}
-                </p>
+          {printQueue.map((job) => {
+            const isReservationList = job.job_type === 'reservations' || job.order_data?.job_type === 'reservations';
+            return (
+              <div key={job.id} className={`bg-neutral-900 border p-3 flex items-center justify-between ${isReservationList ? 'border-blue-500' : 'border-neutral-700'}`}>
+                <div>
+                  {isReservationList ? (
+                    <>
+                      <p className="font-anton text-lg text-blue-400">📋 RESERVIERUNGEN</p>
+                      <p className="font-mono text-xs text-neutral-400">
+                        {job.order_data?.total_reservations || '?'} Reservierungen • {job.order_data?.total_guests || '?'} Gäste
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-anton text-lg text-white">#{job.order_number}</p>
+                      <p className="font-mono text-xs text-neutral-400">
+                        {new Date(job.created_at).toLocaleTimeString('de-DE')}
+                      </p>
+                    </>
+                  )}
+                </div>
+                <button
+                  onClick={() => processPrintJob(job)}
+                  disabled={isPrinting || !printerConnected}
+                  className="bg-green-600 hover:bg-green-500 disabled:bg-neutral-700 text-white font-mono text-xs px-4 py-2"
+                >
+                  Drucken
+                </button>
               </div>
-              <button
-                onClick={() => processPrintJob(job)}
-                disabled={isPrinting || !printerConnected}
-                className="bg-green-600 hover:bg-green-500 disabled:bg-neutral-700 text-white font-mono text-xs px-4 py-2"
-              >
-                Drucken
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
