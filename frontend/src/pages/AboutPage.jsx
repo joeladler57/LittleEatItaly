@@ -1,16 +1,66 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import axios from "axios";
+import { API } from "../App";
 import DripBorder from "../components/DripBorder";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/yn5dt6ix_l1.png";
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
 
 const AboutPage = () => {
-  const stats = [
+  const [content, setContent] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchContent();
+  }, []);
+
+  const fetchContent = async () => {
+    try {
+      const res = await axios.get(`${API}/content`);
+      setContent(res.data.about || {});
+    } catch (e) {
+      console.error("Error fetching content:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Default values if not set in admin
+  const stats = content?.stats || [
     { number: "2015", label: "GEGRÜNDET" },
     { number: "48", label: "STUNDEN TEIG" },
     { number: "480°", label: "OFENTEMP." },
     { number: "100%", label: "IMPORTIERT" },
   ];
+
+  const storyTitle = content?.story_title || "GEBOREN IN NEAPEL";
+  const storyText = content?.story_text || `Little Eat Italy begann mit einem einfachen Traum: den authentischen Geschmack der neapolitanischen Pizza auf die urbanen Straßen zu bringen. Unser Gründer, Marco Rossi, wuchs auf und sah seiner Großmutter beim Teigkneten in ihrer Familienküche in Neapel zu.
+
+2015 eröffnete er unser erstes Lokal in einer umgebauten Garage, ausgestattet mit nichts als einem aus Italien importierten Holzofen und Rezepten, die über vier Generationen weitergegeben wurden. Die mit Graffiti bedeckten Wände waren nicht Teil des ursprünglichen Plans – sie kamen von lokalen Straßenkünstlern, die für ihre Pizzen mit Kunst bezahlten.
+
+Heute erzählen diese Wände unsere Geschichte. Wir sind nicht nur eine Pizzeria – wir sind eine Leinwand für urbane Kultur, ein Treffpunkt für Träumer und vor allem ein Ort, an dem jede Pizza ein Meisterwerk ist.`;
+  const storyImage = content?.story_image || "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=85&w=800&auto=format&fit=crop";
+
+  const philosophy = content?.philosophy || [
+    {
+      title: "AUTHENTIZITÄT",
+      description: "Jede Zutat stammt aus Italien. San Marzano Tomaten, Büffelmozzarella, 00-Mehl – keine Kompromisse."
+    },
+    {
+      title: "HANDWERKSKUNST",
+      description: "Unser Teig fermentiert mindestens 48 Stunden. Unser Ofen brennt bei 480°C. Das ist kein Fast Food – das ist Kunst."
+    },
+    {
+      title: "GEMEINSCHAFT",
+      description: "Wir glauben, dass Pizza Menschen zusammenbringt. Unsere Türen stehen allen offen – Künstlern, Musikern, Familien, Träumern."
+    }
+  ];
+
+  const quoteText = content?.quote_text || "PIZZA IST NICHT NUR ESSEN. ES IST EINE SPRACHE.";
+  const quoteAuthor = content?.quote_author || "MARCO ROSSI, GRÜNDER";
+
+  const storyParagraphs = storyText.split('\n\n').filter(p => p.trim());
 
   return (
     <div data-testid="about-page" className="min-h-screen pt-20">
