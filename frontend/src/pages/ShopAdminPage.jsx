@@ -821,16 +821,35 @@ const OrdersSection = ({ orders, onUpdate, settings }) => {
                   className="overflow-hidden"
                 >
                   <div className="p-4 border-t border-pizza-black">
-                    {/* Customer Info */}
-                    <div className="grid sm:grid-cols-3 gap-4 mb-4">
-                      <div className="flex items-center gap-2 font-mono text-sm text-neutral-400">
-                        <User className="w-4 h-4" /> {order.customer_name}
+                    {/* Customer Info with Stats */}
+                    <div className="bg-pizza-black/50 p-4 mb-4">
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        {order.customer_info?.is_new && (
+                          <span className="px-2 py-1 bg-green-500/20 text-green-400 font-mono text-xs">
+                            ✨ NEUER KUNDE
+                          </span>
+                        )}
+                        {order.customer_info?.has_account && (
+                          <span className="px-2 py-1 bg-blue-500/20 text-blue-400 font-mono text-xs">
+                            👤 REGISTRIERT
+                          </span>
+                        )}
+                        {order.customer_info && !order.customer_info.is_new && (
+                          <span className="px-2 py-1 bg-purple-500/20 text-purple-400 font-mono text-xs">
+                            {order.customer_info.total_orders} Bestellungen • {formatPrice(order.customer_info.total_spent || 0)} Umsatz
+                          </span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 font-mono text-sm text-neutral-400">
-                        <Phone className="w-4 h-4" /> {order.customer_phone}
-                      </div>
-                      <div className="flex items-center gap-2 font-mono text-sm text-neutral-400">
-                        <Mail className="w-4 h-4" /> {order.customer_email}
+                      <div className="grid sm:grid-cols-3 gap-4">
+                        <div className="flex items-center gap-2 font-mono text-sm text-neutral-400">
+                          <User className="w-4 h-4" /> {order.customer_name}
+                        </div>
+                        <div className="flex items-center gap-2 font-mono text-sm text-neutral-400">
+                          <Phone className="w-4 h-4" /> {order.customer_phone}
+                        </div>
+                        <div className="flex items-center gap-2 font-mono text-sm text-neutral-400">
+                          <Mail className="w-4 h-4" /> {order.customer_email}
+                        </div>
                       </div>
                     </div>
 
