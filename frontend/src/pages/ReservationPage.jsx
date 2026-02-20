@@ -319,10 +319,25 @@ const ReservationPage = () => {
               ZURÜCK ZUR STARTSEITE
             </Button>
           </motion.div>
+
+          {/* Push Opt-In Modal */}
+          <PushOptInModal 
+            isOpen={showPushOptIn} 
+            onClose={() => setShowPushOptIn(false)}
+            trigger="reservation"
+          />
         </div>
       </div>
     );
   }
+
+  // Show push opt-in after success
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setShowPushOptIn(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
 
   return (
     <div className="min-h-screen bg-pizza-black pt-20 pb-16">
