@@ -4,12 +4,13 @@ import axios from "axios";
 import { API } from "../App";
 import { 
   User, Mail, Phone, ShoppingBag, Calendar, LogOut, 
-  Package, Clock, Euro, ChevronRight, UserPlus, LogIn
+  Package, Clock, Euro, UserPlus, LogIn, Gift, Star, QrCode, Sparkles
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
+import QRCode from "react-qr-code";
 
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
 
@@ -18,9 +19,11 @@ const CustomerAccountPage = () => {
   const [customer, setCustomer] = useState(null);
   const [orders, setOrders] = useState([]);
   const [reservations, setReservations] = useState([]);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [loyalty, setLoyalty] = useState(null);
+  const [activeTab, setActiveTab] = useState("bonuskarte");
   const [loading, setLoading] = useState(true);
-  const [authMode, setAuthMode] = useState("login"); // login or register
+  const [authMode, setAuthMode] = useState("login");
+  const [redeeming, setRedeeming] = useState(null);
   
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({ 
@@ -39,14 +42,16 @@ const CustomerAccountPage = () => {
   const fetchCustomerData = async (token) => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const [profileRes, ordersRes, reservationsRes] = await Promise.all([
+      const [profileRes, ordersRes, reservationsRes, loyaltyRes] = await Promise.all([
         axios.get(`${API}/customers/me`, { headers }),
         axios.get(`${API}/customers/me/orders`, { headers }),
-        axios.get(`${API}/customers/me/reservations`, { headers })
+        axios.get(`${API}/customers/me/reservations`, { headers }),
+        axios.get(`${API}/customers/me/loyalty`, { headers })
       ]);
       setCustomer(profileRes.data);
       setOrders(ordersRes.data);
       setReservations(reservationsRes.data);
+      setLoyalty(loyaltyRes.data);
       setIsLoggedIn(true);
     } catch (e) {
       console.error("Auth error:", e);
@@ -100,7 +105,32 @@ const CustomerAccountPage = () => {
     setCustomer(null);
     setOrders([]);
     setReservations([]);
+    setLoyalty(null);
     toast.success("Erfolgreich abgemeldet");
+  };
+
+  const handleRedeem = async (reward) => {
+    if (loyalty?.loyalty_points < reward.points_required) {
+      toast.error("Nicht genügend Punkte");
+      return;
+    }
+    setRedeeming(reward.id);
+    try {
+      const token = localStorage.getItem("customer_token");
+      const res = await axios.post(`${API}/customers/me/redeem?reward_id=${reward.id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(res.data.message);
+      // Refresh loyalty data
+      const loyaltyRes = await axios.get(`${API}/customers/me/loyalty`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setLoyalty(loyaltyRes.data);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Einlösung fehlgeschlagen");
+    } finally {
+      setRedeeming(null);
+    }
   };
 
   const formatDate = (dateStr) => {
@@ -137,6 +167,17 @@ const CustomerAccountPage = () => {
     );
   };
 
+  const getTransactionIcon = (type) => {
+    switch (type) {
+      case "earned_online": return "🛒";
+      case "earned_instore": return "🍽️";
+      case "redeemed": return "🎁";
+      case "bonus": return "🎉";
+      case "expired": return "⏰";
+      default: return "📝";
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-pizza-black flex items-center justify-center">
@@ -157,6 +198,9 @@ const CustomerAccountPage = () => {
             <h1 className="font-anton text-3xl text-pizza-white">
               MEIN <span className="text-pizza-red">KONTO</span>
             </h1>
+            <p className="font-mono text-sm text-neutral-400 mt-2">
+              Sammle Punkte und erhalte Prämien!
+            </p>
           </motion.div>
 
           {/* Auth Tabs */}
@@ -278,7 +322,7 @@ const CustomerAccountPage = () => {
     );
   }
 
-  // Logged in - show profile
+  // Logged in - show profile with loyalty card
   return (
     <div className="min-h-screen bg-pizza-black pt-24 pb-16 px-4">
       <div className="max-w-4xl mx-auto">
@@ -290,31 +334,42 @@ const CustomerAccountPage = () => {
           </h1>
         </motion.div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-pizza-dark border border-pizza-dark p-4 text-center">
-            <ShoppingBag className="w-6 h-6 text-pizza-red mx-auto mb-2" />
-            <div className="font-anton text-2xl text-pizza-white">{customer?.total_orders || 0}</div>
-            <div className="font-mono text-xs text-neutral-400">Bestellungen</div>
+        {/* Loyalty Points Card */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }} 
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-gradient-to-br from-pizza-red via-red-700 to-red-900 p-6 mb-8 relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24" />
+          
+          <div className="relative z-10">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <p className="font-mono text-xs text-white/70 uppercase tracking-wider">Bonuskarte</p>
+                <h2 className="font-anton text-4xl text-white">{loyalty?.loyalty_points || 0} <span className="text-2xl">PUNKTE</span></h2>
+              </div>
+              <Star className="w-10 h-10 text-yellow-400" />
+            </div>
+            
+            <div className="flex items-center gap-2 text-white/80 font-mono text-sm">
+              <Sparkles className="w-4 h-4" />
+              <span>{loyalty?.points_per_euro || 1} Punkt pro Euro</span>
+            </div>
+            
+            <p className="font-mono text-xs text-white/60 mt-2">
+              Gesamt gesammelt: {loyalty?.lifetime_points || 0} Punkte
+            </p>
           </div>
-          <div className="bg-pizza-dark border border-pizza-dark p-4 text-center">
-            <Calendar className="w-6 h-6 text-pizza-red mx-auto mb-2" />
-            <div className="font-anton text-2xl text-pizza-white">{customer?.total_reservations || 0}</div>
-            <div className="font-mono text-xs text-neutral-400">Reservierungen</div>
-          </div>
-          <div className="bg-pizza-dark border border-pizza-dark p-4 text-center">
-            <Euro className="w-6 h-6 text-pizza-red mx-auto mb-2" />
-            <div className="font-anton text-2xl text-pizza-white">{(customer?.total_spent || 0).toFixed(0)}€</div>
-            <div className="font-mono text-xs text-neutral-400">Gesamtumsatz</div>
-          </div>
-        </div>
+        </motion.div>
 
         {/* Tabs */}
         <div className="flex overflow-x-auto gap-2 mb-6">
           {[
-            { id: "profile", label: "Profil", icon: User },
+            { id: "bonuskarte", label: "Bonuskarte", icon: QrCode },
+            { id: "praemien", label: "Prämien", icon: Gift },
             { id: "orders", label: "Bestellungen", icon: Package },
-            { id: "reservations", label: "Reservierungen", icon: Calendar }
+            { id: "profile", label: "Profil", icon: User }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -333,6 +388,162 @@ const CustomerAccountPage = () => {
 
         {/* Content */}
         <div className="bg-pizza-dark border border-pizza-dark">
+          {/* Bonuskarte Tab - QR Code */}
+          {activeTab === "bonuskarte" && (
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <h3 className="font-anton text-xl text-pizza-white mb-2">DEINE DIGITALE BONUSKARTE</h3>
+                <p className="font-mono text-sm text-neutral-400">
+                  Zeige diesen QR-Code beim Bezahlen vor Ort
+                </p>
+              </div>
+              
+              {/* QR Code */}
+              <div className="bg-white p-6 mx-auto w-fit rounded-lg mb-6">
+                {loyalty?.qr_code_data && (
+                  <QRCode 
+                    value={loyalty.qr_code_data} 
+                    size={200}
+                    level="H"
+                  />
+                )}
+              </div>
+              
+              <div className="text-center">
+                <p className="font-mono text-xs text-neutral-500 mb-4">
+                  {customer?.name} • {customer?.email}
+                </p>
+              </div>
+
+              {/* Recent Transactions */}
+              {loyalty?.recent_transactions?.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="font-anton text-sm text-pizza-red mb-3">LETZTE AKTIVITÄTEN</h4>
+                  <div className="space-y-2">
+                    {loyalty.recent_transactions.slice(0, 5).map((tx, i) => (
+                      <div key={i} className="flex justify-between items-center p-3 bg-pizza-black/50">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">{getTransactionIcon(tx.type)}</span>
+                          <div>
+                            <p className="font-mono text-sm text-pizza-white">{tx.description}</p>
+                            <p className="font-mono text-xs text-neutral-500">{formatDate(tx.created_at)}</p>
+                          </div>
+                        </div>
+                        <span className={`font-anton text-lg ${tx.amount > 0 ? "text-green-400" : "text-red-400"}`}>
+                          {tx.amount > 0 ? "+" : ""}{tx.amount}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Prämien Tab */}
+          {activeTab === "praemien" && (
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <h3 className="font-anton text-xl text-pizza-white mb-2">VERFÜGBARE PRÄMIEN</h3>
+                <p className="font-mono text-sm text-neutral-400">
+                  Du hast <span className="text-pizza-red font-bold">{loyalty?.loyalty_points || 0} Punkte</span>
+                </p>
+              </div>
+
+              <div className="grid gap-4">
+                {loyalty?.rewards?.map((reward) => {
+                  const canRedeem = (loyalty?.loyalty_points || 0) >= reward.points_required;
+                  const progress = Math.min(100, ((loyalty?.loyalty_points || 0) / reward.points_required) * 100);
+                  
+                  return (
+                    <div key={reward.id} className={`p-4 border ${canRedeem ? "border-pizza-red bg-pizza-red/10" : "border-pizza-dark bg-pizza-black/50"}`}>
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-anton text-lg text-pizza-white">{reward.name}</h4>
+                          <p className="font-mono text-xs text-neutral-400">{reward.description}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-anton text-2xl text-pizza-red">{reward.points_required}</span>
+                          <p className="font-mono text-xs text-neutral-500">Punkte</p>
+                        </div>
+                      </div>
+                      
+                      {/* Progress bar */}
+                      <div className="h-2 bg-pizza-dark mb-3 overflow-hidden">
+                        <div 
+                          className="h-full bg-pizza-red transition-all duration-500"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="font-mono text-xs text-neutral-500">
+                          {canRedeem ? "Bereit zum Einlösen!" : `Noch ${reward.points_required - (loyalty?.loyalty_points || 0)} Punkte`}
+                        </span>
+                        <Button
+                          onClick={() => handleRedeem(reward)}
+                          disabled={!canRedeem || redeeming === reward.id}
+                          className={`font-anton text-xs rounded-none ${
+                            canRedeem 
+                              ? "bg-pizza-red hover:bg-red-700 text-white" 
+                              : "bg-neutral-700 text-neutral-500 cursor-not-allowed"
+                          }`}
+                        >
+                          <Gift className="w-4 h-4 mr-1" />
+                          {redeeming === reward.id ? "..." : "EINLÖSEN"}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Orders Tab */}
+          {activeTab === "orders" && (
+            <div className="divide-y divide-pizza-black">
+              {orders.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Package className="w-12 h-12 text-pizza-dark mx-auto mb-2" />
+                  <p className="font-mono text-sm text-neutral-500">Noch keine Bestellungen</p>
+                </div>
+              ) : (
+                orders.map((order) => (
+                  <div key={order.id} className="p-4 hover:bg-pizza-black/30 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <span className="font-anton text-pizza-red">#{order.order_number}</span>
+                        <span className="font-mono text-sm text-neutral-400 ml-2">{formatDate(order.created_at)}</span>
+                        {order.points_earned > 0 && (
+                          <span className="ml-2 px-2 py-0.5 bg-green-500/20 text-green-400 font-mono text-xs">
+                            +{order.points_earned} Punkte
+                          </span>
+                        )}
+                      </div>
+                      {getStatusBadge(order.status)}
+                    </div>
+                    <div className="font-mono text-sm text-neutral-300">
+                      {order.items?.map((item, i) => (
+                        <span key={i}>
+                          {item.quantity}x {item.item_name}
+                          {i < order.items.length - 1 && ", "}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="font-mono text-xs text-neutral-500">
+                        Abholung: {order.pickup_time}
+                      </span>
+                      <span className="font-anton text-pizza-white">{formatPrice(order.total)}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* Profile Tab */}
           {activeTab === "profile" && (
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-3 p-4 bg-pizza-black/50">
@@ -357,84 +568,25 @@ const CustomerAccountPage = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-pizza-black/50">
+                <ShoppingBag className="w-5 h-5 text-pizza-red" />
+                <div>
+                  <div className="font-mono text-xs text-neutral-400">Statistiken</div>
+                  <div className="text-pizza-white">
+                    {customer?.total_orders || 0} Bestellungen • {formatPrice(customer?.total_spent || 0)} Umsatz
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-pizza-black/50">
                 <Clock className="w-5 h-5 text-pizza-red" />
                 <div>
                   <div className="font-mono text-xs text-neutral-400">Mitglied seit</div>
                   <div className="text-pizza-white">{formatDate(customer?.created_at)}</div>
                 </div>
               </div>
-              <Button onClick={handleLogout} variant="outline" className="w-full mt-4 border-pizza-red text-pizza-red hover:bg-pizza-red hover:text-pizza-white">
+              <Button onClick={handleLogout} variant="outline" className="w-full mt-4 border-pizza-red text-pizza-red hover:bg-pizza-red hover:text-pizza-white rounded-none">
                 <LogOut className="w-4 h-4 mr-2" />
                 ABMELDEN
               </Button>
-            </div>
-          )}
-
-          {activeTab === "orders" && (
-            <div className="divide-y divide-pizza-black">
-              {orders.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Package className="w-12 h-12 text-pizza-dark mx-auto mb-2" />
-                  <p className="font-mono text-sm text-neutral-500">Noch keine Bestellungen</p>
-                </div>
-              ) : (
-                orders.map((order) => (
-                  <div key={order.id} className="p-4 hover:bg-pizza-black/30 transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <span className="font-anton text-pizza-red">#{order.order_number}</span>
-                        <span className="font-mono text-sm text-neutral-400 ml-2">{formatDate(order.created_at)}</span>
-                      </div>
-                      {getStatusBadge(order.status)}
-                    </div>
-                    <div className="font-mono text-sm text-neutral-300">
-                      {order.items?.map((item, i) => (
-                        <span key={i}>
-                          {item.quantity}x {item.item_name}
-                          {i < order.items.length - 1 && ", "}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="font-mono text-xs text-neutral-500">
-                        Abholung: {order.pickup_time}
-                      </span>
-                      <span className="font-anton text-pizza-white">{formatPrice(order.total)}</span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {activeTab === "reservations" && (
-            <div className="divide-y divide-pizza-black">
-              {reservations.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Calendar className="w-12 h-12 text-pizza-dark mx-auto mb-2" />
-                  <p className="font-mono text-sm text-neutral-500">Noch keine Reservierungen</p>
-                </div>
-              ) : (
-                reservations.map((res) => (
-                  <div key={res.id} className="p-4 hover:bg-pizza-black/30 transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <span className="font-anton text-pizza-red">#{res.reservation_number}</span>
-                        <span className="font-mono text-sm text-neutral-400 ml-2">{res.date} um {res.time} Uhr</span>
-                      </div>
-                      {getStatusBadge(res.status)}
-                    </div>
-                    <div className="font-mono text-sm text-neutral-300">
-                      {res.guests} {res.guests === 1 ? "Person" : "Personen"}
-                    </div>
-                    {res.notes && (
-                      <div className="font-mono text-xs text-neutral-500 mt-1">
-                        Notiz: {res.notes}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
             </div>
           )}
         </div>
