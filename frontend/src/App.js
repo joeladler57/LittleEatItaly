@@ -24,6 +24,7 @@ import StaffPage from "./pages/StaffPage";
 import PrintStationPage from "./pages/PrintStationPage";
 import TerminalPage from "./pages/TerminalPage";
 import CustomerAccountPage from "./pages/CustomerAccountPage";
+import DisplayPage from "./pages/DisplayPage";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
