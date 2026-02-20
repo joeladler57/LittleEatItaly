@@ -2912,10 +2912,12 @@ async def seed_data():
 
 
 # Import and include modular routers
-from routers import loyalty_router, customers_router
+from routers import loyalty_router, customers_router, terminal_router, staff_router
 
 app.include_router(loyalty_router)
 app.include_router(customers_router)
+app.include_router(terminal_router, prefix="/api")
+app.include_router(staff_router, prefix="/api")
 
 # Include the main api_router
 # Include the router in the main app
