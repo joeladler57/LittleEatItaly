@@ -180,42 +180,24 @@ Heute erzählen diese Wände unsere Geschichte. Wir sind nicht nur eine Pizzeria
               transition={{ duration: 0.8 }}
             >
               <h2 className="font-anton text-4xl sm:text-5xl tracking-wider text-pizza-white mb-8">
-                GEBOREN IN <span className="text-pizza-red">NEAPEL</span>
+                {storyTitle.split(' ').map((word, i) => (
+                  <span key={i} className={i === storyTitle.split(' ').length - 1 ? "text-pizza-red" : ""}>
+                    {word}{" "}
+                  </span>
+                ))}
               </h2>
               <div className="space-y-6 font-mono text-base text-neutral-200 leading-relaxed">
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.2 }}
-                >
-                  Little Eat Italy begann mit einem einfachen Traum: den authentischen Geschmack 
-                  der neapolitanischen Pizza auf die urbanen Straßen zu bringen. Unser Gründer, 
-                  Marco Rossi, wuchs auf und sah seiner Großmutter beim Teigkneten in ihrer 
-                  Familienküche in Neapel zu.
-                </motion.p>
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.4 }}
-                >
-                  2015 eröffnete er unser erstes Lokal in einer umgebauten Garage, ausgestattet 
-                  mit nichts als einem aus Italien importierten Holzofen und Rezepten, die über 
-                  vier Generationen weitergegeben wurden. Die mit Graffiti bedeckten Wände waren 
-                  nicht Teil des ursprünglichen Plans – sie kamen von lokalen Straßenkünstlern, 
-                  die für ihre Pizzen mit Kunst bezahlten.
-                </motion.p>
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.6 }}
-                >
-                  Heute erzählen diese Wände unsere Geschichte. Wir sind nicht nur eine Pizzeria – 
-                  wir sind eine Leinwand für urbane Kultur, ein Treffpunkt für Träumer und vor 
-                  allem ein Ort, an dem jede Pizza ein Meisterwerk ist.
-                </motion.p>
+                {storyParagraphs.map((paragraph, index) => (
+                  <motion.p
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 + index * 0.2 }}
+                  >
+                    {paragraph}
+                  </motion.p>
+                ))}
               </div>
             </motion.div>
           </div>
