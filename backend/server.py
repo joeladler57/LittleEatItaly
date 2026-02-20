@@ -25,6 +25,20 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# Import customer and loyalty functions from routers
+from routers import (
+    find_or_create_customer_record,
+    update_customer_order_stats,
+    update_customer_reservation_stats,
+    get_customer_info,
+    get_loyalty_settings,
+    calculate_points_for_purchase,
+    add_points_to_customer,
+    redeem_points,
+    generate_customer_qr_data,
+    verify_customer_qr_data
+)
+
 # GlobalFood API Configuration
 GLOBALFOOD_API_URL = "https://pos.globalfoodsoft.com/pos/menu"
 GLOBALFOOD_API_KEY = os.environ.get('GLOBALFOOD_API_KEY', 'pQ5d8UmzbClR90Y1DR')
