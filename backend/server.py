@@ -470,6 +470,147 @@ class CustomerInfo(BaseModel):
     last_reservation_date: Optional[str] = None
     has_account: bool = False  # True if registered customer
 
+# ============ CUSTOMER FUNCTIONS ============
+
+async def find_or_create_customer_record(email: str, phone: str, name: str) -> dict:
+    """
+    Find existing customer by email or phone, or create a new guest record.
+    Returns customer info for display in admin/staff views.
+    """
+    # Normalize phone number (remove spaces, dashes)
+    normalized_phone = phone.replace(" ", "").replace("-", "").replace("/", "")
+    
+    # Try to find by email first
+    customer = await db.customers.find_one({"email": email.lower()}, {"_id": 0, "password_hash": 0})
+    
+    # If not found by email, try by phone
+    if not customer:
+        customer = await db.customers.find_one({
+            "$or": [
+                {"phone": phone},
+                {"phone": normalized_phone}
+            ]
+        }, {"_id": 0, "password_hash": 0})
+    
+    if customer:
+        # Existing customer found
+        return {
+            "id": customer.get("id"),
+            "name": customer.get("name", name),
+            "email": customer.get("email", email),
+            "phone": customer.get("phone", phone),
+            "is_new": False,
+            "total_orders": customer.get("total_orders", 0),
+            "total_reservations": customer.get("total_reservations", 0),
+            "total_spent": customer.get("total_spent", 0.0),
+            "last_order_date": customer.get("last_order_date").isoformat() if customer.get("last_order_date") else None,
+            "last_reservation_date": customer.get("last_reservation_date").isoformat() if customer.get("last_reservation_date") else None,
+            "has_account": customer.get("password_hash") is not None if "password_hash" in customer else customer.get("has_account", False)
+        }
+    
+    # Create guest record (no password)
+    guest_id = str(uuid.uuid4())
+    guest_record = {
+        "id": guest_id,
+        "email": email.lower(),
+        "name": name,
+        "phone": phone,
+        "total_orders": 0,
+        "total_reservations": 0,
+        "total_spent": 0.0,
+        "last_order_date": None,
+        "last_reservation_date": None,
+        "has_account": False,
+        "is_guest": True,
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc)
+    }
+    await db.customers.insert_one(guest_record)
+    
+    return {
+        "id": guest_id,
+        "name": name,
+        "email": email.lower(),
+        "phone": phone,
+        "is_new": True,
+        "total_orders": 0,
+        "total_reservations": 0,
+        "total_spent": 0.0,
+        "last_order_date": None,
+        "last_reservation_date": None,
+        "has_account": False
+    }
+
+async def update_customer_order_stats(customer_id: str, order_total: float):
+    """Update customer statistics after an order"""
+    await db.customers.update_one(
+        {"id": customer_id},
+        {
+            "$inc": {"total_orders": 1, "total_spent": order_total},
+            "$set": {
+                "last_order_date": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+
+async def update_customer_reservation_stats(customer_id: str):
+    """Update customer statistics after a reservation"""
+    await db.customers.update_one(
+        {"id": customer_id},
+        {
+            "$inc": {"total_reservations": 1},
+            "$set": {
+                "last_reservation_date": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+
+async def get_customer_info(customer_id: str) -> Optional[dict]:
+    """Get customer info by ID"""
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0, "password_hash": 0})
+    if not customer:
+        return None
+    return {
+        "id": customer.get("id"),
+        "name": customer.get("name"),
+        "email": customer.get("email"),
+        "phone": customer.get("phone"),
+        "is_new": customer.get("total_orders", 0) == 0 and customer.get("total_reservations", 0) == 0,
+        "total_orders": customer.get("total_orders", 0),
+        "total_reservations": customer.get("total_reservations", 0),
+        "total_spent": customer.get("total_spent", 0.0),
+        "last_order_date": customer.get("last_order_date").isoformat() if customer.get("last_order_date") else None,
+        "last_reservation_date": customer.get("last_reservation_date").isoformat() if customer.get("last_reservation_date") else None,
+        "has_account": not customer.get("is_guest", True)
+    }
+
+def create_customer_token(customer_id: str, email: str) -> str:
+    """Create JWT token for customer"""
+    expiration = datetime.now(timezone.utc) + timedelta(hours=72)  # 3 days
+    payload = {
+        "sub": customer_id,
+        "email": email,
+        "type": "customer",
+        "exp": expiration,
+        "iat": datetime.now(timezone.utc)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+async def verify_customer_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """Verify customer JWT token"""
+    try:
+        token = credentials.credentials
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "customer":
+            raise HTTPException(status_code=401, detail="Invalid token type")
+        return {"id": payload.get("sub"), "email": payload.get("email")}
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 # ============ CMS CONTENT MODELS ============
 
 class ActionButton(BaseModel):
