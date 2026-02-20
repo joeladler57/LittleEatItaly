@@ -355,10 +355,42 @@ GET  /api/customers               # Alle Kunden (Admin)
 GET  /api/customers/{id}          # Kundendetails (Admin)
 ```
 
+### Februar 2026 - Treuepunkte-System (Implementiert ✅)
+- ✅ **Bonuskarte mit QR-Code** (`/konto` > Bonuskarte):
+  - Digitale Kundenkarte mit QR-Code für Vor-Ort-Nutzung
+  - Punktestand und Historie angezeigt
+  - Prämien einlösbar (Gratis-Artikel)
+- ✅ **Automatische Punktevergabe** bei Online-Bestellungen:
+  - 1 Punkt pro Euro (einstellbar im Admin)
+  - Punkte werden bei Bestellung automatisch gutgeschrieben
+- ✅ **Admin-Einstellungen** (`/admin/shop` > BONUSPUNKTE):
+  - Punkte pro Euro konfigurierbar
+  - Mindestumsatz für Punkte
+  - Verfallsdatum (12 Monate default)
+  - Willkommensbonus bei Registrierung
+  - Prämien hinzufügen/bearbeiten/löschen
+- ✅ **Personal-Bereich** (`/personal` > BONUSPUNKTE):
+  - QR-Code scannen oder Kunde suchen
+  - Punkte für Vor-Ort-Verzehr gutschreiben
+  - Umsatz eingeben → System berechnet Punkte
+
+**Loyalty API Endpoints:**
+```bash
+GET  /api/loyalty/settings         # Öffentliche Einstellungen
+GET  /api/loyalty/settings/admin   # Admin-Einstellungen
+PUT  /api/loyalty/settings         # Einstellungen speichern
+GET  /api/customers/me/loyalty     # Kundenpunkte + QR-Code
+POST /api/customers/me/redeem      # Prämie einlösen
+POST /api/staff/loyalty/scan       # QR-Code scannen
+POST /api/staff/loyalty/add-points # Punkte gutschreiben
+GET  /api/staff/loyalty/search     # Kunde suchen
+```
+
 ## Backlog / Zukünftige Features
 - E-Mail-Benachrichtigungen aktivieren (Resend API-Key benötigt)
 - Statistiken-Dashboard für Bestellungen/Reservierungen
-- Code-Refactoring: `server.py` in separate Router aufteilen (über 1500 Zeilen, sollte in `/backend/routers/` aufgeteilt werden)
+- Code-Refactoring: `server.py` in separate Router aufteilen (über 3000 Zeilen!)
 - Mehrsprachigkeit (DE/EN)
 - Terminal: Extras/Addons pro Artikel konfigurieren
+
 
