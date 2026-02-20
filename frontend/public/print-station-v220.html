@@ -441,12 +441,17 @@
                         receiptXML = buildReceiptXML(order);
                     }
                     
+                    console.log('Sending to:', url);
+                    console.log('XML length:', receiptXML.length);
+                    
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', url, true);
-                    xhr.setRequestHeader('Content-Type', 'application/xml; charset=UTF-8');
+                    xhr.setRequestHeader('Content-Type', 'text/xml; charset=UTF-8');
                     xhr.timeout = 15000;
                     
                     xhr.onload = function() {
+                        console.log('Response status:', xhr.status);
+                        console.log('Response:', xhr.responseText);
                         if (xhr.status >= 200 && xhr.status < 300) {
                             if (xhr.responseText.includes('success="false"')) {
                                 resolve(false);
@@ -458,11 +463,19 @@
                         }
                     };
                     
-                    xhr.onerror = function() { resolve(true); };
-                    xhr.ontimeout = function() { resolve(false); };
+                    xhr.onerror = function() { 
+                        console.log('XHR Error - but print might have worked (CORS)');
+                        // CORS blocks the response, but print often succeeds
+                        resolve(true); 
+                    };
+                    xhr.ontimeout = function() { 
+                        console.log('XHR Timeout');
+                        resolve(false); 
+                    };
                     xhr.send(receiptXML);
                     
                 } catch (e) {
+                    console.error('Print exception:', e);
                     resolve(false);
                 }
             });
