@@ -332,6 +332,12 @@ const DisplayPage = () => {
                     key={reservation.id} 
                     reservation={reservation}
                     onStatusChange={updateReservationStatus}
+                    onNoteEdit={startEditingNote}
+                    onNoteSave={updateStaffNote}
+                    onNoteCancel={cancelEditingNote}
+                    isEditing={editingNoteId === reservation.id}
+                    editValue={editingNoteId === reservation.id ? editingNoteValue : ""}
+                    setEditValue={setEditingNoteValue}
                   />
                 ))}
                 
@@ -348,6 +354,12 @@ const DisplayPage = () => {
                     key={reservation.id} 
                     reservation={reservation}
                     onStatusChange={updateReservationStatus}
+                    onNoteEdit={startEditingNote}
+                    onNoteSave={updateStaffNote}
+                    onNoteCancel={cancelEditingNote}
+                    isEditing={editingNoteId === reservation.id}
+                    editValue={editingNoteId === reservation.id ? editingNoteValue : ""}
+                    setEditValue={setEditingNoteValue}
                     dimmed
                   />
                 ))}
