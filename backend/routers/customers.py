@@ -277,3 +277,63 @@ async def get_customer_by_id(customer_id: str, username: str = Depends(verify_ad
     customer["recent_reservations"] = recent_reservations
     
     return customer
+
+
+# ============ WALLET PASS ENDPOINTS ============
+
+@router.get("/customers/me/wallet-pass")
+async def get_wallet_pass(type: str, customer: dict = Depends(verify_customer_token)):
+    """
+    Generate or retrieve wallet pass for customer.
+    Type can be 'apple' or 'google'.
+    
+    Note: Full Apple/Google Wallet integration requires:
+    - Apple: Developer account with Pass Type ID and certificates
+    - Google: Cloud project with Wallet API enabled and service account
+    
+    This endpoint returns instructions or pass URL when configured.
+    """
+    customer_data = await db.customers.find_one(
+        {"id": customer["id"]}, 
+        {"_id": 0, "password_hash": 0}
+    )
+    
+    if not customer_data:
+        raise HTTPException(status_code=404, detail="Kunde nicht gefunden")
+    
+    # Check if wallet integration is configured
+    settings = await db.settings.find_one({"id": "wallet_settings"}, {"_id": 0})
+    
+    if type == "apple":
+        if settings and settings.get("apple_wallet_enabled"):
+            # Apple Wallet is configured - generate .pkpass
+            # This would require certificates to be set up
+            pass_url = settings.get("apple_pass_url_template", "").format(
+                customer_id=customer["id"]
+            )
+            if pass_url:
+                return {"pass_url": pass_url, "type": "apple"}
+        
+        # Not configured - return 501
+        raise HTTPException(
+            status_code=501, 
+            detail="Apple Wallet Integration ist noch nicht konfiguriert. Bitte nutze die QR-Code Speicher-Funktion."
+        )
+    
+    elif type == "google":
+        if settings and settings.get("google_wallet_enabled"):
+            # Google Wallet is configured - generate JWT pass link
+            pass_url = settings.get("google_pass_url_template", "").format(
+                customer_id=customer["id"]
+            )
+            if pass_url:
+                return {"pass_url": pass_url, "type": "google"}
+        
+        # Not configured - return 501
+        raise HTTPException(
+            status_code=501, 
+            detail="Google Wallet Integration ist noch nicht konfiguriert. Bitte nutze 'Zur Startseite hinzufügen'."
+        )
+    
+    else:
+        raise HTTPException(status_code=400, detail="Ungültiger Wallet-Typ. Erlaubt: apple, google")
