@@ -12,7 +12,7 @@ const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza
 
 // Default printer settings
 const DEFAULT_PRINTER_IP = "192.168.2.129";
-const DEFAULT_PRINTER_PORT = 8008;
+const DEFAULT_PRINTER_PORT = 80;
 
 // Build ePOS-Print XML from order data
 const buildReceiptXML = (order, settings) => {
