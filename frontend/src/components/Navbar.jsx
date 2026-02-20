@@ -86,6 +86,23 @@ const Navbar = () => {
                 />
               </Link>
             ))}
+            {/* Account Link */}
+            <Link
+              to="/konto"
+              data-testid="nav-link-account"
+              className="relative group flex items-center gap-1"
+            >
+              <User className={`w-4 h-4 ${location.pathname === "/konto" ? "text-pizza-red" : "text-pizza-white group-hover:text-pizza-red"}`} />
+              <span
+                className={`font-mono text-sm tracking-widest transition-colors duration-200 ${
+                  location.pathname === "/konto"
+                    ? "text-pizza-red"
+                    : "text-pizza-white hover:text-pizza-red"
+                }`}
+              >
+                KONTO
+              </span>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
