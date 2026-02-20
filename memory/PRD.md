@@ -400,6 +400,24 @@ GET  /api/staff/loyalty/search     # Kunde suchen
   - 10/10 Integration-Tests bestanden (100%)
   - Alle API-Endpoints funktionieren korrekt
 
+### Februar 2026 - Staff QR-Scanner (Implementiert ✅)
+- ✅ **Kamera-basierter QR-Scanner** (`/personal` > BONUSPUNKTE > QR-CODE):
+  - "KAMERA STARTEN" Button aktiviert die Smartphone-Kamera
+  - Automatische Erkennung von LEI-LOYALTY QR-Codes
+  - Scanner-Overlay mit visueller Führung
+  - "KAMERA STOPPEN" Button zum Beenden
+- ✅ **Manuelle QR-Eingabe** als Fallback:
+  - Textfeld für LEI-LOYALTY:... Codes
+  - Nützlich bei defekten QR-Codes oder Problemen
+- ✅ **Kundensuche** alternativ:
+  - Suche nach Name, E-Mail oder Telefon
+  - Liste mit Punktestand-Anzeige
+- ✅ **Punkte-Gutschrift**:
+  - Umsatz in € eingeben
+  - Automatische Punkte-Berechnung (1P pro €)
+  - "PUNKTE GUTSCHREIBEN" Button
+  - Toast-Bestätigung bei Erfolg
+
 ## Backlog / Zukünftige Features
 - E-Mail-Benachrichtigungen aktivieren (Resend API-Key benötigt)
 - Statistiken-Dashboard für Bestellungen/Reservierungen
