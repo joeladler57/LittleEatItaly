@@ -119,6 +119,14 @@ const ReservationPage = () => {
     }
   }, [formData.date, settings]);
 
+  // Show push opt-in after successful reservation
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setShowPushOptIn(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   const fetchSettings = async () => {
     try {
       const response = await axios.get(`${API}/shop/settings`);
