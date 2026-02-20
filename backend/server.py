@@ -2092,6 +2092,13 @@ async def create_order(order_data: OrderCreate):
     # Get next order number
     order_number = await get_next_order_number()
     
+    # Find or create customer record
+    customer_info = await find_or_create_customer_record(
+        email=order_data.customer_email,
+        phone=order_data.customer_phone,
+        name=order_data.customer_name
+    )
+    
     # Create order
     order = Order(
         order_number=order_number,
@@ -2110,8 +2117,14 @@ async def create_order(order_data: OrderCreate):
     order_dict = order.model_dump()
     order_dict["created_at"] = order_dict["created_at"].isoformat()
     order_dict["updated_at"] = order_dict["updated_at"].isoformat()
+    # Add customer reference
+    order_dict["customer_id"] = customer_info["id"]
+    order_dict["customer_info"] = customer_info
     
     await db.orders.insert_one(order_dict)
+    
+    # Update customer statistics
+    await update_customer_order_stats(customer_info["id"], total)
     
     # Send confirmation email (non-blocking)
     asyncio.create_task(send_order_confirmation_email(order_dict, settings))
