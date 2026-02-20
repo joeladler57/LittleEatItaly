@@ -167,24 +167,12 @@ const DisplayPage = () => {
   };
 
   const printReservationList = async () => {
-    const token = localStorage.getItem("staff_token");
-    if (!token) return;
-
     setIsPrinting(true);
     
     try {
-      // Get printer settings
-      const settingsRes = await axios.get(`${API}/shop/settings`);
-      const settings = settingsRes.data;
-      
-      const printerIP = settings.printer_ip || localStorage.getItem("printer_ip") || "192.168.2.129";
-      const printerPort = settings.printer_port || localStorage.getItem("printer_port") || "8008";
-      
-      if (!settings.printer_enabled) {
-        toast.error("Drucker ist deaktiviert");
-        setIsPrinting(false);
-        return;
-      }
+      // Get printer settings from localStorage first (like Print Station does)
+      const printerIP = localStorage.getItem("printer_ip") || "192.168.2.129";
+      const printerPort = localStorage.getItem("printer_port") || "8008";
       
       // Filter active reservations
       const activeReservations = reservations.filter(r => 
@@ -248,8 +236,11 @@ const DisplayPage = () => {
       xml += `<cut/>`;
       xml += `</epos-print>`;
       
-      // Send to printer via ePOS-Print
+      // Send to printer via ePOS-Print (same method as Print Station)
       const url = `http://${printerIP}:${printerPort}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000`;
+      
+      console.log('Printing to:', url);
+      console.log('XML:', xml);
       
       const xhr = new XMLHttpRequest();
       xhr.open('POST', url, true);
@@ -257,17 +248,24 @@ const DisplayPage = () => {
       xhr.timeout = 15000;
       
       xhr.onload = function() {
+        console.log('Print response:', xhr.status, xhr.responseText);
         if (xhr.status >= 200 && xhr.status < 300) {
-          toast.success(`Liste gedruckt (${activeReservations.length} Reservierungen)`);
+          const text = xhr.responseText;
+          if (text.includes('success="false"')) {
+            toast.error("Drucker meldet Fehler");
+          } else {
+            toast.success(`${activeReservations.length} Reservierungen gedruckt!`);
+          }
         } else {
-          toast.error("Druckfehler - Drucker antwortet nicht");
+          toast.error("Drucker antwortet nicht");
         }
         setIsPrinting(false);
       };
       
       xhr.onerror = function() {
-        // Network error might still mean print succeeded (CORS)
-        toast.success(`Liste wird gedruckt...`);
+        console.error('XHR error - but print might have succeeded');
+        // CORS might block response, but request may have gone through
+        toast.info("Druckauftrag gesendet...");
         setIsPrinting(false);
       };
       
@@ -279,8 +277,8 @@ const DisplayPage = () => {
       xhr.send(xml);
       
     } catch (error) {
-      const message = error.response?.data?.detail || "Druckfehler";
-      toast.error(message);
+      console.error('Print error:', error);
+      toast.error("Druckfehler: " + error.message);
       setIsPrinting(false);
     }
   };
