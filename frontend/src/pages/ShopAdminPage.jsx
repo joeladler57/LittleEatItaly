@@ -561,6 +561,11 @@ const ShopAdminPage = () => {
             <LoyaltySection />
           </TabsContent>
 
+          {/* Push Notifications Tab */}
+          <TabsContent value="push">
+            <PushNotificationsSection />
+          </TabsContent>
+
           {/* Settings Tab */}
           <TabsContent value="settings">
             <SettingsSection settings={settings} onUpdate={fetchAllData} />
