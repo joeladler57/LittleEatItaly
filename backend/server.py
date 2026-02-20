@@ -1325,6 +1325,52 @@ async def get_printer_status(role: str = Depends(verify_staff_token)):
     except Exception as e:
         return {"enabled": True, "connected": False, "message": str(e)}
 
+@api_router.post("/printer/reservations")
+async def print_reservation_list(date: Optional[str] = None, role: str = Depends(verify_staff_token)):
+    """Print today's reservation list to the network printer"""
+    settings = await db.shop_settings.find_one({"id": "shop_settings"}, {"_id": 0})
+    if not settings:
+        settings = ShopSettings().model_dump()
+    
+    if not settings.get("printer_enabled"):
+        raise HTTPException(status_code=400, detail="Drucker ist deaktiviert")
+    
+    printer_ip = settings.get("printer_ip", "")
+    printer_port = settings.get("printer_port", 9100)
+    
+    if not printer_ip:
+        raise HTTPException(status_code=400, detail="Keine Drucker-IP konfiguriert")
+    
+    # Get today's date if not specified
+    if not date:
+        date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # Get reservations for the date (excluding cancelled and no_show)
+    reservations = await db.reservations.find({
+        "date": date,
+        "status": {"$nin": ["cancelled", "no_show"]}
+    }, {"_id": 0}).sort("time", 1).to_list(100)
+    
+    if not reservations:
+        raise HTTPException(status_code=404, detail="Keine Reservierungen für dieses Datum")
+    
+    # Build and send receipt
+    try:
+        receipt_data = build_reservation_list_receipt(reservations, settings)
+        result = await send_to_network_printer(printer_ip, printer_port, receipt_data)
+        
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": f"Reservierungsliste gedruckt ({len(reservations)} Reservierungen)",
+                "count": len(reservations)
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get("error", "Druckfehler"))
+    except Exception as e:
+        logging.error(f"Print reservation list error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 class StaffReservationCreate(BaseModel):
     """Model for staff-created phone reservations"""
     customer_name: str
