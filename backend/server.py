@@ -283,7 +283,8 @@ class Reservation(BaseModel):
     time: str
     guests: int
     notes: str = ""
-    status: str = "pending"  # pending, confirmed, cancelled, completed
+    staff_note: str = ""  # Internal note for staff (e.g., table number)
+    status: str = "pending"  # pending, confirmed, cancelled, completed, no_show
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
