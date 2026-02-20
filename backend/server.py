@@ -423,6 +423,53 @@ class StaffTokenResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int = 43200  # 12 hours
 
+# ============ CUSTOMER MODELS ============
+
+class CustomerRegister(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    phone: str
+
+class CustomerLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class CustomerUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+
+class Customer(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    email: str
+    password_hash: str
+    name: str
+    phone: str
+    # Statistics
+    total_orders: int = 0
+    total_reservations: int = 0
+    total_spent: float = 0.0
+    last_order_date: Optional[datetime] = None
+    last_reservation_date: Optional[datetime] = None
+    # Metadata
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    is_active: bool = True
+
+class CustomerInfo(BaseModel):
+    """Customer info shown in admin/staff views"""
+    id: Optional[str] = None
+    name: str
+    email: str
+    phone: str
+    is_new: bool = True  # True if first order/reservation
+    total_orders: int = 0
+    total_reservations: int = 0
+    total_spent: float = 0.0
+    last_order_date: Optional[str] = None
+    last_reservation_date: Optional[str] = None
+    has_account: bool = False  # True if registered customer
+
 # ============ CMS CONTENT MODELS ============
 
 class ActionButton(BaseModel):
