@@ -2275,6 +2275,19 @@ async def create_order(order_data: OrderCreate):
     # Update customer statistics
     await update_customer_order_stats(customer_info["id"], total)
     
+    # Award loyalty points for online order
+    points_earned = await calculate_points_for_purchase(total)
+    if points_earned > 0:
+        await add_points_to_customer(
+            customer_id=customer_info["id"],
+            points=points_earned,
+            point_type="earned_online",
+            description=f"Online-Bestellung #{order_number}",
+            order_id=order.id
+        )
+        order_dict["points_earned"] = points_earned
+        await db.orders.update_one({"id": order.id}, {"$set": {"points_earned": points_earned}})
+    
     # Send confirmation email (non-blocking)
     asyncio.create_task(send_order_confirmation_email(order_dict, settings))
     
@@ -2289,7 +2302,8 @@ async def create_order(order_data: OrderCreate):
     return {
         "message": "Bestellung erfolgreich aufgegeben!",
         "order_number": order_number,
-        "order_id": order.id
+        "order_id": order.id,
+        "points_earned": points_earned
     }
 
 @api_router.get("/shop/orders")
