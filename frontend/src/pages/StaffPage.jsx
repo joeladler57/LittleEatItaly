@@ -1324,7 +1324,7 @@ const PhoneReservationModal = ({ onClose, onSuccess }) => {
   );
 };
 
-// Loyalty Tab Component
+// Loyalty Tab Component with Camera QR Scanner
 const LoyaltyTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [customers, setCustomers] = useState([]);
@@ -1335,9 +1335,18 @@ const LoyaltyTab = () => {
   const [loyaltySettings, setLoyaltySettings] = useState(null);
   const [qrMode, setQrMode] = useState(false);
   const [qrInput, setQrInput] = useState("");
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState(null);
 
   useEffect(() => {
     fetchLoyaltySettings();
+  }, []);
+
+  // Cleanup camera when switching modes or unmounting
+  useEffect(() => {
+    return () => {
+      setCameraActive(false);
+    };
   }, []);
 
   const fetchLoyaltySettings = async () => {
@@ -1365,24 +1374,45 @@ const LoyaltyTab = () => {
     }
   };
 
-  const handleQrScan = async () => {
-    if (!qrInput.trim()) return;
+  const handleQrScan = async (qrData) => {
+    if (!qrData || !qrData.trim()) return;
     setIsSearching(true);
+    setCameraActive(false);
     try {
       const token = localStorage.getItem("staff_token");
-      const res = await axios.post(`${API}/staff/loyalty/scan?qr_data=${encodeURIComponent(qrInput)}`, {}, {
+      const res = await axios.post(`${API}/staff/loyalty/scan?qr_data=${encodeURIComponent(qrData)}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSelectedCustomer(res.data);
       setQrInput("");
-      setQrMode(false);
-      toast.success(`Kunde gefunden: ${res.data.name}`);
+      toast.success(`✅ Kunde gefunden: ${res.data.name}`);
     } catch (e) {
       toast.error(e.response?.data?.detail || "Ungültiger QR-Code");
       setQrInput("");
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const handleCameraScan = (err, result) => {
+    if (result) {
+      const scannedText = result.text;
+      if (scannedText.startsWith("LEI-LOYALTY:")) {
+        handleQrScan(scannedText);
+      }
+    }
+    if (err && err.name !== "NotFoundException") {
+      console.error("Camera error:", err);
+    }
+  };
+
+  const startCamera = () => {
+    setCameraError(null);
+    setCameraActive(true);
+  };
+
+  const stopCamera = () => {
+    setCameraActive(false);
   };
 
   const addPoints = async () => {
@@ -1425,10 +1455,11 @@ const LoyaltyTab = () => {
       {/* Mode Toggle */}
       <div className="flex gap-2">
         <button
-          onClick={() => { setQrMode(false); setSelectedCustomer(null); }}
+          onClick={() => { setQrMode(false); setSelectedCustomer(null); setCameraActive(false); }}
           className={`flex-1 py-3 font-anton text-sm flex items-center justify-center gap-2 ${
             !qrMode ? "bg-yellow-500 text-black" : "bg-neutral-800 text-neutral-400"
           }`}
+          data-testid="loyalty-search-tab"
         >
           <Search className="w-5 h-5" />
           SUCHEN
@@ -1438,6 +1469,7 @@ const LoyaltyTab = () => {
           className={`flex-1 py-3 font-anton text-sm flex items-center justify-center gap-2 ${
             qrMode ? "bg-yellow-500 text-black" : "bg-neutral-800 text-neutral-400"
           }`}
+          data-testid="loyalty-qr-tab"
         >
           <QrCode className="w-5 h-5" />
           QR-CODE
@@ -1455,11 +1487,13 @@ const LoyaltyTab = () => {
               onKeyPress={(e) => e.key === "Enter" && searchCustomers()}
               placeholder="Name, E-Mail oder Telefon..."
               className="flex-1 bg-neutral-800 border border-neutral-700 text-white px-4 py-3 font-mono focus:border-yellow-500 outline-none"
+              data-testid="loyalty-search-input"
             />
             <button
               onClick={searchCustomers}
               disabled={isSearching}
               className="bg-yellow-500 text-black px-6 py-3 font-anton hover:bg-yellow-400"
+              data-testid="loyalty-search-button"
             >
               {isSearching ? "..." : "SUCHEN"}
             </button>
@@ -1467,12 +1501,13 @@ const LoyaltyTab = () => {
 
           {/* Search Results */}
           {customers.length > 0 && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-2" data-testid="loyalty-search-results">
               {customers.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => setSelectedCustomer(c)}
                   className="w-full p-3 bg-neutral-800 hover:bg-neutral-700 text-left flex justify-between items-center"
+                  data-testid={`loyalty-customer-${c.id}`}
                 >
                   <div>
                     <p className="font-mono text-white">{c.name}</p>
@@ -1489,33 +1524,100 @@ const LoyaltyTab = () => {
       {/* QR Mode */}
       {qrMode && !selectedCustomer && (
         <div className="bg-neutral-900 p-4 border border-neutral-800">
-          <p className="font-mono text-sm text-neutral-400 mb-3 text-center">
-            Scanne den QR-Code des Kunden oder gib ihn manuell ein
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={qrInput}
-              onChange={(e) => setQrInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleQrScan()}
-              placeholder="LEI-LOYALTY:..."
-              className="flex-1 bg-neutral-800 border border-neutral-700 text-white px-4 py-3 font-mono focus:border-yellow-500 outline-none"
-              autoFocus
-            />
-            <button
-              onClick={handleQrScan}
-              disabled={isSearching}
-              className="bg-yellow-500 text-black px-6 py-3 font-anton hover:bg-yellow-400"
-            >
-              {isSearching ? "..." : "SCAN"}
-            </button>
-          </div>
+          {/* Camera Scanner */}
+          {cameraActive ? (
+            <div className="space-y-3">
+              <div className="relative bg-black rounded overflow-hidden" style={{ minHeight: "280px" }}>
+                <BarcodeScanner
+                  width="100%"
+                  height={280}
+                  facingMode="environment"
+                  onUpdate={handleCameraScan}
+                  onError={(err) => {
+                    console.error("Camera error:", err);
+                    setCameraError("Kamera konnte nicht gestartet werden");
+                    setCameraActive(false);
+                  }}
+                />
+                {/* Scanner Overlay */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute inset-8 border-2 border-yellow-500/50 rounded-lg"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-yellow-400 rounded-lg">
+                    <div className="absolute -top-1 -left-1 w-4 h-4 border-t-4 border-l-4 border-yellow-400 rounded-tl"></div>
+                    <div className="absolute -top-1 -right-1 w-4 h-4 border-t-4 border-r-4 border-yellow-400 rounded-tr"></div>
+                    <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-4 border-l-4 border-yellow-400 rounded-bl"></div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-4 border-r-4 border-yellow-400 rounded-br"></div>
+                  </div>
+                </div>
+              </div>
+              <p className="font-mono text-xs text-center text-yellow-400 animate-pulse">
+                📸 QR-Code in den Rahmen halten...
+              </p>
+              <button
+                onClick={stopCamera}
+                className="w-full py-3 bg-red-500 hover:bg-red-400 text-white font-anton flex items-center justify-center gap-2"
+                data-testid="stop-camera-button"
+              >
+                <StopCircle className="w-5 h-5" />
+                KAMERA STOPPEN
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Start Camera Button */}
+              <button
+                onClick={startCamera}
+                className="w-full py-6 bg-yellow-500 hover:bg-yellow-400 text-black font-anton text-lg flex items-center justify-center gap-3"
+                data-testid="start-camera-button"
+              >
+                <Camera className="w-7 h-7" />
+                KAMERA STARTEN
+              </button>
+
+              {cameraError && (
+                <div className="bg-red-500/20 border border-red-500/50 p-3 text-center">
+                  <p className="font-mono text-sm text-red-400">{cameraError}</p>
+                </div>
+              )}
+
+              {/* Manual QR Input Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-neutral-700"></div>
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-neutral-900 px-3 text-neutral-500 font-mono">ODER MANUELL EINGEBEN</span>
+                </div>
+              </div>
+
+              {/* Manual QR Input */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={qrInput}
+                  onChange={(e) => setQrInput(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleQrScan(qrInput)}
+                  placeholder="LEI-LOYALTY:..."
+                  className="flex-1 bg-neutral-800 border border-neutral-700 text-white px-4 py-3 font-mono text-sm focus:border-yellow-500 outline-none"
+                  data-testid="qr-manual-input"
+                />
+                <button
+                  onClick={() => handleQrScan(qrInput)}
+                  disabled={isSearching || !qrInput.trim()}
+                  className="bg-neutral-700 hover:bg-neutral-600 text-white px-6 py-3 font-anton"
+                  data-testid="qr-manual-submit"
+                >
+                  {isSearching ? "..." : "OK"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Selected Customer */}
       {selectedCustomer && (
-        <div className="bg-neutral-900 border border-yellow-500/50 p-4">
+        <div className="bg-neutral-900 border border-yellow-500/50 p-4" data-testid="selected-customer-card">
           <div className="flex justify-between items-start mb-4">
             <div>
               <h3 className="font-anton text-xl text-white">{selectedCustomer.name}</h3>
@@ -1523,8 +1625,9 @@ const LoyaltyTab = () => {
               <p className="font-mono text-xs text-neutral-400">{selectedCustomer.phone}</p>
             </div>
             <button
-              onClick={() => setSelectedCustomer(null)}
+              onClick={() => { setSelectedCustomer(null); setCameraActive(false); }}
               className="text-neutral-500 hover:text-white"
+              data-testid="close-customer-card"
             >
               <X className="w-6 h-6" />
             </button>
@@ -1533,7 +1636,7 @@ const LoyaltyTab = () => {
           {/* Current Points */}
           <div className="bg-yellow-500/20 p-4 mb-4 text-center">
             <p className="font-mono text-xs text-yellow-400/70">AKTUELLER PUNKTESTAND</p>
-            <p className="font-anton text-4xl text-yellow-400">{selectedCustomer.loyalty_points}</p>
+            <p className="font-anton text-4xl text-yellow-400" data-testid="customer-points">{selectedCustomer.loyalty_points}</p>
           </div>
 
           {/* Add Points */}
@@ -1547,6 +1650,7 @@ const LoyaltyTab = () => {
                   onChange={(e) => setPurchaseAmount(e.target.value)}
                   placeholder="Umsatz in €"
                   className="w-full bg-neutral-800 border border-neutral-700 text-white px-4 py-3 font-mono focus:border-yellow-500 outline-none text-xl"
+                  data-testid="purchase-amount-input"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500">€</span>
               </div>
@@ -1554,7 +1658,7 @@ const LoyaltyTab = () => {
             
             {purchaseAmount && (
               <div className="bg-green-500/20 p-3 flex justify-between items-center">
-                <span className="font-mono text-sm text-green-400">
+                <span className="font-mono text-sm text-green-400" data-testid="calculated-points">
                   = {calculatePoints(purchaseAmount)} Punkte
                 </span>
                 <span className="font-mono text-xs text-neutral-500">
@@ -1569,6 +1673,7 @@ const LoyaltyTab = () => {
               className={`w-full py-4 font-anton text-lg flex items-center justify-center gap-2 ${
                 purchaseAmount ? "bg-green-500 hover:bg-green-400 text-black" : "bg-neutral-700 text-neutral-500"
               }`}
+              data-testid="add-points-button"
             >
               <Star className="w-5 h-5" />
               {isAdding ? "WIRD HINZUGEFÜGT..." : "PUNKTE GUTSCHREIBEN"}
