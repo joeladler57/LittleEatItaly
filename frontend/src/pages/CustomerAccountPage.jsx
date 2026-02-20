@@ -807,6 +807,13 @@ const CustomerAccountPage = () => {
           )}
         </div>
       </div>
+
+      {/* Push Opt-In Modal */}
+      <PushOptInModal 
+        isOpen={showPushOptIn} 
+        onClose={() => setShowPushOptIn(false)}
+        trigger="registration"
+      />
     </div>
   );
 };
