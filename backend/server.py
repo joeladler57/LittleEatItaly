@@ -3243,6 +3243,163 @@ async def get_customer_by_id(customer_id: str, username: str = Depends(verify_ad
     
     return customer
 
+# ============ LOYALTY ENDPOINTS ============
+
+@api_router.get("/loyalty/settings")
+async def get_loyalty_settings_endpoint():
+    """Get loyalty program settings (public)"""
+    settings = await get_loyalty_settings()
+    # Return only public info
+    return {
+        "enabled": settings.get("enabled", True),
+        "points_per_euro": settings.get("points_per_euro", 1.0),
+        "rewards": [r for r in settings.get("rewards", []) if r.get("is_active", True)]
+    }
+
+@api_router.get("/loyalty/settings/admin")
+async def get_loyalty_settings_admin(username: str = Depends(verify_admin_token)):
+    """Get full loyalty settings (admin only)"""
+    return await get_loyalty_settings()
+
+@api_router.put("/loyalty/settings")
+async def update_loyalty_settings(settings: dict, username: str = Depends(verify_admin_token)):
+    """Update loyalty program settings"""
+    settings["id"] = "loyalty_settings"
+    await db.loyalty_settings.update_one(
+        {"id": "loyalty_settings"},
+        {"$set": settings},
+        upsert=True
+    )
+    return {"message": "Einstellungen gespeichert"}
+
+@api_router.get("/customers/me/loyalty")
+async def get_customer_loyalty(customer: dict = Depends(verify_customer_token)):
+    """Get customer loyalty info including QR code data"""
+    customer_data = await db.customers.find_one({"id": customer["id"]}, {"_id": 0, "password_hash": 0})
+    if not customer_data:
+        raise HTTPException(status_code=404, detail="Kunde nicht gefunden")
+    
+    settings = await get_loyalty_settings()
+    
+    # Get recent point transactions
+    recent_transactions = await db.points_transactions.find(
+        {"customer_id": customer["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    return {
+        "loyalty_points": customer_data.get("loyalty_points", 0),
+        "lifetime_points": customer_data.get("lifetime_points", 0),
+        "qr_code_data": generate_customer_qr_data(customer["id"]),
+        "points_per_euro": settings.get("points_per_euro", 1.0),
+        "rewards": [r for r in settings.get("rewards", []) if r.get("is_active", True)],
+        "recent_transactions": recent_transactions
+    }
+
+@api_router.post("/customers/me/redeem")
+async def redeem_customer_reward(reward_id: str, customer: dict = Depends(verify_customer_token)):
+    """Redeem a reward using points"""
+    settings = await get_loyalty_settings()
+    reward = next((r for r in settings.get("rewards", []) if r.get("id") == reward_id and r.get("is_active")), None)
+    
+    if not reward:
+        raise HTTPException(status_code=404, detail="Prämie nicht gefunden")
+    
+    customer_data = await db.customers.find_one({"id": customer["id"]})
+    if not customer_data:
+        raise HTTPException(status_code=404, detail="Kunde nicht gefunden")
+    
+    if customer_data.get("loyalty_points", 0) < reward["points_required"]:
+        raise HTTPException(status_code=400, detail="Nicht genügend Punkte")
+    
+    success = await redeem_points(customer["id"], reward["points_required"], reward["name"])
+    if not success:
+        raise HTTPException(status_code=400, detail="Einlösung fehlgeschlagen")
+    
+    return {
+        "message": f"Erfolgreich eingelöst: {reward['name']}",
+        "points_used": reward["points_required"],
+        "remaining_points": customer_data.get("loyalty_points", 0) - reward["points_required"]
+    }
+
+@api_router.post("/staff/loyalty/scan")
+async def staff_scan_customer_qr(qr_data: str, staff_pin: str = Depends(verify_staff_pin)):
+    """Staff scans customer QR code to get customer info"""
+    customer_id = verify_customer_qr_data(qr_data)
+    if not customer_id:
+        raise HTTPException(status_code=400, detail="Ungültiger QR-Code")
+    
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0, "password_hash": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Kunde nicht gefunden")
+    
+    return {
+        "id": customer["id"],
+        "name": customer.get("name"),
+        "email": customer.get("email"),
+        "phone": customer.get("phone"),
+        "loyalty_points": customer.get("loyalty_points", 0),
+        "lifetime_points": customer.get("lifetime_points", 0),
+        "total_orders": customer.get("total_orders", 0),
+        "total_spent": customer.get("total_spent", 0.0)
+    }
+
+class AddPointsRequest(BaseModel):
+    customer_id: str
+    purchase_amount: float
+    description: str = "Vor-Ort-Verzehr"
+
+@api_router.post("/staff/loyalty/add-points")
+async def staff_add_points(data: AddPointsRequest, staff_pin: str = Depends(verify_staff_pin)):
+    """Staff adds points for in-store purchase"""
+    customer = await db.customers.find_one({"id": data.customer_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Kunde nicht gefunden")
+    
+    points_earned = await calculate_points_for_purchase(data.purchase_amount)
+    if points_earned <= 0:
+        raise HTTPException(status_code=400, detail="Keine Punkte für diesen Betrag")
+    
+    await add_points_to_customer(
+        customer_id=data.customer_id,
+        points=points_earned,
+        point_type="earned_instore",
+        description=f"{data.description} ({data.purchase_amount:.2f}€)",
+        staff_id=staff_pin
+    )
+    
+    # Get updated customer points
+    updated_customer = await db.customers.find_one({"id": data.customer_id})
+    
+    return {
+        "message": f"{points_earned} Punkte gutgeschrieben",
+        "points_added": points_earned,
+        "new_total": updated_customer.get("loyalty_points", 0),
+        "customer_name": customer.get("name")
+    }
+
+@api_router.get("/staff/loyalty/search")
+async def staff_search_customer(query: str, staff_pin: str = Depends(verify_staff_pin)):
+    """Staff searches for customer by name, email or phone"""
+    customers = await db.customers.find({
+        "$or": [
+            {"name": {"$regex": query, "$options": "i"}},
+            {"email": {"$regex": query, "$options": "i"}},
+            {"phone": {"$regex": query, "$options": "i"}}
+        ]
+    }, {"_id": 0, "password_hash": 0}).limit(10).to_list(10)
+    
+    return [
+        {
+            "id": c["id"],
+            "name": c.get("name"),
+            "email": c.get("email"),
+            "phone": c.get("phone"),
+            "loyalty_points": c.get("loyalty_points", 0)
+        }
+        for c in customers
+    ]
+
 # Include the router in the main app
 app.include_router(api_router)
 
