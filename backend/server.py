@@ -2904,6 +2904,182 @@ async def seed_data():
     
     return {"message": "Data seeded successfully"}
 
+# ============ CUSTOMER ENDPOINTS ============
+
+@api_router.post("/customers/register")
+async def register_customer(data: CustomerRegister):
+    """Register a new customer account"""
+    # Check if email already exists with an account
+    existing = await db.customers.find_one({"email": data.email.lower(), "has_account": True})
+    if existing:
+        raise HTTPException(status_code=400, detail="Ein Konto mit dieser E-Mail existiert bereits")
+    
+    # Check if guest record exists - upgrade it to full account
+    guest = await db.customers.find_one({"email": data.email.lower(), "is_guest": True})
+    
+    if guest:
+        # Upgrade guest to full account
+        await db.customers.update_one(
+            {"id": guest["id"]},
+            {
+                "$set": {
+                    "name": data.name,
+                    "phone": data.phone,
+                    "password_hash": hash_password(data.password),
+                    "has_account": True,
+                    "is_guest": False,
+                    "updated_at": datetime.now(timezone.utc)
+                }
+            }
+        )
+        customer_id = guest["id"]
+    else:
+        # Create new customer
+        customer = Customer(
+            email=data.email.lower(),
+            password_hash=hash_password(data.password),
+            name=data.name,
+            phone=data.phone
+        )
+        customer_dict = customer.model_dump()
+        customer_dict["has_account"] = True
+        customer_dict["is_guest"] = False
+        await db.customers.insert_one(customer_dict)
+        customer_id = customer.id
+    
+    # Create token
+    token = create_customer_token(customer_id, data.email.lower())
+    
+    return {
+        "message": "Konto erfolgreich erstellt!",
+        "access_token": token,
+        "token_type": "bearer"
+    }
+
+@api_router.post("/customers/login")
+async def login_customer(data: CustomerLogin):
+    """Login customer"""
+    customer = await db.customers.find_one({"email": data.email.lower(), "has_account": True})
+    if not customer:
+        raise HTTPException(status_code=401, detail="E-Mail oder Passwort falsch")
+    
+    if not verify_password(data.password, customer.get("password_hash", "")):
+        raise HTTPException(status_code=401, detail="E-Mail oder Passwort falsch")
+    
+    # Create token
+    token = create_customer_token(customer["id"], data.email.lower())
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "customer": {
+            "id": customer["id"],
+            "name": customer["name"],
+            "email": customer["email"],
+            "phone": customer["phone"]
+        }
+    }
+
+@api_router.get("/customers/me")
+async def get_customer_profile(customer: dict = Depends(verify_customer_token)):
+    """Get current customer profile"""
+    customer_data = await db.customers.find_one({"id": customer["id"]}, {"_id": 0, "password_hash": 0})
+    if not customer_data:
+        raise HTTPException(status_code=404, detail="Kunde nicht gefunden")
+    
+    # Convert datetime objects to ISO strings
+    if customer_data.get("created_at") and hasattr(customer_data["created_at"], "isoformat"):
+        customer_data["created_at"] = customer_data["created_at"].isoformat()
+    if customer_data.get("updated_at") and hasattr(customer_data["updated_at"], "isoformat"):
+        customer_data["updated_at"] = customer_data["updated_at"].isoformat()
+    if customer_data.get("last_order_date") and hasattr(customer_data["last_order_date"], "isoformat"):
+        customer_data["last_order_date"] = customer_data["last_order_date"].isoformat()
+    if customer_data.get("last_reservation_date") and hasattr(customer_data["last_reservation_date"], "isoformat"):
+        customer_data["last_reservation_date"] = customer_data["last_reservation_date"].isoformat()
+    
+    return customer_data
+
+@api_router.put("/customers/me")
+async def update_customer_profile(data: CustomerUpdate, customer: dict = Depends(verify_customer_token)):
+    """Update customer profile"""
+    update_data = {"updated_at": datetime.now(timezone.utc)}
+    if data.name:
+        update_data["name"] = data.name
+    if data.phone:
+        update_data["phone"] = data.phone
+    
+    await db.customers.update_one({"id": customer["id"]}, {"$set": update_data})
+    return {"message": "Profil aktualisiert"}
+
+@api_router.get("/customers/me/orders")
+async def get_customer_orders(customer: dict = Depends(verify_customer_token)):
+    """Get customer's order history"""
+    orders = await db.orders.find(
+        {"customer_id": customer["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return orders
+
+@api_router.get("/customers/me/reservations")
+async def get_customer_reservations(customer: dict = Depends(verify_customer_token)):
+    """Get customer's reservation history"""
+    reservations = await db.reservations.find(
+        {"customer_id": customer["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return reservations
+
+@api_router.get("/customers")
+async def get_all_customers(username: str = Depends(verify_admin_token)):
+    """Get all customers (admin only)"""
+    customers = await db.customers.find({}, {"_id": 0, "password_hash": 0}).sort("created_at", -1).to_list(1000)
+    
+    # Convert datetime objects
+    for c in customers:
+        if c.get("created_at") and hasattr(c["created_at"], "isoformat"):
+            c["created_at"] = c["created_at"].isoformat()
+        if c.get("updated_at") and hasattr(c["updated_at"], "isoformat"):
+            c["updated_at"] = c["updated_at"].isoformat()
+        if c.get("last_order_date") and hasattr(c["last_order_date"], "isoformat"):
+            c["last_order_date"] = c["last_order_date"].isoformat()
+        if c.get("last_reservation_date") and hasattr(c["last_reservation_date"], "isoformat"):
+            c["last_reservation_date"] = c["last_reservation_date"].isoformat()
+    
+    return customers
+
+@api_router.get("/customers/{customer_id}")
+async def get_customer_by_id(customer_id: str, username: str = Depends(verify_admin_token)):
+    """Get customer details by ID (admin only)"""
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0, "password_hash": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Kunde nicht gefunden")
+    
+    # Convert datetime objects
+    if customer.get("created_at") and hasattr(customer["created_at"], "isoformat"):
+        customer["created_at"] = customer["created_at"].isoformat()
+    if customer.get("updated_at") and hasattr(customer["updated_at"], "isoformat"):
+        customer["updated_at"] = customer["updated_at"].isoformat()
+    if customer.get("last_order_date") and hasattr(customer["last_order_date"], "isoformat"):
+        customer["last_order_date"] = customer["last_order_date"].isoformat()
+    if customer.get("last_reservation_date") and hasattr(customer["last_reservation_date"], "isoformat"):
+        customer["last_reservation_date"] = customer["last_reservation_date"].isoformat()
+    
+    # Get recent orders and reservations
+    recent_orders = await db.orders.find(
+        {"customer_id": customer_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(10).to_list(10)
+    
+    recent_reservations = await db.reservations.find(
+        {"customer_id": customer_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(10).to_list(10)
+    
+    customer["recent_orders"] = recent_orders
+    customer["recent_reservations"] = recent_reservations
+    
+    return customer
+
 # Include the router in the main app
 app.include_router(api_router)
 
