@@ -326,9 +326,39 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
   - "ZUR KASSE" Button ist jetzt auf allen Desktop-Bildschirmen (1920px, 1440px) vollständig sichtbar
   - Getestet auf 1920x1080 und 1440x900 Viewports
 
+### Februar 2026 - Kundenverwaltungssystem (Implementiert ✅)
+- ✅ **Kundenkonto-System** (`/konto`):
+  - Kundenregistrierung mit Name, E-Mail, Telefon, Passwort
+  - Kunden-Login mit JWT-Token (72 Stunden gültig)
+  - Kundenprofilseite mit Statistiken (Bestellungen, Reservierungen, Umsatz)
+  - Bestellverlauf und Reservierungshistorie für eingeloggte Kunden
+- ✅ **Automatische Kundenerkennung**:
+  - Bei jeder Bestellung/Reservierung wird Kunde über E-Mail ODER Telefon erkannt
+  - "Neuer Kunde" Badge für Erstkunden
+  - Wiederkehrende Kunden: Anzahl Bestellungen + Gesamtumsatz wird angezeigt
+  - Gast-Bestellungen werden auch gespeichert (ohne Passwort)
+- ✅ **Admin-Ansicht erweitert**:
+  - Kundeninfo-Badge bei jeder Bestellung im Shop-Dashboard
+  - "✨ NEUER KUNDE" für Erstkunden
+  - "1 Bestellungen • 12,90 € Umsatz" für wiederkehrende Kunden
+  - "👤 REGISTRIERT" Badge für Kunden mit Konto
+
+**Customer API Endpoints:**
+```bash
+POST /api/customers/register      # Konto erstellen
+POST /api/customers/login         # Kunden-Login
+GET  /api/customers/me            # Kundenprofil abrufen
+PUT  /api/customers/me            # Profil bearbeiten
+GET  /api/customers/me/orders     # Bestellverlauf
+GET  /api/customers/me/reservations # Reservierungshistorie
+GET  /api/customers               # Alle Kunden (Admin)
+GET  /api/customers/{id}          # Kundendetails (Admin)
+```
+
 ## Backlog / Zukünftige Features
 - E-Mail-Benachrichtigungen aktivieren (Resend API-Key benötigt)
 - Statistiken-Dashboard für Bestellungen/Reservierungen
 - Code-Refactoring: `server.py` in separate Router aufteilen (über 1500 Zeilen, sollte in `/backend/routers/` aufgeteilt werden)
 - Mehrsprachigkeit (DE/EN)
 - Terminal: Extras/Addons pro Artikel konfigurieren
+
