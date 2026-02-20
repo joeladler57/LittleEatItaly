@@ -3997,4 +3997,264 @@ const TerminalSection = ({ onUpdate }) => {
   );
 };
 
+// Loyalty Section Component
+const LoyaltySection = () => {
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editingReward, setEditingReward] = useState(null);
+  const [newReward, setNewReward] = useState({
+    name: "",
+    description: "",
+    points_required: 50,
+    category: "food",
+    is_active: true
+  });
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const token = localStorage.getItem("admin_token");
+      const res = await axios.get(`${API}/loyalty/settings/admin`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSettings(res.data);
+    } catch (e) {
+      console.error("Error:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveSettings = async () => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      await axios.put(`${API}/loyalty/settings`, settings, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Einstellungen gespeichert!");
+    } catch (e) {
+      toast.error("Fehler beim Speichern");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addReward = () => {
+    if (!newReward.name || newReward.points_required <= 0) {
+      toast.error("Name und Punkte erforderlich");
+      return;
+    }
+    const reward = {
+      ...newReward,
+      id: `reward_${Date.now()}`,
+      sort_order: (settings.rewards?.length || 0) + 1
+    };
+    setSettings({
+      ...settings,
+      rewards: [...(settings.rewards || []), reward]
+    });
+    setNewReward({
+      name: "",
+      description: "",
+      points_required: 50,
+      category: "food",
+      is_active: true
+    });
+  };
+
+  const deleteReward = (rewardId) => {
+    setSettings({
+      ...settings,
+      rewards: settings.rewards.filter(r => r.id !== rewardId)
+    });
+  };
+
+  const toggleReward = (rewardId) => {
+    setSettings({
+      ...settings,
+      rewards: settings.rewards.map(r => 
+        r.id === rewardId ? { ...r, is_active: !r.is_active } : r
+      )
+    });
+  };
+
+  if (loading) {
+    return <div className="text-center py-8 text-neutral-400">Lade...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <h2 className="font-anton text-xl text-pizza-white mb-6">BONUSPUNKTE EINSTELLUNGEN</h2>
+
+      {/* General Settings */}
+      <div className="bg-pizza-dark border border-pizza-dark p-6">
+        <h3 className="font-anton text-lg text-pizza-red mb-4 flex items-center gap-2">
+          <Star className="w-5 h-5" />
+          ALLGEMEINE EINSTELLUNGEN
+        </h3>
+
+        <div className="space-y-4">
+          {/* Enable/Disable */}
+          <div className="flex items-center justify-between p-4 bg-pizza-black/50">
+            <div>
+              <Label className="text-pizza-white font-mono text-sm">Bonusprogramm aktiv</Label>
+              <p className="text-xs text-neutral-500 font-mono">Kunden können Punkte sammeln und einlösen</p>
+            </div>
+            <Switch
+              checked={settings?.enabled}
+              onCheckedChange={(checked) => setSettings({ ...settings, enabled: checked })}
+            />
+          </div>
+
+          {/* Points per Euro */}
+          <div className="p-4 bg-pizza-black/50">
+            <Label className="text-pizza-white font-mono text-sm block mb-2">Punkte pro Euro</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                type="number"
+                min="0.1"
+                step="0.1"
+                value={settings?.points_per_euro || 1}
+                onChange={(e) => setSettings({ ...settings, points_per_euro: parseFloat(e.target.value) || 1 })}
+                className="w-24 bg-pizza-black border-pizza-dark text-pizza-white text-center"
+              />
+              <span className="font-mono text-sm text-neutral-400">
+                z.B. bei 1: 10€ Umsatz = 10 Punkte
+              </span>
+            </div>
+          </div>
+
+          {/* Minimum Purchase */}
+          <div className="p-4 bg-pizza-black/50">
+            <Label className="text-pizza-white font-mono text-sm block mb-2">Mindestumsatz für Punkte</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                type="number"
+                min="0"
+                value={settings?.min_purchase_for_points || 0}
+                onChange={(e) => setSettings({ ...settings, min_purchase_for_points: parseFloat(e.target.value) || 0 })}
+                className="w-24 bg-pizza-black border-pizza-dark text-pizza-white text-center"
+              />
+              <span className="font-mono text-sm text-neutral-400">€ (0 = kein Minimum)</span>
+            </div>
+          </div>
+
+          {/* Expiry */}
+          <div className="p-4 bg-pizza-black/50">
+            <Label className="text-pizza-white font-mono text-sm block mb-2">Punkte verfallen nach</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                type="number"
+                min="1"
+                value={settings?.points_expiry_months || 12}
+                onChange={(e) => setSettings({ ...settings, points_expiry_months: parseInt(e.target.value) || 12 })}
+                className="w-24 bg-pizza-black border-pizza-dark text-pizza-white text-center"
+              />
+              <span className="font-mono text-sm text-neutral-400">Monaten</span>
+            </div>
+          </div>
+
+          {/* Welcome Bonus */}
+          <div className="p-4 bg-pizza-black/50">
+            <Label className="text-pizza-white font-mono text-sm block mb-2">Willkommensbonus</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                type="number"
+                min="0"
+                value={settings?.welcome_bonus_points || 0}
+                onChange={(e) => setSettings({ ...settings, welcome_bonus_points: parseInt(e.target.value) || 0 })}
+                className="w-24 bg-pizza-black border-pizza-dark text-pizza-white text-center"
+              />
+              <span className="font-mono text-sm text-neutral-400">Punkte bei Registrierung</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Rewards */}
+      <div className="bg-pizza-dark border border-pizza-dark p-6">
+        <h3 className="font-anton text-lg text-pizza-red mb-4 flex items-center gap-2">
+          <Gift className="w-5 h-5" />
+          PRÄMIEN VERWALTEN
+        </h3>
+
+        {/* Add New Reward */}
+        <div className="bg-pizza-black/50 p-4 mb-4">
+          <h4 className="font-mono text-sm text-neutral-400 mb-3">NEUE PRÄMIE HINZUFÜGEN</h4>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <Input
+              placeholder="Name (z.B. Gratis Pizza)"
+              value={newReward.name}
+              onChange={(e) => setNewReward({ ...newReward, name: e.target.value })}
+              className="bg-pizza-black border-pizza-dark text-pizza-white"
+            />
+            <Input
+              placeholder="Beschreibung"
+              value={newReward.description}
+              onChange={(e) => setNewReward({ ...newReward, description: e.target.value })}
+              className="bg-pizza-black border-pizza-dark text-pizza-white"
+            />
+            <Input
+              type="number"
+              placeholder="Punkte"
+              value={newReward.points_required}
+              onChange={(e) => setNewReward({ ...newReward, points_required: parseInt(e.target.value) || 0 })}
+              className="bg-pizza-black border-pizza-dark text-pizza-white"
+            />
+            <Button onClick={addReward} className="bg-green-600 hover:bg-green-700 text-white rounded-none">
+              <Plus className="w-4 h-4 mr-2" /> HINZUFÜGEN
+            </Button>
+          </div>
+        </div>
+
+        {/* Rewards List */}
+        <div className="space-y-2">
+          {settings?.rewards?.length === 0 && (
+            <p className="font-mono text-sm text-neutral-500 text-center py-4">Keine Prämien definiert</p>
+          )}
+          {settings?.rewards?.map((reward) => (
+            <div key={reward.id} className={`flex items-center justify-between p-4 ${reward.is_active ? "bg-pizza-black/50" : "bg-pizza-black/30 opacity-50"}`}>
+              <div className="flex items-center gap-4">
+                <span className="font-anton text-2xl text-pizza-red">{reward.points_required}</span>
+                <div>
+                  <p className="font-mono text-pizza-white">{reward.name}</p>
+                  {reward.description && <p className="font-mono text-xs text-neutral-500">{reward.description}</p>}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={reward.is_active}
+                  onCheckedChange={() => toggleReward(reward.id)}
+                />
+                <Button
+                  onClick={() => deleteReward(reward.id)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Save Button */}
+      <Button
+        onClick={saveSettings}
+        disabled={saving}
+        className="w-full bg-pizza-red hover:bg-red-700 text-white font-anton tracking-wider py-6 rounded-none"
+      >
+        <Save className="w-4 h-4 mr-2" /> {saving ? "SPEICHERN..." : "EINSTELLUNGEN SPEICHERN"}
+      </Button>
+    </div>
+  );
+};
+
 export default ShopAdminPage;
