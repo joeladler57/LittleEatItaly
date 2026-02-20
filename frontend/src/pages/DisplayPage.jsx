@@ -131,6 +131,36 @@ const DisplayPage = () => {
     }
   };
 
+  const updateStaffNote = async (id, note) => {
+    const token = localStorage.getItem("staff_token");
+    if (!token) return;
+
+    try {
+      await axios.put(
+        `${API}/staff/reservations/${id}/note?note=${encodeURIComponent(note)}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success("Tischnotiz gespeichert");
+      setEditingNoteId(null);
+      setEditingNoteValue("");
+      fetchReservations();
+    } catch (error) {
+      toast.error("Fehler beim Speichern");
+    }
+  };
+
+  const startEditingNote = (reservation) => {
+    setEditingNoteId(reservation.id);
+    setEditingNoteValue(reservation.staff_note || "");
+  };
+
+  const cancelEditingNote = () => {
+    setEditingNoteId(null);
+    setEditingNoteValue("");
+  };
+
   // PIN Input Component
   const PinInput = () => (
     <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-black flex flex-col items-center justify-center p-6">
