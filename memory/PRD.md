@@ -234,6 +234,13 @@ GET  /api/terminal/menu/all            # Alle Menüartikel inkl. inaktive (Admin
 POST /api/terminal/menu                # Artikel hinzufügen (Admin)
 PUT  /api/terminal/menu/{id}           # Artikel bearbeiten (Admin)
 DELETE /api/terminal/menu/{id}         # Artikel löschen (Admin)
+
+# Print Queue / Druckwarteschlange
+GET  /api/print-queue                  # Alle Druckaufträge abrufen (Staff)
+POST /api/print-queue                  # Bestellung zur Druckwarteschlange hinzufügen
+POST /api/print-queue/reservations     # Reservierungsliste zur Druckwarteschlange hinzufügen
+PUT  /api/print-queue/{id}/status      # Druckauftrag-Status aktualisieren
+DELETE /api/print-queue/{id}           # Druckauftrag löschen
 ```
 
 ### E-Mail Konfiguration
