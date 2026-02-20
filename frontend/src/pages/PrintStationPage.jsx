@@ -470,17 +470,10 @@ const PrintStationPage = () => {
   const processPrintJob = async (job) => {
     if (isPrinting) return;
     
-    console.log('=== PROCESSING PRINT JOB ===');
-    console.log('Full job object:', JSON.stringify(job, null, 2));
-    console.log('job.job_type:', job.job_type);
-    console.log('job.order_data:', job.order_data);
-    
     setIsPrinting(true);
     try {
       // For reservation lists, pass the order_data which contains the reservation details
       const printData = job.order_data || job;
-      console.log('Passing to printReceipt:', JSON.stringify(printData, null, 2).substring(0, 500));
-      
       const success = await printReceipt(printData);
       
       if (success) {
