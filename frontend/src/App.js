@@ -71,14 +71,19 @@ const AnimatedRoutes = () => {
 
 function App() {
   const [isLoaded, setIsLoaded] = useState(false);
+  const seedCalledRef = useRef(false);
 
   useEffect(() => {
+    // Prevent double-call in StrictMode
+    if (seedCalledRef.current) return;
+    seedCalledRef.current = true;
+    
     // Seed data on first load
     const seedData = async () => {
       try {
         await axios.post(`${API}/seed`);
       } catch (e) {
-        console.log("Seed endpoint called");
+        // Ignore seed errors
       }
       setIsLoaded(true);
     };
