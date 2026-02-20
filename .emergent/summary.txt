@@ -1,84 +1,272 @@
 <analysis>**original_problem_statement:**
-The user initially requested a modern, graffiti-style website for their Neapolitan pizzeria, Little Eat Italy. The project has evolved into a full-stack application for online ordering and table reservations.
+The user initially requested a modern, graffiti-style website for their Neapolitan pizzeria, Little Eat Italy. This has evolved into a full-stack application for online ordering, reservations, and internal staff management.
 
-The most recent work involved several major feature implementations and bug fixes:
-1.  **Waiter Terminal ():** A new internal ordering system for waiters. It required PIN login, table selection, and ordering from a separate in-house menu. Key features requested during development included the ability to assign items to a course (Vorspeise, Hauptspeise) and add free-text notes.
-2.  **Addon Management:** The user requested the ability to manage addons for menu items, similar to the existing online ordering system. This included creating addon groups (e.g., Pizza Toppings) and assigning them to specific menu categories.
-3.  **Data Import:** The user provided CSV files (, ) and requested that both the new Waiter Terminal and the existing online ordering system be populated with this real menu data.
-4.  **Bug Fixes:** The user reported several bugs during the session, including issues with receipt printing, online order submission failures, and UI layout problems on desktop.
-
-**PRODUCT REQUIREMENTS:**
-- **Waiter Terminal ():**
-    - Waiter PIN login.
-    - Fixed table numbers.
-    - A separate, independent Inhouse-Menü (in-house menu).
-    - Waiters can select items, categorize them by course (e.g., Vorspeise, Hauptspeise), and add free-text notes.
-    - Waiters can select addons for items (e.g., Extra Cheese).
-    - Submitted orders are automatically printed.
-- **Admin Management ():**
-    - The admin must be able to manage waiter PINs, table numbers, and the complete in-house menu, including categories, items, and addon groups.
-- **Online Ordering System:**
-    - The system should use the real menu data from the provided CSV, excluding drinks.
-    - Addons should be available for relevant items (e.g., Pizza).
+Recent user requests included:
+1.  **Customer Account System:** Implement a feature to create customer accounts (name, email, phone, password). The system should track if a customer is new or returning, their total number of orders, and their total spending. This information should be visible to staff/admins when viewing an order.
+2.  **Loyalty/Points Program:** Build a customer loyalty system where:
+    *   Points are automatically awarded for online orders based on a configurable rate (e.g., 1 point per 1€).
+    *   Staff can manually add points for in-store purchases by scanning a customer's QR code.
+    *   Customers have a digital loyalty card in their account with a QR code, current point balance, and transaction history.
+    *   Admins can configure the points-per-euro rate and create/manage redeemable rewards (e.g., Free Drink for 50 points).
+3.  **Code Refactoring:** The user approved the agent's suggestion to refactor the monolithic  file for better maintainability.
 
 **User's preferred language**: German
 
 **what currently exists?**
-A full-stack React/FastAPI/MongoDB application. The core features are a customer-facing online ordering page, a staff PWA, and an admin dashboard. An automated printing system using a local HTML file () is fully functional.
-
-The Waiter Terminal feature is now complete, including the frontend UI for waiters and the backend management UI in the admin dashboard. Both the terminal and the main online ordering system have been populated with real menu and addon data from user-provided CSV files. Several critical bugs related to order submission and UI layout have been identified and fixed.
+A full-stack React/FastAPI/MongoDB application. Core features include a customer-facing ordering page (), an admin dashboard (), a staff PWA (), and a waiter terminal (). A customer account system () and a comprehensive loyalty program are now implemented. The backend refactoring has begun, with customer and loyalty endpoints moved to separate files, but the process is not yet complete.
 
 **Last working item**:
-- **Last item agent was working:** The agent was fixing a CSS bug on the online ordering page () where the shopping cart sidebar was cut off on desktop resolutions. The agent identified that  on the  tag in  was the likely cause and removed it.
+- **Last item agent was working:** Refactoring the monolithic  file. The agent successfully created new router files for customer () and loyalty () logic and then removed the corresponding 333 lines of code from .
 - **Status:** IN PROGRESS
-- **Agent Testing Done:** N (The fix has been applied but not visually verified with a final screenshot).
-- **Which testing method agent to use?** screenshot tool
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** backend testing agent
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: (P0) Verify Desktop Cart UI Fix**
-  - **Attempted fixes:** The agent removed  from the  element in .
-  - **Next debug checklist:** Take a screenshot of the  page on a desktop viewport (e.g., 1920x1080 and 1440x900) after adding an item to the cart to confirm the sidebar is fully visible.
-  - **Why fix this issue and what will be achieved with the fix?** The Zur Kasse (Checkout) button is inaccessible on desktop, blocking users from completing orders.
+- **Issue 1: (P0) Stabilize and Verify Backend After Refactoring**
+  - **Attempted fixes:** The agent moved customer and loyalty endpoints into separate router files (, ) and removed the original code from  using a script.
+  - **Next debug checklist:**
+    1.  Check the backend logs (==> /var/log/supervisor/backend.err.log <==
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.venv/lib/python3.11/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/app/backend/server.py", line 3326, in <module>
+    async def staff_scan_customer_qr(qr_data: str, staff_pin: str = Depends(verify_staff_pin)):
+                                                                            ^^^^^^^^^^^^^^^^
+NameError: name 'verify_staff_pin' is not defined
+WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
+INFO:     Started server process [1835]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1835]
+INFO:     Stopping reloader process [46]
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [1899] using WatchFiles
+INFO:     Started server process [1901]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+2026-02-20 11:06:54,620 - server - WARNING - Resend API key not configured, skipping email
+2026-02-20 11:06:54,779 - server - INFO - No active push subscriptions
+2026-02-20 11:14:47,493 - server - WARNING - Resend API key not configured, skipping email
+2026-02-20 11:14:47,497 - server - INFO - No active push subscriptions
+WARNING:  WatchFiles detected changes in 'routers/database.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1901]
+INFO:     Started server process [3628]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/shared.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3628]
+INFO:     Started server process [3686]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/loyalty.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3686]
+INFO:     Started server process [3739]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/customers.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3739]
+INFO:     Started server process [3770]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/__init__.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3770]
+INFO:     Started server process [3812]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3812]
+INFO:     Started server process [4043]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [48] using WatchFiles
+INFO:     Started server process [60]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+
+==> /var/log/supervisor/backend.out.log <==
+INFO:     10.49.135.69:52172 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:49418 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:38476 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:49424 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:57292 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:57292 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:57292 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:57292 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:34092 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:34092 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:34092 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:50236 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:45164 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:55868 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:59424 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:59436 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:55878 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:35258 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:35258 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:35258 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:35258 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:40700 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:40700 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:40700 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:40700 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:59904 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:39490 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:51088 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:51088 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:51738 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:51738 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:36062 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:36062 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:49432 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:58184 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:58184 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:58184 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:59726 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:59726 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:59726 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:42196 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:45108 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:42206 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:42206 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:42206 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:36682 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:53266 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:47580 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:59936 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:47584 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:47584 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:56142 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:56142 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:56142 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:45412 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:45412 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:56582 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:57712 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:46906 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:46906 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:46906 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:46906 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:55072 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:59020 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:59020 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:53502 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:53502 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:48410 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:52886 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:52886 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:52686 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:52686 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:43144 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:43144 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:53904 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:53904 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:53904 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:40082 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:48372 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:48372 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:37772 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:37772 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:47700 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:47700 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:47700 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:38040 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:38040 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:38040 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:47942 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:47942 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:58222 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:53692 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:58238 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:58238 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.135.69:58238 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:56240 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:56240 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:56240 - "GET /api/print-queue/pending HTTP/1.1" 200 OK
+INFO:     10.49.128.66:56240 - "GET /api/print-queue/pending HTTP/1.1" 200 OK) for startup errors. It's highly likely there are import errors.
+    2.  Create a shared  and/or  to resolve circular dependencies and import errors between  and the new routers.
+    3.  Ensure all helper functions, Pydantic models, and database objects (, ) are correctly imported in the new router files.
+    4.  Verify that the new routers are correctly included in the main FastAPI app in  ().
+    5.  Once the backend starts, perform a full regression test of all customer and loyalty API endpoints to ensure no functionality was broken.
+  - **Why fix this issue and what will be achieved with the fix?** The backend is currently in a broken state due to the incomplete refactoring. Completing this step is critical to restore functionality and proceed with further development on a more stable and maintainable codebase.
   - **Status:** IN PROGRESS
-  - **Is recurring issue?** N
-  - **Should Test frontend/backend/both after fix?** Frontend
+  - **Is recurring issue?** Y (This addresses the long-standing technical debt of the monolithic .)
+  - **Should Test frontend/backend/both after fix?** Backend
 
 **In progress Task List**:
-None.
+- **Task 1: (P0) Complete the  Refactoring**
+  - **Where to resume:** The backend is likely failing to start. The next agent must debug the import errors resulting from the recent code removal and restructuring.
+  - **What will be achieved with this?** A more modular, maintainable, and scalable backend architecture.
+  - **Status:** IN PROGRESS
+  - **Should Test frontend/backend/both after fix?** Backend
+  - **Blocked on something:** Blocked on resolving the startup errors from the partial refactor.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - **Task 1 (P0): User Verification:** Guide the user to test the complete end-to-end flows for both the Waiter Terminal and the updated Online Ordering system, now that they are populated with real data and bugs have been fixed.
-  - **Task 2 (P1): Refactor :** The main backend file, , has become excessively large and contains logic for all parts of the application. It needs to be refactored into smaller, more manageable router files (e.g., , , ) to reduce technical debt and improve maintainability.
+  - **Task 1 (P0): Continue Refactoring :** After the customer and loyalty routers are stabilized, continue the process by moving other logical sections (e.g., admin, terminal, orders, print_queue) into their own dedicated router files.
+  - **Task 2 (P1): Implement Staff-Side Loyalty UI:** The UI for staff to manually add points has been created ( -> Bonuspunkte tab), but the functionality (scanning QR code, submitting the form to add points) needs to be implemented and tested end-to-end.
+  - **Task 3 (P1): Implement Loyalty Points Redemption:** The customer UI shows redeemable rewards, but the EINLÖSEN (Redeem) button functionality is not implemented. This requires creating a backend endpoint and frontend logic to deduct points and apply the reward.
+
 - **Future Tasks:**
   - **Task 1 (P2): Enable Email Notifications:** Guide the user on obtaining a  to activate the pre-built email notification feature for orders.
 
 **Completed work in this session**
-- **Waiter Terminal Feature (DONE):**
-  - Implemented the complete waiter-facing UI at  for login, table selection, and ordering.
-  - Added features for course selection and free-text notes per item.
-- **Terminal Admin UI (DONE):**
-  - Created a Terminal section in the admin dashboard ().
-  - Implemented UI for managing Waiters, Tables, In-house Menu Items, and Addon Groups.
-- **Addon Functionality (DONE):**
-  - Extended the backend and frontend to support addon groups for the terminal menu.
-  - Implemented UI in the admin panel to create addon groups and assign them to categories.
-- **CSV Data Import (DONE):**
-  - Populated the Waiter Terminal menu and the Online Ordering menu with real product data from user-provided CSV files.
-  - Imported and configured all pizza toppings as an addon group.
-- **Bug Fixes (DONE):**
-  - **Online Order Submission:** Fixed a Pydantic validation error in the backend that prevented orders with addons from being submitted.
-  - **Cart Button UX:** Repositioned the toast notification which was blocking the mobile cart button.
-  - **Admin UI Display:** Fixed a bug where the terminal's in-house menu items were not displaying in the admin panel.
-  - **Printing:** Diagnosed and helped the user resolve a client-side configuration issue that was preventing terminal receipts from printing.
+- **Desktop Cart UI Fix (DONE):** Resolved a critical CSS bug where the shopping cart was cut off on desktop resolutions, making the checkout button inaccessible.
+- **Customer Account System (DONE):**
+  - Implemented backend and frontend for customer registration, login, and profile management.
+  - System now tracks customer statistics (order count, total spent), which are displayed in the admin order view.
+- **Loyalty/Points Program (DONE):**
+  - Implemented backend logic for automatic point collection on orders and manual addition by staff.
+  - Created a full-featured admin UI to configure the loyalty program settings (points-per-euro, rewards, expiration).
+  - Built the customer-facing Bonuskarte (Loyalty Card) page with a QR code, points balance, history, and a view of available rewards.
 
 **Earlier issues found/mentioned but not fixed**
 - **Issue 1: Monolithic **
-  - **Debug checklist:** Identify logical sections within  (e.g., auth, admin, orders, terminal, print queue) and create new files in a  directory. Use FastAPI's  to move the endpoints and their dependencies into these new files. Include the new routers in the main  app instance in .
-  - **Why to solve this issue and what will be achieved with this?** The file is over 1500 lines long, making it hard to navigate, debug, and maintain. Refactoring will improve code organization and scalability.
-  - **Should Test frontend/backend/both after fix:** Backend (via API tests/regression testing).
-  - **Is recurring issue?** Y
+  - This issue is currently being addressed. The refactoring is in progress.
 
 **Known issue recurrence from previous fork**
 None.
@@ -87,83 +275,76 @@ None.
 
 
 **Key Technical Concepts**
-- **Printing:** Direct client-to-printer communication via ePOS-Print XML over HTTP.
 - **Backend:** FastAPI, Pydantic, MongoDB.
-- **Frontend:** React, TailwindCSS, shadcn/ui, lucide-react.
-- **Data Import:** Ad-hoc Python scripts using  and  to populate the database.
+- **Frontend:** React, TailwindCSS, shadcn/ui, lucide-react, .
+- **Refactoring:** Breaking down a monolithic application into modular routers.
 
 **key DB schema**
-- **terminal_waiters:** 
-- **terminal_tables:** 
-- **terminal_menu_categories:** 
-- **terminal_menu_items:** 
-- **terminal_addon_groups:** 
-- **orders:**  (Type changed from  to  to fix bug).
-- **print_queue:** Handles jobs of  and .
+- **customers:** 
+- **loyalty_settings (in  collection):** 
 
 **changes in tech stack**
 None.
 
 **All files of reference**
-- : File for the online ordering page, contains the cart UI that was being fixed.
-- : Global stylesheet where the  property was removed.
-- : Contains all backend logic, including the recently fixed Pydantic model.
-- : Contains the heavily modified admin UI for both the main shop and the new terminal.
-- : Contains the completed UI for the waiter terminal.
+- : The main monolithic file, currently in the process of being refactored.
+- : New file containing all customer-related endpoints.
+- : New file containing all loyalty-related endpoints.
+- : New page for the customer profile and digital loyalty card.
+- : Modified to add customer info to orders and a new tab for loyalty settings.
+- : Modified to add a new Bonuspunkte tab for staff to manually add points.
+- : The file where the desktop cart UI was fixed.
 
 **Areas that need refactoring**:
-- **:** This is a critical source of technical debt. It urgently needs to be broken down into multiple router files for better maintainability.
+- **:** Refactoring is in progress but incomplete. The remaining endpoints for orders, reservations, admin, terminal, and printing still need to be moved to their own router files.
 
 **key api endpoints**
-- **Terminal Addons (New):**
+- **Customer:**
   - 
   - 
   - 
+- **Loyalty:**
   - 
-- **Orders:**
-  -  (Model was updated to fix a bug)
+  - 
+  - , , 
+  - 
 
 **Critical Info for New Agent**
-- **Your first task is to verify the CSS fix for the desktop cart.** Take a screenshot of the  page with an item in the cart to confirm the layout is correct.
-- After verification, the highest priority is to **request user testing** for all the new features and fixes.
-- The **refactoring of ** is the most significant piece of technical debt and should be proposed as the next major task after user verification is complete.
-- **You must communicate in German.**
+- **Your immediate task is to fix the backend.** It is currently broken due to an in-progress refactoring. You must check the supervisor logs, resolve all import errors between  and the new , and get the server running again.
+- **Do not proceed with new features until the backend refactoring is stabilized.**
+- Once the backend is stable, the next logical step is to continue the refactoring by moving more endpoints out of .
+- **Communicate in German.**
 
 **documents and test reports created in this job**
 -  (updated)
-- 
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **User:** prüfe nun die desktop version, dort ist der Warenkorb seitlich rechts abgeschnitten - *Reports the cart UI is cut off on desktop.*
-- **Agent:** Implemented a fix by changing the CSS layout.
-- **User:** beim absenden der bestellung über das online Bestellsystem erscheint ein Fehler am ende - *Reports an error when submitting an online order.*
-- **Agent:** Fixed the backend Pydantic model and a frontend UX issue with an overlapping toast notification.
-- **User:** jetzt nutze die gleichen Produkte für das Bestellsystem... - *Asks to populate the online store with the same CSV data (food only).*
-- **Agent:** Imported the data and fixed issues with addon display.
-- **User:** wenn ich beim Backoffice auf terminal-inhousemenü gehe zeigt er mir nichts - *Reports a bug where the admin UI doesn't show terminal menu items.*
-- **Agent:** Fixed the frontend rendering logic in the admin panel.
-- **User:** nutze die Datei für die addons... - *Provides a CSV with toppings to be used as addons.*
-- **Agent:** Imported the toppings as an addon group.
+- **User:** code refactoring machen wie du sagst weil es dringen ist - *Agreed to proceed with the urgent refactoring of .*
+- **User:** Provided requirements for the loyalty program (points for orders, manual addition by staff, QR code, admin-configurable rewards).
+- **User:** Provided requirements for the customer account system (track new vs. returning, order history, spend).
+- **User:** die abfrage für die api... bzw der link - *Asked for a list of the Terminal API endpoints.*
+- **User:** ich brauche im backend die terminal einstellungen für die api - *Asked for an API for terminal settings.*
+- **Agent:** Finished the desktop UI fix and asked the user for the next task.
 
 **Project Health Check:**
-- **Broken:** None.
-- **Mocked:** Email notifications (Resend integration is inactive pending API key).
+- **Broken:** The backend is currently non-functional due to an incomplete refactoring.
+- **Mocked:** Email notifications (Resend integration is inactive pending an API key).
 
 **3rd Party Integrations**
 - **Resend:** Integrated but inactive. Requires .
-- **Epson ePOS-Print:** Actively used for printing via direct HTTP XML requests.
+- **Epson ePOS-Print:** Actively used for printing.
+- **qrcode.react:** (Frontend) Used to generate the customer's loyalty QR code.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES (Used once after initial terminal feature completion).
+- **Testing agent used after significant changes:** NO
 - **Test files created:** None.
-- **Known regressions:** None.
+- **Known regressions:** None currently, but high risk of regressions after the refactoring is stabilized.
 
 **Credentials to test flow:**
 - **Admin Login:** ,  / 
 - **Staff PIN:** , 
 - **Waiter PINs (Example):**  (Marco),  (Lucia)
-- **Print Station PIN:** 
 
 **What agent forgot to execute**
-- The agent has consistently postponed the crucial refactoring of , which was identified as a source of technical debt early on.
-- The final verification (screenshot) for the desktop cart layout fix was not performed before the session ended.</analysis>
+- The agent has not implemented the **redemption** of loyalty points. The UI shows rewards but the Redeem button is not functional.
+- The staff-side UI for **scanning a QR code** to add points is not implemented; only a placeholder tab and form were created.</analysis>
