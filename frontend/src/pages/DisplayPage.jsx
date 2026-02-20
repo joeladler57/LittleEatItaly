@@ -64,12 +64,12 @@ const DisplayPage = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     if (pollingRef.current) clearInterval(pollingRef.current);
     localStorage.removeItem("staff_token");
     setIsAuthenticated(false);
     setReservations([]);
-  };
+  }, []);
 
   const fetchReservations = useCallback(async () => {
     const token = localStorage.getItem("staff_token");
@@ -91,7 +91,11 @@ const DisplayPage = () => {
     } catch (error) {
       console.error("Failed to fetch reservations:", error);
       if (error.response?.status === 401) {
-        handleLogout();
+        // Token expired - logout
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        localStorage.removeItem("staff_token");
+        setIsAuthenticated(false);
+        setReservations([]);
       }
     }
   }, []);
