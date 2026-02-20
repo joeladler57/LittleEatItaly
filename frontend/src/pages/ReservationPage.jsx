@@ -339,14 +339,6 @@ const ReservationPage = () => {
     );
   }
 
-  // Show push opt-in after success
-  useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => setShowPushOptIn(true), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [success]);
-
   return (
     <div className="min-h-screen bg-pizza-black pt-20 pb-16">
       {/* Header */}
