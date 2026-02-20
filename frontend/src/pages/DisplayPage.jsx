@@ -379,7 +379,17 @@ const DisplayPage = () => {
   };
 
   // Reservation Card Component
-  const ReservationCard = ({ reservation, onStatusChange, dimmed = false }) => {
+  const ReservationCard = ({ 
+    reservation, 
+    onStatusChange, 
+    onNoteEdit,
+    onNoteSave,
+    onNoteCancel,
+    isEditing,
+    editValue,
+    setEditValue,
+    dimmed = false 
+  }) => {
     const statusInfo = getStatusInfo(reservation.status);
     const isCompleted = ['completed', 'cancelled', 'no_show'].includes(reservation.status);
     
@@ -415,9 +425,65 @@ const DisplayPage = () => {
                 <span className="font-medium">{reservation.guests} Pers.</span>
               </div>
               {reservation.notes && reservation.notes !== '[Telefonisch]' && (
-                <span className="text-xs text-zinc-500 truncate max-w-[150px]">
+                <span className="text-xs text-zinc-500 truncate max-w-[100px]">
                   {reservation.notes.replace('[Telefonisch] ', '')}
                 </span>
+              )}
+            </div>
+            
+            {/* Staff Note (Table Number) */}
+            <div className="mt-2">
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    placeholder="Tisch Nr. / Notiz..."
+                    className="h-8 text-sm bg-zinc-700 border-zinc-600 text-white w-32"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        onNoteSave(reservation.id, editValue);
+                      } else if (e.key === 'Escape') {
+                        onNoteCancel();
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => onNoteSave(reservation.id, editValue)}
+                    className="h-8 w-8 p-0 bg-green-600 hover:bg-green-500"
+                  >
+                    <Save className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={onNoteCancel}
+                    variant="ghost"
+                    className="h-8 w-8 p-0 text-zinc-400 hover:text-white"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div 
+                  className="flex items-center gap-2 cursor-pointer group"
+                  onClick={() => !isCompleted && onNoteEdit(reservation)}
+                >
+                  {reservation.staff_note ? (
+                    <span className="text-sm bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded border border-blue-600/30">
+                      Tisch: {reservation.staff_note}
+                    </span>
+                  ) : !isCompleted && (
+                    <span className="text-xs text-zinc-500 flex items-center gap-1 group-hover:text-zinc-300">
+                      <Edit3 className="w-3 h-3" />
+                      Tischnotiz hinzufügen
+                    </span>
+                  )}
+                  {reservation.staff_note && !isCompleted && (
+                    <Edit3 className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300" />
+                  )}
+                </div>
               )}
             </div>
           </div>
