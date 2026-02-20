@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { API } from "../App";
 import { 
   User, Mail, Phone, ShoppingBag, Calendar, LogOut, 
-  Package, Clock, Euro, UserPlus, LogIn, Gift, Star, QrCode, Sparkles
+  Package, Clock, Euro, UserPlus, LogIn, Gift, Star, QrCode, Sparkles,
+  Wallet, Download, Smartphone, Share2, Apple, ChevronRight
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
