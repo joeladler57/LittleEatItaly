@@ -167,141 +167,34 @@ const DisplayPage = () => {
   };
 
   const printReservationList = async () => {
+    const token = localStorage.getItem("staff_token");
+    if (!token) return;
+
     setIsPrinting(true);
     
     try {
-      // Get printer settings from API (same as orders/terminal)
-      const settingsRes = await axios.get(`${API}/shop/settings`);
-      const settings = settingsRes.data;
-      
-      const printerIP = settings.printer_ip;
-      const printerPort = settings.printer_port || 8008;
-      
-      if (!printerIP) {
-        toast.error("Keine Drucker-IP konfiguriert");
-        setIsPrinting(false);
-        return;
-      }
-      
-      // Filter active reservations
-      const activeReservations = reservations.filter(r => 
-        !['cancelled', 'no_show'].includes(r.status)
+      const response = await axios.post(
+        `${API}/printer/reservations`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      if (activeReservations.length === 0) {
-        toast.error("Keine Reservierungen zum Drucken");
-        setIsPrinting(false);
-        return;
-      }
-      
-      // Build ePOS-Print XML for reservation list
-      const today = new Date().toLocaleDateString('de-DE', { 
-        weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' 
-      });
-      const totalGuests = activeReservations.reduce((sum, r) => sum + (r.guests || 0), 0);
-      
-      let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
-<text lang="de"/>
-<text align="center"/>
-<text font="font_a" dw="true" dh="true" em="true"/>
-<text>RESERVIERUNGEN&#10;</text>
-<text dw="false" dh="false" em="false"/>
-<text>${escapeXML(today)}&#10;</text>
-<text>================================&#10;</text>
-<text align="center"/>
-<text em="true"/><text>${activeReservations.length} Reservierungen | ${totalGuests} Gaeste&#10;</text>
-<text em="false"/>
-<text>================================&#10;</text>
-<text align="left"/>`;
-      
-      // Group by time
-      let currentTime = null;
-      const sorted = [...activeReservations].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-      
-      for (const res of sorted) {
-        if (res.time !== currentTime) {
-          xml += `<feed line="1"/>`;
-          xml += `<text dh="true" em="true"/>`;
-          xml += `<text>--- ${escapeXML(res.time)} Uhr ---&#10;</text>`;
-          xml += `<text dh="false" em="false"/>`;
-          currentTime = res.time;
-        }
-        
-        xml += `<text em="true"/>`;
-        xml += `<text>  ${escapeXML(res.customer_name)}</text>`;
-        xml += `<text em="false"/>`;
-        xml += `<text>  [${res.guests} Pers.]</text>`;
-        if (res.staff_note) {
-          xml += `<text>  T:${escapeXML(res.staff_note)}</text>`;
-        }
-        xml += `<text>&#10;</text>`;
-      }
-      
-      xml += `<text>================================&#10;</text>`;
-      xml += `<text align="center"/>`;
-      xml += `<text>Gedruckt: ${new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}&#10;</text>`;
-      xml += `<feed line="4"/>`;
-      xml += `<cut/>`;
-      xml += `</epos-print>`;
-      
-      // Send to printer via ePOS-Print
-      const url = `http://${printerIP}:${printerPort}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000`;
-      
-      console.log('Printing reservations to:', url);
-      
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', url, true);
-      xhr.setRequestHeader('Content-Type', 'application/xml; charset=UTF-8');
-      xhr.timeout = 15000;
-      
-      xhr.onload = function() {
-        console.log('Print response:', xhr.status, xhr.responseText);
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const text = xhr.responseText;
-          if (text.includes('success="false"')) {
-            toast.error("Drucker meldet Fehler");
-          } else {
-            toast.success(`${activeReservations.length} Reservierungen gedruckt!`);
-          }
-        } else {
-          toast.error("Drucker antwortet nicht");
-        }
-        setIsPrinting(false);
-      };
-      
-      xhr.onerror = function() {
-        console.error('XHR error - CORS may block response but print might succeed');
-        toast.info("Druckauftrag gesendet...");
-        setIsPrinting(false);
-      };
-      
-      xhr.ontimeout = function() {
-        toast.error("Drucker-Timeout");
-        setIsPrinting(false);
-      };
-      
-      xhr.send(xml);
-      
+      toast.success(response.data.message || "Liste gedruckt!");
     } catch (error) {
-      console.error('Print error:', error);
-      toast.error("Fehler: " + (error.message || "Unbekannt"));
+      const message = error.response?.data?.detail || "Druckfehler";
+      toast.error(message);
+    } finally {
       setIsPrinting(false);
     }
   };
 
-  // Helper function to escape XML
+  // Helper function to escape XML (kept for reference)
   const escapeXML = (str) => {
     if (!str) return '';
     return String(str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;')
-      .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')
-      .replace(/Ä/g, 'Ae').replace(/Ö/g, 'Oe').replace(/Ü/g, 'Ue')
-      .replace(/ß/g, 'ss');
+      .replace(/>/g, '&gt;');
   };
 
   // PIN Input Component
