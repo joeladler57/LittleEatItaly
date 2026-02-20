@@ -270,6 +270,7 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
   - Zeigt nur heutige Reservierungen
   - Sortiert nach Uhrzeit
   - Status-Buttons: Grün (Angekommen), Gelb (Abgesagt), Rot (Nicht erschienen)
+  - **Interne Tischnotiz:** Klick auf "Tischnotiz hinzufügen" → Eingabe → Speichern
   - Automatische Aktualisierung alle 30 Sekunden
   - Statistik-Leiste (Offen/Angekommen)
 
