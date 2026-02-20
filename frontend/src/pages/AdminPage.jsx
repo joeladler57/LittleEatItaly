@@ -273,6 +273,7 @@ const AdminPage = () => {
           <Tabs defaultValue="hero" className="w-full">
             <TabsList className="flex flex-wrap gap-2 mb-8 bg-transparent">
               {[
+                { id: "statistics", label: "STATISTIK", icon: BarChart3 },
                 { id: "hero", label: "STARTSEITE", icon: Image },
                 { id: "about", label: "ÜBER UNS", icon: FileText },
                 { id: "contact", label: "KONTAKT", icon: Phone },
