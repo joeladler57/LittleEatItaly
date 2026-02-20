@@ -174,14 +174,14 @@ const DisplayPage = () => {
     
     try {
       const response = await axios.post(
-        `${API}/printer/reservations`,
+        `${API}/print-queue/reservations`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      toast.success(response.data.message || "Liste gedruckt!");
+      toast.success(response.data.message || "Reservierungsliste zur Druckwarteschlange hinzugefügt!");
     } catch (error) {
-      const message = error.response?.data?.detail || "Druckfehler";
+      const message = error.response?.data?.detail || "Fehler beim Hinzufügen zur Druckwarteschlange";
       toast.error(message);
     } finally {
       setIsPrinting(false);
