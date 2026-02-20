@@ -5,6 +5,7 @@ from .loyalty import router as loyalty_router
 from .customers import router as customers_router
 from .terminal import router as terminal_router
 from .staff import router as staff_router
+from .statistics import router as statistics_router
 
 # Export functions that are used by main server.py
 from .customers import (
