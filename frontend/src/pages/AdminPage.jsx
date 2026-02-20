@@ -240,6 +240,7 @@ const AdminPage = () => {
             <TabsList className="flex flex-wrap gap-2 mb-8 bg-transparent">
               {[
                 { id: "hero", label: "STARTSEITE", icon: Image },
+                { id: "about", label: "ÜBER UNS", icon: FileText },
                 { id: "contact", label: "KONTAKT", icon: Phone },
                 { id: "impressum", label: "IMPRESSUM", icon: FileText },
                 { id: "social", label: "SOCIAL MEDIA", icon: Share2 },
