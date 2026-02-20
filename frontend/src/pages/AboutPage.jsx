@@ -259,20 +259,7 @@ Heute erzählen diese Wände unsere Geschichte. Wir sind nicht nur eine Pizzeria
                 UNSERE <span className="text-pizza-red">PHILOSOPHIE</span>
               </h2>
               <div className="space-y-6">
-                {[
-                  {
-                    title: "AUTHENTIZITÄT",
-                    description: "Jede Zutat stammt aus Italien. San Marzano Tomaten, Büffelmozzarella, 00-Mehl – keine Kompromisse."
-                  },
-                  {
-                    title: "HANDWERKSKUNST",
-                    description: "Unser Teig fermentiert mindestens 48 Stunden. Unser Ofen brennt bei 480°C. Das ist kein Fast Food – das ist Kunst."
-                  },
-                  {
-                    title: "GEMEINSCHAFT",
-                    description: "Wir glauben, dass Pizza Menschen zusammenbringt. Unsere Türen stehen allen offen – Künstlern, Musikern, Familien, Träumern."
-                  }
-                ].map((item, index) => (
+                {philosophy.map((item, index) => (
                   <motion.div
                     key={item.title}
                     initial={{ opacity: 0, x: -30 }}
