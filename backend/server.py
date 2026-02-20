@@ -3323,7 +3323,7 @@ async def redeem_customer_reward(reward_id: str, customer: dict = Depends(verify
     }
 
 @api_router.post("/staff/loyalty/scan")
-async def staff_scan_customer_qr(qr_data: str, staff_pin: str = Depends(verify_staff_pin)):
+async def staff_scan_customer_qr(qr_data: str, role: str = Depends(verify_staff_token)):
     """Staff scans customer QR code to get customer info"""
     customer_id = verify_customer_qr_data(qr_data)
     if not customer_id:
@@ -3350,7 +3350,7 @@ class AddPointsRequest(BaseModel):
     description: str = "Vor-Ort-Verzehr"
 
 @api_router.post("/staff/loyalty/add-points")
-async def staff_add_points(data: AddPointsRequest, staff_pin: str = Depends(verify_staff_pin)):
+async def staff_add_points(data: AddPointsRequest, role: str = Depends(verify_staff_token)):
     """Staff adds points for in-store purchase"""
     customer = await db.customers.find_one({"id": data.customer_id})
     if not customer:
@@ -3365,7 +3365,7 @@ async def staff_add_points(data: AddPointsRequest, staff_pin: str = Depends(veri
         points=points_earned,
         point_type="earned_instore",
         description=f"{data.description} ({data.purchase_amount:.2f}€)",
-        staff_id=staff_pin
+        staff_id=role
     )
     
     # Get updated customer points
@@ -3379,7 +3379,7 @@ async def staff_add_points(data: AddPointsRequest, staff_pin: str = Depends(veri
     }
 
 @api_router.get("/staff/loyalty/search")
-async def staff_search_customer(query: str, staff_pin: str = Depends(verify_staff_pin)):
+async def staff_search_customer(query: str, role: str = Depends(verify_staff_token)):
     """Staff searches for customer by name, email or phone"""
     customers = await db.customers.find({
         "$or": [
