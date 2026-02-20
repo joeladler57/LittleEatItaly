@@ -451,7 +451,7 @@ const AdminPage = () => {
                   </div>
                 </div>
 
-                <Button onClick={saveHeroContent} disabled={saving} className="bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-widest rounded-none">
+                <Button onClick={saveAboutContent} disabled={saving} className="bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-widest rounded-none">
                   <Save className="w-4 h-4 mr-2" />{saving ? "SPEICHERN..." : "ÜBER UNS SPEICHERN"}
                 </Button>
               </div>
