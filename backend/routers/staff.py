@@ -171,7 +171,7 @@ async def get_staff_reservations(status: Optional[str] = None, date: Optional[st
 @router.put("/reservations/{reservation_id}/status")
 async def update_staff_reservation_status(reservation_id: str, status: str, role: str = Depends(verify_staff_token)):
     """Update reservation status (staff)"""
-    valid_statuses = ["pending", "confirmed", "cancelled", "completed"]
+    valid_statuses = ["pending", "confirmed", "cancelled", "completed", "no_show"]
     if status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Valid: {valid_statuses}")
     
