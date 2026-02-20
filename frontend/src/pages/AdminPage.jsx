@@ -300,6 +300,130 @@ const AdminPage = () => {
               </div>
             </TabsContent>
 
+            {/* About Us Section */}
+            <TabsContent value="about" className="space-y-6">
+              <div className="p-6 border border-pizza-dark bg-pizza-dark/20">
+                <h2 className="font-anton text-xl tracking-wider text-pizza-white mb-6 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-pizza-red" />ÜBER UNS SEITE
+                </h2>
+                
+                {/* Story Section */}
+                <div className="mb-8">
+                  <h3 className="font-anton text-lg text-pizza-red mb-4">UNSERE GESCHICHTE</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="font-mono text-sm text-neutral-300 mb-2 block">TITEL</Label>
+                      <Input value={content.about?.story_title || "GEBOREN IN NEAPEL"} 
+                        onChange={(e) => setContent({ ...content, about: { ...content.about, story_title: e.target.value } })}
+                        className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none" />
+                    </div>
+                    <div>
+                      <Label className="font-mono text-sm text-neutral-300 mb-2 block">TEXT (Absätze mit Leerzeile trennen)</Label>
+                      <Textarea 
+                        value={content.about?.story_text || ""} 
+                        onChange={(e) => setContent({ ...content, about: { ...content.about, story_text: e.target.value } })}
+                        className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none min-h-[200px]"
+                        placeholder="Little Eat Italy begann mit einem einfachen Traum..."
+                      />
+                    </div>
+                    <div>
+                      <Label className="font-mono text-sm text-neutral-300 mb-2 block">BILD URL</Label>
+                      <Input value={content.about?.story_image || ""} 
+                        onChange={(e) => setContent({ ...content, about: { ...content.about, story_image: e.target.value } })}
+                        className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none" 
+                        placeholder="https://images.unsplash.com/..." />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats Section */}
+                <div className="mb-8">
+                  <h3 className="font-anton text-lg text-pizza-red mb-4">STATISTIKEN</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {(content.about?.stats || [
+                      { number: "2015", label: "GEGRÜNDET" },
+                      { number: "48", label: "STUNDEN TEIG" },
+                      { number: "480°", label: "OFENTEMP." },
+                      { number: "100%", label: "IMPORTIERT" }
+                    ]).map((stat, index) => (
+                      <div key={index} className="p-3 bg-pizza-black/50 border border-pizza-dark">
+                        <Input value={stat.number} 
+                          onChange={(e) => {
+                            const newStats = [...(content.about?.stats || [{ number: "2015", label: "GEGRÜNDET" }, { number: "48", label: "STUNDEN TEIG" }, { number: "480°", label: "OFENTEMP." }, { number: "100%", label: "IMPORTIERT" }])];
+                            newStats[index] = { ...newStats[index], number: e.target.value };
+                            setContent({ ...content, about: { ...content.about, stats: newStats } });
+                          }}
+                          className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-anton text-2xl text-center rounded-none mb-2" />
+                        <Input value={stat.label} 
+                          onChange={(e) => {
+                            const newStats = [...(content.about?.stats || [{ number: "2015", label: "GEGRÜNDET" }, { number: "48", label: "STUNDEN TEIG" }, { number: "480°", label: "OFENTEMP." }, { number: "100%", label: "IMPORTIERT" }])];
+                            newStats[index] = { ...newStats[index], label: e.target.value };
+                            setContent({ ...content, about: { ...content.about, stats: newStats } });
+                          }}
+                          className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-mono text-xs text-center rounded-none" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Philosophy Section */}
+                <div className="mb-8">
+                  <h3 className="font-anton text-lg text-pizza-red mb-4">UNSERE PHILOSOPHIE</h3>
+                  <div className="space-y-4">
+                    {(content.about?.philosophy || [
+                      { title: "AUTHENTIZITÄT", description: "Jede Zutat stammt aus Italien." },
+                      { title: "HANDWERKSKUNST", description: "Unser Teig fermentiert mindestens 48 Stunden." },
+                      { title: "GEMEINSCHAFT", description: "Wir glauben, dass Pizza Menschen zusammenbringt." }
+                    ]).map((item, index) => (
+                      <div key={index} className="p-4 bg-pizza-black/50 border border-pizza-dark">
+                        <Input value={item.title} 
+                          onChange={(e) => {
+                            const newPhilosophy = [...(content.about?.philosophy || [{ title: "AUTHENTIZITÄT", description: "" }, { title: "HANDWERKSKUNST", description: "" }, { title: "GEMEINSCHAFT", description: "" }])];
+                            newPhilosophy[index] = { ...newPhilosophy[index], title: e.target.value };
+                            setContent({ ...content, about: { ...content.about, philosophy: newPhilosophy } });
+                          }}
+                          className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-red font-anton rounded-none mb-2" 
+                          placeholder="TITEL" />
+                        <Textarea value={item.description} 
+                          onChange={(e) => {
+                            const newPhilosophy = [...(content.about?.philosophy || [{ title: "AUTHENTIZITÄT", description: "" }, { title: "HANDWERKSKUNST", description: "" }, { title: "GEMEINSCHAFT", description: "" }])];
+                            newPhilosophy[index] = { ...newPhilosophy[index], description: e.target.value };
+                            setContent({ ...content, about: { ...content.about, philosophy: newPhilosophy } });
+                          }}
+                          className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-mono text-sm rounded-none" 
+                          placeholder="Beschreibung..." />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Quote Section */}
+                <div className="mb-8">
+                  <h3 className="font-anton text-lg text-pizza-red mb-4">ZITAT</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="font-mono text-sm text-neutral-300 mb-2 block">ZITAT TEXT</Label>
+                      <Textarea 
+                        value={content.about?.quote_text || "PIZZA IST NICHT NUR ESSEN. ES IST EINE SPRACHE."} 
+                        onChange={(e) => setContent({ ...content, about: { ...content.about, quote_text: e.target.value } })}
+                        className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-anton text-lg rounded-none" />
+                    </div>
+                    <div>
+                      <Label className="font-mono text-sm text-neutral-300 mb-2 block">AUTOR</Label>
+                      <Input 
+                        value={content.about?.quote_author || "MARCO ROSSI, GRÜNDER"} 
+                        onChange={(e) => setContent({ ...content, about: { ...content.about, quote_author: e.target.value } })}
+                        className="bg-pizza-black border-pizza-dark focus:border-pizza-red text-pizza-white font-mono rounded-none" />
+                    </div>
+                  </div>
+                </div>
+
+                <Button onClick={saveContent} disabled={saving} className="bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-widest rounded-none">
+                  <Save className="w-4 h-4 mr-2" />{saving ? "SPEICHERN..." : "ÜBER UNS SPEICHERN"}
+                </Button>
+              </div>
+            </TabsContent>
+
             {/* Contact Section */}
             <TabsContent value="contact" className="space-y-6">
               <div className="p-6 border border-pizza-dark bg-pizza-dark/20">
