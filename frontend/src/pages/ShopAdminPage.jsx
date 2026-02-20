@@ -14,7 +14,7 @@ import {
   Check, X, Clock, Phone, User, Mail, ChevronDown, ChevronUp,
   Plus, Trash2, Edit2, GripVertical, Save, RefreshCw, Download,
   Volume2, VolumeX, Bell, BellRing, Smartphone, BellOff, Send,
-  Printer, FileText, Eye, Tablet, Users, Hash, Star, Gift
+  Printer, FileText, Eye, Tablet, Users, Hash, Star, Gift, UserX, Info
 } from "lucide-react";
 import { useNotificationSound } from "../hooks/useNotificationSound";
 import { usePWA, registerServiceWorker } from "../hooks/usePWA";
