@@ -637,6 +637,103 @@ ESCPOS_COMMANDS = {
 def escpos_feed_lines(n: int) -> bytes:
     return bytes([ESC, 0x64, n])
 
+def build_reservation_list_receipt(reservations: list, settings: dict) -> bytes:
+    """Build ESC/POS receipt for reservation list"""
+    data = bytearray()
+    
+    def add_text(text: str):
+        # Convert special characters for thermal printer
+        text = text.replace('ä', 'ae').replace('ö', 'oe').replace('ü', 'ue')
+        text = text.replace('Ä', 'Ae').replace('Ö', 'Oe').replace('Ü', 'Ue')
+        text = text.replace('ß', 'ss')
+        data.extend(text.encode('cp437', errors='replace'))
+    
+    def add_line():
+        data.extend(b'\n')
+    
+    def add_cmd(cmd: bytes):
+        data.extend(cmd)
+    
+    # Initialize printer
+    add_cmd(ESCPOS_COMMANDS["INIT"])
+    
+    # Header
+    add_cmd(ESCPOS_COMMANDS["ALIGN_CENTER"])
+    add_cmd(ESCPOS_COMMANDS["BOLD_ON"])
+    add_cmd(ESCPOS_COMMANDS["DOUBLE_SIZE"])
+    add_text("RESERVIERUNGEN")
+    add_line()
+    add_cmd(ESCPOS_COMMANDS["NORMAL_SIZE"])
+    
+    # Date
+    today = datetime.now(timezone.utc).strftime("%d.%m.%Y")
+    add_text(today)
+    add_line()
+    add_cmd(ESCPOS_COMMANDS["BOLD_OFF"])
+    
+    add_text("================================")
+    add_line()
+    add_line()
+    
+    # Count totals
+    total_guests = sum(int(r.get("guests", 0)) for r in reservations)
+    add_cmd(ESCPOS_COMMANDS["ALIGN_CENTER"])
+    add_text(f"{len(reservations)} Reservierungen | {total_guests} Gaeste")
+    add_line()
+    add_line()
+    add_text("================================")
+    add_line()
+    
+    # Reservations grouped by time
+    add_cmd(ESCPOS_COMMANDS["ALIGN_LEFT"])
+    
+    current_time = None
+    for res in sorted(reservations, key=lambda x: x.get("time", "")):
+        time = res.get("time", "")
+        name = res.get("customer_name", "")
+        guests = res.get("guests", 0)
+        staff_note = res.get("staff_note", "")
+        
+        # Time header if changed
+        if time != current_time:
+            add_line()
+            add_cmd(ESCPOS_COMMANDS["BOLD_ON"])
+            add_cmd(ESCPOS_COMMANDS["DOUBLE_HEIGHT"])
+            add_text(f"--- {time} Uhr ---")
+            add_line()
+            add_cmd(ESCPOS_COMMANDS["NORMAL_SIZE"])
+            add_cmd(ESCPOS_COMMANDS["BOLD_OFF"])
+            current_time = time
+        
+        # Reservation line: Name (guests) [table]
+        add_cmd(ESCPOS_COMMANDS["BOLD_ON"])
+        add_text(f"  {name}")
+        add_cmd(ESCPOS_COMMANDS["BOLD_OFF"])
+        
+        # Guests in box-like format
+        add_text(f"  [{guests} Pers.]")
+        
+        # Table note if exists
+        if staff_note:
+            add_text(f"  T:{staff_note}")
+        
+        add_line()
+    
+    # Footer
+    add_line()
+    add_text("================================")
+    add_line()
+    add_cmd(ESCPOS_COMMANDS["ALIGN_CENTER"])
+    add_text(f"Gedruckt: {datetime.now(timezone.utc).strftime('%H:%M')}")
+    add_line()
+    add_line()
+    
+    # Cut paper
+    add_cmd(escpos_feed_lines(3))
+    add_cmd(ESCPOS_COMMANDS["PARTIAL_CUT"])
+    
+    return bytes(data)
+
 def build_escpos_receipt(order: dict, settings: dict) -> bytes:
     """Build ESC/POS receipt data from order"""
     data = bytearray()
