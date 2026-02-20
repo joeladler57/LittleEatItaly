@@ -406,7 +406,15 @@ const PrintStationPage = () => {
     return new Promise((resolve) => {
       try {
         const url = `http://${printerIP}:${printerPort}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000`;
-        const receiptXML = buildReceiptXML(order, settings);
+        
+        // Check if this is a reservation list print job
+        let receiptXML;
+        if (order.job_type === 'reservations') {
+          console.log('Printing reservation list...');
+          receiptXML = buildReservationListXML(order);
+        } else {
+          receiptXML = buildReceiptXML(order, settings);
+        }
         
         console.log('Sending print job to:', url);
 
