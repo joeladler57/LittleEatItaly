@@ -37,7 +37,8 @@ from routers import (
     add_points_to_customer,
     redeem_points,
     generate_customer_qr_data,
-    verify_customer_qr_data
+    verify_customer_qr_data,
+    verify_staff_token
 )
 
 # GlobalFood API Configuration
