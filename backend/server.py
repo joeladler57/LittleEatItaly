@@ -2719,6 +2719,168 @@ async def test_push_notification(
     
     return {"message": f"Test notification sent to {sent_count} device(s)"}
 
+# ============ CUSTOMER PUSH NOTIFICATIONS ============
+
+class CustomerPushSubscription(BaseModel):
+    endpoint: str
+    keys: dict
+
+class CustomerPushData(BaseModel):
+    subscription: CustomerPushSubscription
+    customer_id: Optional[str] = None
+
+class BroadcastMessage(BaseModel):
+    title: str
+    body: str
+    url: Optional[str] = "/"
+    target: str = "all"  # "all", "customers", "admins"
+
+@api_router.post("/push/customer/subscribe")
+async def customer_subscribe_to_push(data: CustomerPushData):
+    """Subscribe a customer device for push notifications (no auth required for initial subscription)"""
+    subscription_data = {
+        "endpoint": data.subscription.endpoint,
+        "keys": data.subscription.keys,
+        "customer_id": data.customer_id,
+        "type": "customer",
+        "active": True,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    existing = await db.customer_push_subscriptions.find_one({"endpoint": data.subscription.endpoint})
+    if existing:
+        await db.customer_push_subscriptions.update_one(
+            {"endpoint": data.subscription.endpoint},
+            {"$set": {"customer_id": data.customer_id, "active": True, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+    else:
+        await db.customer_push_subscriptions.insert_one(subscription_data)
+    
+    return {"message": "Erfolgreich für Push-Benachrichtigungen angemeldet"}
+
+@api_router.delete("/push/customer/unsubscribe")
+async def customer_unsubscribe_from_push(endpoint: str):
+    """Unsubscribe a customer device from push notifications"""
+    result = await db.customer_push_subscriptions.delete_one({"endpoint": endpoint})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+    return {"message": "Erfolgreich abgemeldet"}
+
+@api_router.get("/push/customer/stats")
+async def get_customer_push_stats(username: str = Depends(verify_token)):
+    """Get customer push subscription statistics (admin only)"""
+    total = await db.customer_push_subscriptions.count_documents({"active": True})
+    with_account = await db.customer_push_subscriptions.count_documents({"active": True, "customer_id": {"$ne": None}})
+    return {
+        "total_subscriptions": total,
+        "with_account": with_account,
+        "anonymous": total - with_account
+    }
+
+@api_router.post("/push/broadcast")
+async def broadcast_push_message(
+    message: BroadcastMessage,
+    username: str = Depends(verify_token)
+):
+    """Send push notification to all customers (admin only)"""
+    sent_count = 0
+    failed_count = 0
+    
+    try:
+        from pywebpush import webpush, WebPushException
+        
+        # Get VAPID private key
+        private_key = None
+        if os.path.exists(VAPID_PRIVATE_KEY_FILE):
+            with open(VAPID_PRIVATE_KEY_FILE, 'r') as f:
+                private_key = f.read()
+        
+        if not private_key:
+            raise HTTPException(status_code=500, detail="Push-Server nicht konfiguriert")
+        
+        # Get subscriptions based on target
+        subscriptions = []
+        if message.target in ["all", "customers"]:
+            customer_subs = await db.customer_push_subscriptions.find({"active": True}).to_list(1000)
+            subscriptions.extend(customer_subs)
+        if message.target in ["all", "admins"]:
+            admin_subs = await db.push_subscriptions.find({"active": True}).to_list(100)
+            subscriptions.extend(admin_subs)
+        
+        if not subscriptions:
+            return {"message": "Keine aktiven Abonnenten gefunden", "sent": 0, "failed": 0}
+        
+        # Prepare notification payload
+        notification_payload = {
+            "title": message.title,
+            "body": message.body,
+            "icon": "/logo192.png",
+            "badge": "/logo192.png",
+            "url": message.url,
+            "tag": "broadcast",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Send to all subscriptions
+        for sub in subscriptions:
+            try:
+                webpush(
+                    subscription_info={"endpoint": sub["endpoint"], "keys": sub["keys"]},
+                    data=json.dumps(notification_payload),
+                    vapid_private_key=private_key,
+                    vapid_claims={"sub": f"mailto:{VAPID_CLAIMS_EMAIL}"}
+                )
+                sent_count += 1
+            except WebPushException as e:
+                failed_count += 1
+                if e.response and e.response.status_code in [404, 410]:
+                    # Subscription expired - deactivate
+                    collection = "customer_push_subscriptions" if sub.get("type") == "customer" else "push_subscriptions"
+                    await db[collection].update_one(
+                        {"endpoint": sub["endpoint"]},
+                        {"$set": {"active": False}}
+                    )
+            except Exception as e:
+                failed_count += 1
+                logger.error(f"Push error: {e}")
+        
+        # Save broadcast to history
+        await db.push_broadcasts.insert_one({
+            "id": str(uuid.uuid4()),
+            "title": message.title,
+            "body": message.body,
+            "url": message.url,
+            "target": message.target,
+            "sent_count": sent_count,
+            "failed_count": failed_count,
+            "sent_by": username,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        
+        return {
+            "message": f"Nachricht an {sent_count} Empfänger gesendet",
+            "sent": sent_count,
+            "failed": failed_count
+        }
+        
+    except ImportError:
+        raise HTTPException(status_code=500, detail="pywebpush nicht installiert")
+    except Exception as e:
+        logger.error(f"Broadcast error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/push/broadcasts")
+async def get_broadcast_history(
+    limit: int = 20,
+    username: str = Depends(verify_token)
+):
+    """Get broadcast history (admin only)"""
+    broadcasts = await db.push_broadcasts.find(
+        {}, {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    return broadcasts
+
 # Seed data endpoint
 @api_router.post("/seed")
 async def seed_data():
