@@ -501,6 +501,17 @@ const StaffPage = () => {
                 ) : null;
               })()}
             </button>
+            <button
+              onClick={() => setActiveTab("loyalty")}
+              className={`flex items-center gap-2 px-6 py-4 font-anton text-sm whitespace-nowrap border-b-2 transition-all ${
+                activeTab === "loyalty" 
+                  ? 'bg-yellow-600/10 text-white border-yellow-500' 
+                  : 'text-neutral-400 border-transparent hover:text-white'
+              }`}
+            >
+              <Star className="w-5 h-5" />
+              BONUSPUNKTE
+            </button>
           </div>
         </div>
       </div>
