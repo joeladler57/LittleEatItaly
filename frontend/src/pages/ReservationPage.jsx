@@ -83,6 +83,7 @@ const ReservationPage = () => {
   const [result, setResult] = useState(null);
   const [availableDates, setAvailableDates] = useState([]);
   const [availableTimes, setAvailableTimes] = useState([]);
+  const [showPushOptIn, setShowPushOptIn] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
