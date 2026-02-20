@@ -262,6 +262,24 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 
 ## Recently Added Features
 
+### Februar 2026 - Statistik-Dashboard ✅
+- **URL:** `/admin` → Tab "STATISTIK"
+- **Übersicht:**
+  - Umsatz mit Trend-Anzeige (vs. Vorwoche)
+  - Anzahl Bestellungen + Durchschnittswert
+  - Reservierungen + Gästeanzahl
+- **Vergleiche:**
+  - Wochenvergleich (Diese Woche vs. Letzte Woche)
+  - Monatsvergleich (Dieser Monat vs. Letzter Monat)
+- **Reservierungs-Performance:**
+  - Erschienen / Nicht erschienen / No-Show-Rate
+- **Stoßzeiten-Analyse:**
+  - Balkendiagramm nach Stunde (11:00 - 00:00)
+  - Peak-Zeiten für Bestellungen und Reservierungen
+- **Top 10 Gerichte:** Meistverkaufte Artikel mit Anzahl und Umsatz
+- **Bestellungen nach Tag:** Tägliche Übersicht mit Umsatzbalken
+- **Filter:** Heute / Diese Woche / Dieser Monat / Dieses Jahr / Benutzerdefiniert
+
 ### Februar 2026 - Reservierungs-Display für Tablets ✅
 - **URL:** `/display`
 - **Features:**
