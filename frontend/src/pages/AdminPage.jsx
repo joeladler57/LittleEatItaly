@@ -133,6 +133,39 @@ const AdminPage = () => {
     }
   };
 
+  const saveAboutContent = async () => {
+    setSaving(true);
+    try {
+      // Transform frontend about content to backend format
+      const aboutData = {
+        story_title: content.about?.story_title?.split(' ')[0] || "GEBOREN IN",
+        story_title_highlight: content.about?.story_title?.split(' ').slice(1).join(' ') || "NEAPEL",
+        story_paragraphs: content.about?.story_text?.split('\n\n').filter(p => p.trim()) || [],
+        stats: content.about?.stats || [
+          { number: "2015", label: "GEGRÜNDET" },
+          { number: "48", label: "STUNDEN TEIG" },
+          { number: "480°", label: "OFENTEMP." },
+          { number: "100%", label: "IMPORTIERT" }
+        ],
+        philosophy_items: content.about?.philosophy || [
+          { title: "AUTHENTIZITÄT", description: "Jede Zutat stammt aus Italien." },
+          { title: "HANDWERKSKUNST", description: "Unser Teig fermentiert mindestens 48 Stunden." },
+          { title: "GEMEINSCHAFT", description: "Wir glauben, dass Pizza Menschen zusammenbringt." }
+        ],
+        quote_text: content.about?.quote_text?.split('.')[0] || "PIZZA IST NICHT NUR ESSEN. ES IST EINE",
+        quote_highlight: "SPRACHE",
+        quote_author: content.about?.quote_author || "— MARCO ROSSI, GRÜNDER"
+      };
+      await axios.put(`${API}/content/about`, aboutData, getAuthHeader());
+      toast.success("Über uns Seite gespeichert!");
+    } catch (e) {
+      console.error("Save about error:", e);
+      toast.error("Fehler beim Speichern");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (passwordData.new_password !== passwordData.confirm_password) {
