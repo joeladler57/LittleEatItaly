@@ -1057,9 +1057,21 @@ const ReservationsSection = ({ reservations, onUpdate }) => {
                           <p className="font-mono text-xs text-neutral-400">Uhr</p>
                         </div>
                         <div>
-                          <p className="font-anton text-pizza-white">
-                            #{res.reservation_number} • {res.customer_name}
-                          </p>
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <p className="font-anton text-pizza-white">
+                              #{res.reservation_number} • {res.customer_name}
+                            </p>
+                            {res.customer_info?.is_new && (
+                              <span className="px-2 py-0.5 bg-green-500/20 text-green-400 font-mono text-[10px]">
+                                ✨ NEU
+                              </span>
+                            )}
+                            {res.customer_info && !res.customer_info.is_new && (
+                              <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 font-mono text-[10px]">
+                                {res.customer_info.total_reservations} Res.
+                              </span>
+                            )}
+                          </div>
                           <p className="font-mono text-xs text-neutral-400">
                             {res.guests} {res.guests === 1 ? 'Person' : 'Personen'} • {res.customer_phone}
                           </p>
