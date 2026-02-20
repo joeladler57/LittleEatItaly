@@ -49,6 +49,7 @@ __all__ = [
     'customers_router',
     'terminal_router',
     'staff_router',
+    'statistics_router',
     # Customer functions
     'find_or_create_customer_record',
     'update_customer_order_stats',
