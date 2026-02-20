@@ -3,6 +3,8 @@ Routers package for Little Eat Italy
 """
 from .loyalty import router as loyalty_router
 from .customers import router as customers_router
+from .terminal import router as terminal_router
+from .staff import router as staff_router
 
 # Export functions that are used by main server.py
 from .customers import (
@@ -36,13 +38,16 @@ from .shared import (
     create_customer_token,
     get_or_create_admin,
     DEFAULT_ADMIN_USERNAME,
-    DEFAULT_ADMIN_PASSWORD
+    DEFAULT_ADMIN_PASSWORD,
+    ShopSettings
 )
 
 __all__ = [
     # Routers
     'loyalty_router',
     'customers_router',
+    'terminal_router',
+    'staff_router',
     # Customer functions
     'find_or_create_customer_record',
     'update_customer_order_stats',
@@ -70,5 +75,6 @@ __all__ = [
     'create_customer_token',
     'get_or_create_admin',
     'DEFAULT_ADMIN_USERNAME',
-    'DEFAULT_ADMIN_PASSWORD'
+    'DEFAULT_ADMIN_PASSWORD',
+    'ShopSettings'
 ]

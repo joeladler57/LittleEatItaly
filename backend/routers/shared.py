@@ -223,3 +223,34 @@ class AddPointsRequest(BaseModel):
     customer_id: str
     purchase_amount: float
     description: str = "Vor-Ort-Verzehr"
+
+# ============ SHOP SETTINGS MODEL ============
+
+class ShopSettings(BaseModel):
+    id: str = "shop_settings"
+    pickup_enabled: bool = True
+    reservation_enabled: bool = True
+    min_pickup_time_minutes: int = 30
+    max_pickup_days_ahead: int = 7
+    max_reservation_days_ahead: int = 30
+    opening_hours: Dict[str, Dict[str, str]] = {
+        "monday": {"open": "12:00", "close": "22:00"},
+        "tuesday": {"open": "12:00", "close": "22:00"},
+        "wednesday": {"open": "12:00", "close": "22:00"},
+        "thursday": {"open": "12:00", "close": "22:00"},
+        "friday": {"open": "12:00", "close": "00:00"},
+        "saturday": {"open": "12:00", "close": "00:00"},
+        "sunday": {"open": "16:00", "close": "22:00"},
+    }
+    closed_days: List[str] = []
+    restaurant_name: str = "Little Eat Italy"
+    restaurant_address: str = "Europastrasse 8, 57072 Siegen"
+    restaurant_phone: str = "0271 31924461"
+    restaurant_email: str = "bestellung@little-eat-italy.de"
+    staff_pin: str = "1234"
+    printer_enabled: bool = False
+    printer_ip: str = ""
+    printer_port: int = 9100
+    printer_device_id: str = "local_printer"
+    auto_print_on_accept: bool = True
+    receipt_template: Dict = {}
