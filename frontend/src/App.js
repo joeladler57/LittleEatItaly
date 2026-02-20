@@ -53,6 +53,7 @@ const AnimatedRoutes = () => {
         <Route path="/menu" element={<PageWrapper><MenuPage /></PageWrapper>} />
         <Route path="/bestellen" element={<PageWrapper><OrderPage /></PageWrapper>} />
         <Route path="/reservieren" element={<PageWrapper><ReservationPage /></PageWrapper>} />
+        <Route path="/konto" element={<PageWrapper><CustomerAccountPage /></PageWrapper>} />
         <Route path="/about" element={<PageWrapper><AboutPage /></PageWrapper>} />
         <Route path="/contact" element={<PageWrapper><ContactPage /></PageWrapper>} />
         <Route path="/impressum" element={<PageWrapper><ImpressumPage /></PageWrapper>} />
