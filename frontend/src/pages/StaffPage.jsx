@@ -31,6 +31,14 @@ const StaffPage = () => {
   const [reservations, setReservations] = useState([]);
   const [shopSettings, setShopSettings] = useState(null);
 
+  // Loyalty states
+  const [loyaltySearch, setLoyaltySearch] = useState("");
+  const [loyaltyCustomers, setLoyaltyCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [purchaseAmount, setPurchaseAmount] = useState("");
+  const [isAddingPoints, setIsAddingPoints] = useState(false);
+  const [loyaltySettings, setLoyaltySettings] = useState(null);
+
   // Printer hook
   const { printOrder, isPrinting } = usePrinter();
 
