@@ -1323,4 +1323,272 @@ const PhoneReservationModal = ({ onClose, onSuccess }) => {
   );
 };
 
+// Loyalty Tab Component
+const LoyaltyTab = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [purchaseAmount, setPurchaseAmount] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [loyaltySettings, setLoyaltySettings] = useState(null);
+  const [qrMode, setQrMode] = useState(false);
+  const [qrInput, setQrInput] = useState("");
+
+  useEffect(() => {
+    fetchLoyaltySettings();
+  }, []);
+
+  const fetchLoyaltySettings = async () => {
+    try {
+      const res = await axios.get(`${API}/loyalty/settings`);
+      setLoyaltySettings(res.data);
+    } catch (e) {
+      console.error("Error fetching loyalty settings:", e);
+    }
+  };
+
+  const searchCustomers = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    try {
+      const token = localStorage.getItem("staff_token");
+      const res = await axios.get(`${API}/staff/loyalty/search?query=${encodeURIComponent(searchQuery)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCustomers(res.data);
+    } catch (e) {
+      toast.error("Fehler bei der Suche");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleQrScan = async () => {
+    if (!qrInput.trim()) return;
+    setIsSearching(true);
+    try {
+      const token = localStorage.getItem("staff_token");
+      const res = await axios.post(`${API}/staff/loyalty/scan?qr_data=${encodeURIComponent(qrInput)}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSelectedCustomer(res.data);
+      setQrInput("");
+      setQrMode(false);
+      toast.success(`Kunde gefunden: ${res.data.name}`);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Ungültiger QR-Code");
+      setQrInput("");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const addPoints = async () => {
+    if (!selectedCustomer || !purchaseAmount) return;
+    const amount = parseFloat(purchaseAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Bitte gültigen Betrag eingeben");
+      return;
+    }
+    setIsAdding(true);
+    try {
+      const token = localStorage.getItem("staff_token");
+      const res = await axios.post(`${API}/staff/loyalty/add-points`, {
+        customer_id: selectedCustomer.id,
+        purchase_amount: amount,
+        description: "Vor-Ort-Verzehr"
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(res.data.message);
+      setSelectedCustomer({
+        ...selectedCustomer,
+        loyalty_points: res.data.new_total
+      });
+      setPurchaseAmount("");
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Fehler beim Hinzufügen");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const calculatePoints = (amount) => {
+    if (!loyaltySettings || !amount) return 0;
+    return Math.floor(parseFloat(amount) * (loyaltySettings.points_per_euro || 1));
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Mode Toggle */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => { setQrMode(false); setSelectedCustomer(null); }}
+          className={`flex-1 py-3 font-anton text-sm flex items-center justify-center gap-2 ${
+            !qrMode ? "bg-yellow-500 text-black" : "bg-neutral-800 text-neutral-400"
+          }`}
+        >
+          <Search className="w-5 h-5" />
+          SUCHEN
+        </button>
+        <button
+          onClick={() => { setQrMode(true); setSelectedCustomer(null); }}
+          className={`flex-1 py-3 font-anton text-sm flex items-center justify-center gap-2 ${
+            qrMode ? "bg-yellow-500 text-black" : "bg-neutral-800 text-neutral-400"
+          }`}
+        >
+          <QrCode className="w-5 h-5" />
+          QR-CODE
+        </button>
+      </div>
+
+      {/* Search Mode */}
+      {!qrMode && !selectedCustomer && (
+        <div className="bg-neutral-900 p-4 border border-neutral-800">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && searchCustomers()}
+              placeholder="Name, E-Mail oder Telefon..."
+              className="flex-1 bg-neutral-800 border border-neutral-700 text-white px-4 py-3 font-mono focus:border-yellow-500 outline-none"
+            />
+            <button
+              onClick={searchCustomers}
+              disabled={isSearching}
+              className="bg-yellow-500 text-black px-6 py-3 font-anton hover:bg-yellow-400"
+            >
+              {isSearching ? "..." : "SUCHEN"}
+            </button>
+          </div>
+
+          {/* Search Results */}
+          {customers.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {customers.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setSelectedCustomer(c)}
+                  className="w-full p-3 bg-neutral-800 hover:bg-neutral-700 text-left flex justify-between items-center"
+                >
+                  <div>
+                    <p className="font-mono text-white">{c.name}</p>
+                    <p className="font-mono text-xs text-neutral-400">{c.email} • {c.phone}</p>
+                  </div>
+                  <span className="font-anton text-yellow-400">{c.loyalty_points} P</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* QR Mode */}
+      {qrMode && !selectedCustomer && (
+        <div className="bg-neutral-900 p-4 border border-neutral-800">
+          <p className="font-mono text-sm text-neutral-400 mb-3 text-center">
+            Scanne den QR-Code des Kunden oder gib ihn manuell ein
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={qrInput}
+              onChange={(e) => setQrInput(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleQrScan()}
+              placeholder="LEI-LOYALTY:..."
+              className="flex-1 bg-neutral-800 border border-neutral-700 text-white px-4 py-3 font-mono focus:border-yellow-500 outline-none"
+              autoFocus
+            />
+            <button
+              onClick={handleQrScan}
+              disabled={isSearching}
+              className="bg-yellow-500 text-black px-6 py-3 font-anton hover:bg-yellow-400"
+            >
+              {isSearching ? "..." : "SCAN"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Selected Customer */}
+      {selectedCustomer && (
+        <div className="bg-neutral-900 border border-yellow-500/50 p-4">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h3 className="font-anton text-xl text-white">{selectedCustomer.name}</h3>
+              <p className="font-mono text-xs text-neutral-400">{selectedCustomer.email}</p>
+              <p className="font-mono text-xs text-neutral-400">{selectedCustomer.phone}</p>
+            </div>
+            <button
+              onClick={() => setSelectedCustomer(null)}
+              className="text-neutral-500 hover:text-white"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Current Points */}
+          <div className="bg-yellow-500/20 p-4 mb-4 text-center">
+            <p className="font-mono text-xs text-yellow-400/70">AKTUELLER PUNKTESTAND</p>
+            <p className="font-anton text-4xl text-yellow-400">{selectedCustomer.loyalty_points}</p>
+          </div>
+
+          {/* Add Points */}
+          <div className="space-y-3">
+            <p className="font-mono text-sm text-neutral-400">PUNKTE HINZUFÜGEN:</p>
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <input
+                  type="number"
+                  value={purchaseAmount}
+                  onChange={(e) => setPurchaseAmount(e.target.value)}
+                  placeholder="Umsatz in €"
+                  className="w-full bg-neutral-800 border border-neutral-700 text-white px-4 py-3 font-mono focus:border-yellow-500 outline-none text-xl"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500">€</span>
+              </div>
+            </div>
+            
+            {purchaseAmount && (
+              <div className="bg-green-500/20 p-3 flex justify-between items-center">
+                <span className="font-mono text-sm text-green-400">
+                  = {calculatePoints(purchaseAmount)} Punkte
+                </span>
+                <span className="font-mono text-xs text-neutral-500">
+                  ({loyaltySettings?.points_per_euro || 1} P/€)
+                </span>
+              </div>
+            )}
+
+            <button
+              onClick={addPoints}
+              disabled={isAdding || !purchaseAmount}
+              className={`w-full py-4 font-anton text-lg flex items-center justify-center gap-2 ${
+                purchaseAmount ? "bg-green-500 hover:bg-green-400 text-black" : "bg-neutral-700 text-neutral-500"
+              }`}
+            >
+              <Star className="w-5 h-5" />
+              {isAdding ? "WIRD HINZUGEFÜGT..." : "PUNKTE GUTSCHREIBEN"}
+            </button>
+          </div>
+
+          {/* Customer Stats */}
+          <div className="mt-4 pt-4 border-t border-neutral-800 grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <p className="font-mono text-xs text-neutral-500">BESTELLUNGEN</p>
+              <p className="font-anton text-xl text-white">{selectedCustomer.total_orders || 0}</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-xs text-neutral-500">GESAMTUMSATZ</p>
+              <p className="font-anton text-xl text-white">{(selectedCustomer.total_spent || 0).toFixed(2)}€</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default StaffPage;
