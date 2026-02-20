@@ -146,6 +146,25 @@ const Navbar = () => {
                   </Link>
                 </motion.div>
               ))}
+              {/* Account Link */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: navLinks.length * 0.1 }}
+              >
+                <Link
+                  to="/konto"
+                  data-testid="mobile-nav-link-konto"
+                  className={`flex items-center gap-2 font-anton text-2xl tracking-wider ${
+                    location.pathname === "/konto"
+                      ? "text-pizza-red"
+                      : "text-pizza-white"
+                  }`}
+                >
+                  <User className="w-6 h-6" />
+                  MEIN KONTO
+                </Link>
+              </motion.div>
             </div>
           </motion.div>
         )}
