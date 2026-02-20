@@ -420,10 +420,9 @@ GET  /api/staff/loyalty/search     # Kunde suchen
 
 ## Backlog / Zukünftige Features
 - E-Mail-Benachrichtigungen aktivieren (Resend API-Key benötigt)
+- Prämien-Einlösung im Kundenkonto fertigstellen ("EINLÖSEN" Button)
 - Statistiken-Dashboard für Bestellungen/Reservierungen
 - Weitere Refaktorisierung: Terminal, Admin, Orders Endpoints in eigene Router
-- Prämien-Einlösung im Frontend fertigstellen ("EINLÖSEN" Button)
-- Staff QR-Code-Scanner im Frontend implementieren
 - Mehrsprachigkeit (DE/EN)
 
 
