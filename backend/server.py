@@ -923,7 +923,7 @@ def build_escpos_receipt(order: dict, settings: dict) -> bytes:
     
     return bytes(data)
 
-async def send_to_network_printer(printer_ip: str, printer_port: int, data: bytes, timeout: float = 5.0) -> dict:
+async def send_to_network_printer(printer_ip: str, printer_port: int, data: bytes, timeout: float = 3.0) -> dict:
     """Send ESC/POS data to network printer via raw socket (Port 9100)"""
     try:
         # Create socket connection
@@ -937,11 +937,15 @@ async def send_to_network_printer(printer_ip: str, printer_port: int, data: byte
                 sock.sendall(data)
                 return {"success": True, "message": "Printed successfully"}
             except socket.timeout:
-                return {"success": False, "error": "Connection timeout - printer not responding"}
+                return {"success": False, "error": "Drucker nicht erreichbar (Timeout)"}
             except ConnectionRefusedError:
-                return {"success": False, "error": "Connection refused - check printer IP and port"}
+                return {"success": False, "error": "Verbindung abgelehnt - Drucker-IP pruefen"}
             except socket.gaierror:
-                return {"success": False, "error": "Invalid IP address"}
+                return {"success": False, "error": "Ungueltige IP-Adresse"}
+            except OSError as e:
+                if "Network is unreachable" in str(e):
+                    return {"success": False, "error": "Netzwerk nicht erreichbar"}
+                return {"success": False, "error": str(e)}
             except Exception as e:
                 return {"success": False, "error": str(e)}
             finally:
