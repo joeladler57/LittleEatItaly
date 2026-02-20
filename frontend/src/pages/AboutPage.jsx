@@ -335,17 +335,17 @@ Heute erzählen diese Wände unsere Geschichte. Wir sind nicht nur eine Pizzeria
               "
             </motion.div>
             <blockquote className="font-anton text-2xl sm:text-3xl lg:text-4xl tracking-wider text-pizza-white leading-relaxed">
-              PIZZA IST NICHT NUR ESSEN.<br />
-              ES IST EINE <motion.span
-                className="text-pizza-red inline-block"
-                animate={{ 
-                  textShadow: ["0 0 0px #FF1F1F", "0 0 20px #FF1F1F", "0 0 0px #FF1F1F"],
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >SPRACHE</motion.span>.
+              {quoteText.split('.').map((sentence, i) => (
+                <span key={i}>
+                  {sentence.trim()}
+                  {i < quoteText.split('.').length - 1 && sentence.trim() && (
+                    <>.<br /></>
+                  )}
+                </span>
+              ))}
             </blockquote>
             <cite className="block font-mono text-sm text-neutral-300 mt-8">
-              — MARCO ROSSI, GRÜNDER
+              — {quoteAuthor}
             </cite>
           </motion.div>
         </div>
