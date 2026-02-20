@@ -304,7 +304,18 @@ const DisplayPage = () => {
               <h1 className="font-anton text-2xl text-white tracking-wider">RESERVIERUNGEN</h1>
               <p className="text-zinc-400 text-sm">{dateStr}</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {/* Print Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={printReservationList}
+                disabled={isPrinting || activeReservations.length === 0}
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+                title="Liste drucken"
+              >
+                <Printer className={`w-4 h-4 ${isPrinting ? 'animate-pulse' : ''}`} />
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
