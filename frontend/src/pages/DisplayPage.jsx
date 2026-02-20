@@ -166,6 +166,27 @@ const DisplayPage = () => {
     setEditingNoteValue("");
   };
 
+  const printReservationList = async () => {
+    const token = localStorage.getItem("staff_token");
+    if (!token) return;
+
+    setIsPrinting(true);
+    try {
+      const response = await axios.post(
+        `${API}/printer/reservations`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(response.data.message || "Liste wird gedruckt...");
+    } catch (error) {
+      const message = error.response?.data?.detail || "Druckfehler";
+      toast.error(message);
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
   // PIN Input Component
   const PinInput = () => (
     <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-black flex flex-col items-center justify-center p-6">
