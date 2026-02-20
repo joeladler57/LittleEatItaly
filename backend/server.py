@@ -923,7 +923,7 @@ def build_escpos_receipt(order: dict, settings: dict) -> bytes:
     
     return bytes(data)
 
-async def send_to_network_printer(printer_ip: str, printer_port: int, data: bytes, timeout: float = 3.0) -> dict:
+async def send_to_network_printer(printer_ip: str, printer_port: int, data: bytes, timeout: float = 1.5) -> dict:
     """Send ESC/POS data to network printer via raw socket (Port 9100)"""
     try:
         # Create socket connection
