@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Druck-Station v2.2.0</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000; 
+            color: #fff; 
+            min-height: 100vh;
+        }
+        .container { max-width: 400px; margin: 0 auto; padding: 16px; }
+        .header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .header h1 { font-size: 20px; font-weight: bold; }
+        .header .subtitle { font-size: 12px; color: #888; }
+        .version { color: #22c55e; font-size: 12px; }
+        .card { background: #1a1a1a; border: 1px solid #333; padding: 16px; margin-bottom: 12px; border-radius: 4px; }
+        .card.blue-border { border-color: #3b82f6; }
+        .btn { 
+            width: 100%; padding: 14px; font-size: 16px; font-weight: bold; 
+            border: none; border-radius: 4px; cursor: pointer; margin-top: 8px;
+        }
+        .btn-green { background: #22c55e; color: #fff; }
+        .btn-green:hover { background: #16a34a; }
+        .btn-green:disabled { background: #333; color: #666; }
+        .btn-gray { background: #333; color: #fff; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; text-align: center; }
+        .stats .number { font-size: 48px; font-weight: bold; }
+        .stats .label { font-size: 12px; color: #888; }
+        .yellow { color: #eab308; }
+        .green { color: #22c55e; }
+        .blue { color: #3b82f6; }
+        .status-box { padding: 32px; text-align: center; border: 1px solid; border-radius: 4px; }
+        .status-box.waiting { background: rgba(234, 179, 8, 0.1); border-color: #eab308; }
+        .status-box.ready { background: rgba(34, 197, 94, 0.1); border-color: #22c55e; }
+        .status-box.printing { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
+        .queue-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #1a1a1a; border: 1px solid #333; margin-bottom: 8px; }
+        .queue-item.reservation { border-color: #3b82f6; }
+        .queue-item h3 { font-size: 18px; }
+        .queue-item .meta { font-size: 12px; color: #888; }
+        .pin-display { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; }
+        .pin-box { width: 48px; height: 48px; border: 2px solid #333; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .pin-box.filled { border-color: #22c55e; background: rgba(34, 197, 94, 0.2); }
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+        .numpad button { padding: 16px; font-size: 24px; font-weight: bold; background: #333; color: #fff; border: none; border-radius: 4px; }
+        .numpad button:active { background: #555; }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .settings-row label { font-size: 12px; color: #888; }
+        .settings-row input { background: #000; border: 1px solid #333; color: #fff; padding: 8px; width: 200px; font-family: monospace; }
+        .info { font-size: 12px; color: #666; text-align: center; margin-top: 16px; }
+        .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #22c55e; color: #fff; padding: 12px 24px; border-radius: 4px; display: none; z-index: 1000; }
+        .toast.error { background: #ef4444; }
+        .toast.show { display: block; }
+        .icon { font-size: 48px; margin-bottom: 12px; }
+        .center { text-align: center; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="toast" class="toast"></div>
+    
+    <!-- Login Screen -->
+    <div id="loginScreen" class="container center">
+        <div style="padding-top: 60px;">
+            <div class="icon">🖨️</div>
+            <h1 style="font-size: 24px; margin-bottom: 8px;">DRUCK-STATION</h1>
+            <p style="color: #888; margin-bottom: 8px;">PIN eingeben zum Verbinden</p>
+            <p class="version">v2.2.0</p>
+            
+            <div class="pin-display" style="margin-top: 32px;">
+                <div class="pin-box" id="pin0"></div>
+                <div class="pin-box" id="pin1"></div>
+                <div class="pin-box" id="pin2"></div>
+                <div class="pin-box" id="pin3"></div>
+            </div>
+            
+            <div class="numpad">
+                <button onclick="addPin('1')">1</button>
+                <button onclick="addPin('2')">2</button>
+                <button onclick="addPin('3')">3</button>
+                <button onclick="addPin('4')">4</button>
+                <button onclick="addPin('5')">5</button>
+                <button onclick="addPin('6')">6</button>
+                <button onclick="addPin('7')">7</button>
+                <button onclick="addPin('8')">8</button>
+                <button onclick="addPin('9')">9</button>
+                <button></button>
+                <button onclick="addPin('0')">0</button>
+                <button onclick="removePin()">←</button>
+            </div>
+            
+            <button class="btn btn-green" id="loginBtn" onclick="login()" disabled>VERBINDEN</button>
+        </div>
+    </div>
+    
+    <!-- Dashboard -->
+    <div id="dashboard" class="container hidden">
+        <div class="header">
+            <div>🖨️</div>
+            <div>
+                <h1>DRUCK-STATION</h1>
+                <p class="subtitle">Little Eat Italy • <span class="version">v2.2.0</span></p>
+            </div>
+        </div>
+        
+        <!-- Printer Connection -->
+        <div class="card" id="printerCard">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong id="printerStatus">DRUCKER VERBINDEN</strong>
+                    <p style="font-size: 12px; color: #888;" id="printerAddress">192.168.2.129:8008</p>
+                </div>
+                <button class="btn btn-green" style="width: auto; padding: 8px 16px;" id="connectBtn" onclick="togglePrinter()">Verbinden</button>
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="card">
+            <div class="stats">
+                <div>
+                    <p class="label">WARTESCHLANGE</p>
+                    <p class="number yellow" id="queueCount">0</p>
+                </div>
+                <div>
+                    <p class="label">GEDRUCKT</p>
+                    <p class="number green" id="printedCount">0</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status -->
+        <div class="status-box waiting" id="statusBox">
+            <div class="icon" id="statusIcon">🖨️</div>
+            <p style="font-size: 20px; font-weight: bold;" id="statusText">DRUCKER VERBINDEN</p>
+            <p style="font-size: 14px; color: #888; margin-top: 8px;" id="statusSubtext">Oben auf "Verbinden" tippen</p>
+        </div>
+        
+        <!-- Queue -->
+        <div id="queueContainer" style="margin-top: 16px;"></div>
+        
+        <!-- Test Print -->
+        <button class="btn btn-gray" id="testPrintBtn" onclick="testPrint()" style="margin-top: 16px;" disabled>🖨️ Testdruck</button>
+        
+        <p class="info">Dieses Gerät muss im gleichen WLAN wie der Drucker sein!</p>
+        
+        <!-- Settings -->
+        <div class="card" style="margin-top: 16px;">
+            <div class="settings-row">
+                <label>IP-ADRESSE</label>
+                <input type="text" id="printerIP" value="192.168.2.129">
+            </div>
+            <div class="settings-row">
+                <label>PORT</label>
+                <input type="number" id="printerPort" value="8008">
+            </div>
+            <button class="btn btn-gray" onclick="saveSettings()">Einstellungen speichern</button>
+        </div>
+    </div>
+
+    <script>
+        // ===========================================
+        // CONFIGURATION - CHANGE THIS TO YOUR SERVER
+        // ===========================================
+        const API_URL = 'https://pizza-ordering-app-1.preview.emergentagent.com/api';
+        
+        // State
+        let pin = '';
+        let token = '';
+        let printerConnected = false;
+        let printQueue = [];
+        let printedCount = 0;
+        let isPrinting = false;
+        let pollingInterval = null;
+        let printerIP = localStorage.getItem('printer_ip') || '192.168.2.129';
+        let printerPort = parseInt(localStorage.getItem('printer_port')) || 8008;
+        
+        // Initialize
+        document.getElementById('printerIP').value = printerIP;
+        document.getElementById('printerPort').value = printerPort;
+        document.getElementById('printerAddress').textContent = `${printerIP}:${printerPort}`;
+        
+        // PIN Functions
+        function addPin(num) {
+            if (pin.length < 4) {
+                pin += num;
+                updatePinDisplay();
+            }
+        }
+        
+        function removePin() {
+            pin = pin.slice(0, -1);
+            updatePinDisplay();
+        }
+        
+        function updatePinDisplay() {
+            for (let i = 0; i < 4; i++) {
+                const box = document.getElementById('pin' + i);
+                if (pin[i]) {
+                    box.textContent = '•';
+                    box.classList.add('filled');
+                } else {
+                    box.textContent = '';
+                    box.classList.remove('filled');
+                }
+            }
+            document.getElementById('loginBtn').disabled = pin.length !== 4;
+        }
+        
+        // Login
+        async function login() {
+            try {
+                const response = await fetch(`${API_URL}/staff/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin: pin })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    token = data.access_token;
+                    localStorage.setItem('print_station_token', token);
+                    showDashboard();
+                    showToast('Angemeldet!');
+                } else {
+                    showToast('Falscher PIN', true);
+                    pin = '';
+                    updatePinDisplay();
+                }
+            } catch (e) {
+                showToast('Verbindungsfehler', true);
+            }
+        }
+        
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            startPolling();
+        }
+        
+        // Polling
+        function startPolling() {
+            fetchQueue();
+            pollingInterval = setInterval(fetchQueue, 3000);
+        }
+        
+        async function fetchQueue() {
+            try {
+                const response = await fetch(`${API_URL}/print-queue`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const jobs = await response.json();
+                    printQueue = jobs.filter(j => j.status === 'pending');
+                    updateQueueDisplay();
+                    
+                    // Auto-print if connected
+                    if (printerConnected && printQueue.length > 0 && !isPrinting) {
+                        processPrintJob(printQueue[0]);
+                    }
+                }
+            } catch (e) {
+                console.error('Fetch queue error:', e);
+            }
+        }
+        
+        function updateQueueDisplay() {
+            document.getElementById('queueCount').textContent = printQueue.length;
+            document.getElementById('printedCount').textContent = printedCount;
+            
+            const container = document.getElementById('queueContainer');
+            container.innerHTML = '';
+            
+            if (printQueue.length > 0) {
+                const label = document.createElement('p');
+                label.style.cssText = 'font-size: 12px; color: #888; margin-bottom: 8px;';
+                label.textContent = 'WARTESCHLANGE:';
+                container.appendChild(label);
+            }
+            
+            printQueue.forEach(job => {
+                const isReservation = job.job_type === 'reservations' || 
+                                     job.order_data?.job_type === 'reservations' ||
+                                     job.order_data?.reservations !== undefined;
+                
+                const item = document.createElement('div');
+                item.className = 'queue-item' + (isReservation ? ' reservation' : '');
+                
+                if (isReservation) {
+                    item.innerHTML = `
+                        <div>
+                            <h3 class="blue">📋 RESERVIERUNGEN</h3>
+                            <p class="meta">${job.order_data?.total_reservations || '?'} Reservierungen • ${job.order_data?.total_guests || '?'} Gäste</p>
+                        </div>
+                        <button class="btn btn-green" style="width:auto;padding:8px 16px;margin:0;" onclick="processPrintJob(printQueue.find(j=>j.id==='${job.id}'))" ${!printerConnected || isPrinting ? 'disabled' : ''}>Drucken</button>
+                    `;
+                } else {
+                    item.innerHTML = `
+                        <div>
+                            <h3>#${job.order_number}</h3>
+                            <p class="meta">${new Date(job.created_at).toLocaleTimeString('de-DE')}</p>
+                        </div>
+                        <button class="btn btn-green" style="width:auto;padding:8px 16px;margin:0;" onclick="processPrintJob(printQueue.find(j=>j.id==='${job.id}'))" ${!printerConnected || isPrinting ? 'disabled' : ''}>Drucken</button>
+                    `;
+                }
+                container.appendChild(item);
+            });
+            
+            updateStatus();
+        }
+        
+        function updateStatus() {
+            const box = document.getElementById('statusBox');
+            const icon = document.getElementById('statusIcon');
+            const text = document.getElementById('statusText');
+            const subtext = document.getElementById('statusSubtext');
+            
+            if (!printerConnected) {
+                box.className = 'status-box waiting';
+                icon.textContent = '🖨️';
+                text.textContent = 'DRUCKER VERBINDEN';
+                text.style.color = '#eab308';
+                subtext.textContent = 'Oben auf "Verbinden" tippen';
+            } else if (isPrinting) {
+                box.className = 'status-box printing';
+                icon.textContent = '⏳';
+                text.textContent = 'DRUCKT...';
+                text.style.color = '#3b82f6';
+                subtext.textContent = '';
+            } else if (printQueue.length > 0) {
+                box.className = 'status-box waiting';
+                icon.textContent = '🖨️';
+                text.textContent = `${printQueue.length} BON(S) WARTEN`;
+                text.style.color = '#eab308';
+                subtext.textContent = '';
+            } else {
+                box.className = 'status-box ready';
+                icon.textContent = '✅';
+                text.textContent = 'BEREIT';
+                text.style.color = '#22c55e';
+                subtext.textContent = 'Warte auf Bestellungen...';
+            }
+        }
+        
+        // Printer
+        function togglePrinter() {
+            if (printerConnected) {
+                printerConnected = false;
+                document.getElementById('connectBtn').textContent = 'Verbinden';
+                document.getElementById('printerCard').style.borderColor = '#333';
+                document.getElementById('printerStatus').textContent = 'DRUCKER VERBINDEN';
+                document.getElementById('testPrintBtn').disabled = true;
+                showToast('Drucker getrennt');
+            } else {
+                printerConnected = true;
+                document.getElementById('connectBtn').textContent = 'Trennen';
+                document.getElementById('printerCard').style.borderColor = '#22c55e';
+                document.getElementById('printerStatus').textContent = 'DRUCKER BEREIT';
+                document.getElementById('testPrintBtn').disabled = false;
+                showToast('Drucker bereit!');
+            }
+            updateStatus();
+            updateQueueDisplay();
+        }
+        
+        function saveSettings() {
+            printerIP = document.getElementById('printerIP').value;
+            printerPort = parseInt(document.getElementById('printerPort').value);
+            localStorage.setItem('printer_ip', printerIP);
+            localStorage.setItem('printer_port', printerPort.toString());
+            document.getElementById('printerAddress').textContent = `${printerIP}:${printerPort}`;
+            printerConnected = false;
+            togglePrinter();
+            showToast('Einstellungen gespeichert!');
+        }
+        
+        // Print Functions
+        async function processPrintJob(job) {
+            if (isPrinting || !job) return;
+            
+            isPrinting = true;
+            updateStatus();
+            
+            try {
+                const printData = job.order_data || job;
+                const success = await printReceipt(printData);
+                
+                if (success) {
+                    try {
+                        await fetch(`${API_URL}/print-queue/${job.id}/status`, {
+                            method: 'PUT',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}` 
+                            },
+                            body: JSON.stringify({ status: 'completed' })
+                        });
+                    } catch (e) {}
+                    
+                    printedCount++;
+                    
+                    const isReservation = printData.job_type === 'reservations' || 
+                                         printData.reservations !== undefined ||
+                                         (printData.total_reservations !== undefined && printData.date_formatted !== undefined);
+                    
+                    if (isReservation) {
+                        showToast('✅ Reservierungsliste gedruckt!');
+                    } else {
+                        showToast(`✅ Bon #${job.order_number} gedruckt!`);
+                    }
+                    
+                    printQueue = printQueue.filter(j => j.id !== job.id);
+                    updateQueueDisplay();
+                }
+            } catch (e) {
+                showToast('Druckfehler', true);
+            } finally {
+                isPrinting = false;
+                updateStatus();
+            }
+        }
+        
+        function printReceipt(order) {
+            return new Promise((resolve) => {
+                try {
+                    const url = `http://${printerIP}:${printerPort}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000`;
+                    
+                    const isReservationList = order.job_type === 'reservations' || 
+                                             order.reservations !== undefined ||
+                                             (order.total_reservations !== undefined && order.date_formatted !== undefined);
+                    
+                    let receiptXML;
+                    if (isReservationList) {
+                        console.log('=== PRINTING RESERVATION LIST ===');
+                        receiptXML = buildReservationListXML(order);
+                    } else {
+                        console.log('=== PRINTING ORDER RECEIPT ===');
+                        receiptXML = buildReceiptXML(order);
+                    }
+                    
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', url, true);
+                    xhr.setRequestHeader('Content-Type', 'application/xml; charset=UTF-8');
+                    xhr.timeout = 15000;
+                    
+                    xhr.onload = function() {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            if (xhr.responseText.includes('success="false"')) {
+                                resolve(false);
+                            } else {
+                                resolve(true);
+                            }
+                        } else {
+                            resolve(false);
+                        }
+                    };
+                    
+                    xhr.onerror = function() { resolve(true); };
+                    xhr.ontimeout = function() { resolve(false); };
+                    xhr.send(receiptXML);
+                    
+                } catch (e) {
+                    resolve(false);
+                }
+            });
+        }
+        
+        function buildReservationListXML(data) {
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+<text lang="de"/>`;
+            xml += `<text align="center"/><text font="font_a" dw="true" dh="true" em="true"/><text>RESERVIERUNGEN&#10;</text><text dw="false" dh="false" em="false"/>`;
+            xml += `<text align="center"/><text dw="true" em="true"/><text>${escapeXML(data.date_formatted || data.date)}&#10;</text><text dw="false" em="false"/>`;
+            xml += `<text>${escapeXML(data.restaurant_name || 'Little Eat Italy')}&#10;</text>`;
+            xml += `<text>================================&#10;</text>`;
+            xml += `<text align="left"/><text em="true"/><text>Gesamt: ${data.total_reservations} Reservierungen&#10;</text>`;
+            xml += `<text>Gaeste: ${data.total_guests} Personen&#10;</text><text em="false"/>`;
+            xml += `<text>--------------------------------&#10;</text><feed line="1"/>`;
+            
+            const reservations = data.reservations || [];
+            for (let i = 0; i < reservations.length; i++) {
+                const r = reservations[i];
+                xml += `<text dw="true" em="true"/><text>${escapeXML(r.time)} Uhr  [${r.guests} P]&#10;</text><text dw="false" em="false"/>`;
+                xml += `<text em="true"/><text>${escapeXML(r.customer_name)}&#10;</text><text em="false"/>`;
+                if (r.phone) xml += `<text>Tel: ${escapeXML(r.phone)}&#10;</text>`;
+                if (r.notes && r.notes !== '[Telefonisch]') xml += `<text>* ${escapeXML(r.notes.replace('[Telefonisch] ', ''))}&#10;</text>`;
+                if (r.staff_note) xml += `<text em="true"/><text>Tisch: ${escapeXML(r.staff_note)}&#10;</text><text em="false"/>`;
+                if (r.status === 'completed') xml += `<text>[ANGEKOMMEN]&#10;</text>`;
+                else if (r.status === 'confirmed') xml += `<text>[Bestaetigt]&#10;</text>`;
+                if (i < reservations.length - 1) xml += `<text>- - - - - - - - - - - - - - - -&#10;</text>`;
+            }
+            
+            xml += `<text>================================&#10;</text>`;
+            xml += `<text align="center"/><text>Gedruckt: ${new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})} Uhr&#10;</text>`;
+            xml += `<feed line="4"/><cut/></epos-print>`;
+            return xml;
+        }
+        
+        function buildReceiptXML(order) {
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+<text lang="de"/>`;
+            xml += `<text align="center"/><text font="font_a" dw="true" dh="true" em="true"/><text>Little Eat Italy&#10;</text><text dw="false" dh="false" em="false"/>`;
+            xml += `<text>--------------------------------&#10;</text>`;
+            xml += `<text align="center"/><text dw="true" dh="true" em="true"/><text>#${escapeXML(String(order.order_number || '?'))}&#10;</text><text dw="false" dh="false" em="false"/>`;
+            const date = new Date(order.created_at);
+            xml += `<text>${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}&#10;</text>`;
+            xml += `<text align="left"/><text em="true"/><text>Kunde: ${escapeXML(order.customer_name || '')}&#10;</text><text em="false"/>`;
+            if (order.customer_phone) xml += `<text>Tel: ${escapeXML(order.customer_phone)}&#10;</text>`;
+            xml += `<feed line="1"/><text align="center"/><text dw="true" dh="true" em="true"/>`;
+            xml += `<text>================&#10;</text>`;
+            xml += `<text>ABHOLUNG: ${escapeXML(order.confirmed_pickup_time || order.pickup_time || 'N/A')}&#10;</text>`;
+            xml += `<text>================&#10;</text><text dw="false" dh="false" em="false"/>`;
+            xml += `<text align="left"/><text>--------------------------------&#10;</text>`;
+            for (const item of (order.items || [])) {
+                let itemLine = (item.quantity || 1) + 'x ' + (item.item_name || '');
+                if (item.size_name) itemLine += ' (' + item.size_name + ')';
+                const price = (item.total_price || 0).toFixed(2) + '€';
+                const spaces = Math.max(1, 32 - itemLine.length - price.length);
+                xml += `<text>${escapeXML(itemLine)}${' '.repeat(spaces)}${price}&#10;</text>`;
+            }
+            xml += `<text>--------------------------------&#10;</text>`;
+            if (order.notes) xml += `<text>* ${escapeXML(order.notes)}&#10;</text>`;
+            xml += `<text em="true"/>`;
+            const totalPrice = (order.total || 0).toFixed(2) + '€';
+            xml += `<text>GESAMT:${' '.repeat(Math.max(1, 25 - totalPrice.length))}${totalPrice}&#10;</text><text em="false"/>`;
+            xml += `<text>--------------------------------&#10;</text>`;
+            xml += `<text align="center"/><text>Vielen Dank!&#10;</text>`;
+            xml += `<feed line="4"/><cut/></epos-print>`;
+            return xml;
+        }
+        
+        function escapeXML(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        
+        async function testPrint() {
+            if (!printerConnected) return;
+            isPrinting = true;
+            updateStatus();
+            const testOrder = {
+                order_number: 'TEST',
+                customer_name: 'Test Kunde',
+                pickup_time: 'JETZT',
+                created_at: new Date().toISOString(),
+                items: [{ quantity: 1, item_name: 'Test Pizza', size_name: '32cm', total_price: 10.00 }],
+                total: 10.00,
+                notes: 'Testdruck'
+            };
+            const success = await printReceipt(testOrder);
+            if (success) { printedCount++; showToast('✅ Testdruck gesendet!'); }
+            else showToast('Testdruck fehlgeschlagen', true);
+            isPrinting = false;
+            updateStatus();
+            updateQueueDisplay();
+        }
+        
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => { toast.className = 'toast'; }, 3000);
+        }
+        
+        const savedToken = localStorage.getItem('print_station_token');
+        if (savedToken) {
+            token = savedToken;
+            fetch(`${API_URL}/staff/verify`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(r => { if (r.ok) showDashboard(); }).catch(() => {});
+        }
+    </script>
+</body>
+</html>
