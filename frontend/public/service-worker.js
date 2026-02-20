@@ -1,10 +1,12 @@
-const CACHE_NAME = 'little-eat-italy-v3';
+const CACHE_NAME = 'little-eat-italy-v4-forced-update';
+const CACHE_VERSION = '2.2.0-20260220';
 const urlsToCache = [
   '/sounds/notification.mp3'
 ];
 
-// Install event - cache static assets
+// Force update on every install
 self.addEventListener('install', (event) => {
+  console.log('Service Worker installing, version:', CACHE_VERSION);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -13,6 +15,7 @@ self.addEventListener('install', (event) => {
         });
       })
   );
+  // Force immediate activation
   self.skipWaiting();
 });
 
