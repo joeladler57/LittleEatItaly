@@ -4003,6 +4003,257 @@ const TerminalSection = ({ onUpdate }) => {
   );
 };
 
+// Push Notifications Section Component
+const PushNotificationsSection = () => {
+  const [stats, setStats] = useState({ total_subscriptions: 0, with_account: 0, anonymous: 0 });
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [message, setMessage] = useState({
+    title: "",
+    body: "",
+    url: "/",
+    target: "all"
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem("admin_token");
+      const headers = { Authorization: `Bearer ${token}` };
+      
+      const [statsRes, historyRes] = await Promise.all([
+        axios.get(`${API}/push/customer/stats`, { headers }),
+        axios.get(`${API}/push/broadcasts?limit=10`, { headers })
+      ]);
+      
+      setStats(statsRes.data);
+      setHistory(historyRes.data);
+    } catch (e) {
+      console.error("Error fetching push data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!message.title || !message.body) {
+      toast.error("Bitte Titel und Nachricht eingeben");
+      return;
+    }
+    
+    setSending(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      const res = await axios.post(`${API}/push/broadcast`, message, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success(res.data.message);
+      setMessage({ title: "", body: "", url: "/", target: "all" });
+      fetchData();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Fehler beim Senden");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <RefreshCw className="w-8 h-8 animate-spin text-pizza-red" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-pizza-dark p-6 border border-pizza-dark">
+          <div className="flex items-center gap-3 mb-2">
+            <Users className="w-6 h-6 text-blue-500" />
+            <span className="font-mono text-sm text-neutral-400">GESAMT ABONNENTEN</span>
+          </div>
+          <p className="font-anton text-4xl text-pizza-white">{stats.total_subscriptions}</p>
+        </div>
+        <div className="bg-pizza-dark p-6 border border-pizza-dark">
+          <div className="flex items-center gap-3 mb-2">
+            <User className="w-6 h-6 text-green-500" />
+            <span className="font-mono text-sm text-neutral-400">MIT KONTO</span>
+          </div>
+          <p className="font-anton text-4xl text-pizza-white">{stats.with_account}</p>
+        </div>
+        <div className="bg-pizza-dark p-6 border border-pizza-dark">
+          <div className="flex items-center gap-3 mb-2">
+            <UserX className="w-6 h-6 text-yellow-500" />
+            <span className="font-mono text-sm text-neutral-400">ANONYM</span>
+          </div>
+          <p className="font-anton text-4xl text-pizza-white">{stats.anonymous}</p>
+        </div>
+      </div>
+
+      {/* Send Message Form */}
+      <div className="bg-pizza-dark p-6 border border-pizza-dark">
+        <h3 className="font-anton text-xl text-pizza-red mb-4 flex items-center gap-2">
+          <Send className="w-5 h-5" />
+          NACHRICHT SENDEN
+        </h3>
+        
+        <form onSubmit={handleSend} className="space-y-4">
+          <div>
+            <Label className="text-pizza-white font-mono text-sm">TITEL</Label>
+            <Input
+              value={message.title}
+              onChange={(e) => setMessage({ ...message, title: e.target.value })}
+              placeholder="z.B. 🍕 Heute 20% Rabatt!"
+              className="mt-1 bg-pizza-black border-pizza-dark text-pizza-white"
+              maxLength={50}
+              data-testid="push-title-input"
+            />
+          </div>
+          
+          <div>
+            <Label className="text-pizza-white font-mono text-sm">NACHRICHT</Label>
+            <textarea
+              value={message.body}
+              onChange={(e) => setMessage({ ...message, body: e.target.value })}
+              placeholder="Deine Nachricht an alle Kunden..."
+              className="mt-1 w-full bg-pizza-black border border-pizza-dark text-pizza-white p-3 font-mono text-sm min-h-[100px] focus:border-pizza-red outline-none"
+              maxLength={200}
+              data-testid="push-body-input"
+            />
+            <p className="font-mono text-xs text-neutral-500 mt-1">{message.body.length}/200 Zeichen</p>
+          </div>
+
+          <div>
+            <Label className="text-pizza-white font-mono text-sm">LINK (OPTIONAL)</Label>
+            <Input
+              value={message.url}
+              onChange={(e) => setMessage({ ...message, url: e.target.value })}
+              placeholder="z.B. /bestellen"
+              className="mt-1 bg-pizza-black border-pizza-dark text-pizza-white"
+              data-testid="push-url-input"
+            />
+          </div>
+
+          <div>
+            <Label className="text-pizza-white font-mono text-sm">ZIELGRUPPE</Label>
+            <div className="flex gap-2 mt-2">
+              {[
+                { id: "all", label: "Alle", icon: Users },
+                { id: "customers", label: "Nur Kunden", icon: User },
+                { id: "admins", label: "Nur Admins", icon: Settings }
+              ].map((target) => (
+                <button
+                  key={target.id}
+                  type="button"
+                  onClick={() => setMessage({ ...message, target: target.id })}
+                  className={`flex-1 py-3 font-anton text-sm flex items-center justify-center gap-2 transition-all ${
+                    message.target === target.id
+                      ? "bg-pizza-red text-pizza-white"
+                      : "bg-pizza-black text-neutral-400 hover:text-pizza-white border border-pizza-dark"
+                  }`}
+                  data-testid={`push-target-${target.id}`}
+                >
+                  <target.icon className="w-4 h-4" />
+                  {target.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={sending || !message.title || !message.body}
+            className="w-full bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-wider py-6 rounded-none"
+            data-testid="push-send-button"
+          >
+            {sending ? (
+              <>
+                <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                WIRD GESENDET...
+              </>
+            ) : (
+              <>
+                <Send className="w-5 h-5 mr-2" />
+                NACHRICHT SENDEN
+              </>
+            )}
+          </Button>
+        </form>
+      </div>
+
+      {/* History */}
+      <div className="bg-pizza-dark p-6 border border-pizza-dark">
+        <h3 className="font-anton text-xl text-pizza-red mb-4 flex items-center gap-2">
+          <Clock className="w-5 h-5" />
+          GESENDETE NACHRICHTEN
+        </h3>
+        
+        {history.length === 0 ? (
+          <p className="font-mono text-sm text-neutral-500 text-center py-8">
+            Noch keine Nachrichten gesendet
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {history.map((broadcast, i) => (
+              <div key={i} className="p-4 bg-pizza-black/50 border border-pizza-dark">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-anton text-pizza-white">{broadcast.title}</p>
+                    <p className="font-mono text-sm text-neutral-400">{broadcast.body}</p>
+                  </div>
+                  <span className="font-mono text-xs text-neutral-500">
+                    {formatDate(broadcast.created_at)}
+                  </span>
+                </div>
+                <div className="flex gap-4 font-mono text-xs">
+                  <span className="text-green-400">✓ {broadcast.sent_count} gesendet</span>
+                  {broadcast.failed_count > 0 && (
+                    <span className="text-red-400">✗ {broadcast.failed_count} fehlgeschlagen</span>
+                  )}
+                  <span className="text-neutral-500">
+                    Ziel: {broadcast.target === "all" ? "Alle" : broadcast.target === "customers" ? "Kunden" : "Admins"}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Info Box */}
+      <div className="bg-blue-500/10 border border-blue-500/30 p-4">
+        <h4 className="font-anton text-blue-400 mb-2 flex items-center gap-2">
+          <Info className="w-5 h-5" />
+          HINWEIS
+        </h4>
+        <p className="font-mono text-sm text-neutral-400">
+          Kunden müssen Push-Benachrichtigungen in ihrem Browser aktivieren, um Nachrichten zu empfangen. 
+          Dies passiert automatisch, wenn sie die App als PWA installieren oder auf der Website die Benachrichtigungen erlauben.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // Loyalty Section Component
 const LoyaltySection = () => {
   const [settings, setSettings] = useState(null);
