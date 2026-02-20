@@ -249,9 +249,16 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
 - **Web Push**: VAPID-Keys konfiguriert für Push-Benachrichtigungen
 
 ## Next Tasks
-1. 🟡 **E-Mail-Benachrichtigungen aktivieren**: Resend API-Key in `/app/backend/.env` eintragen
-2. 🟢 Impressum mit echten Firmendaten ergänzen (über Admin)
-3. 🟢 Weitere Menü-Artikel hinzufügen (über Shop Admin)
+1. 🟠 **P1 - Weitere Backend-Refaktorisierung**: 
+   - Push-Notification-Endpoints in eigenen Router verschieben
+   - CMS-Content-Endpoints in eigenen Router verschieben
+   - Orders und Reservations in eigene Router verschieben
+2. 🟡 **P2 - Treuepunkte-Einlösung implementieren**: 
+   - Backend-Endpoint für Prämien-Einlösung
+   - Frontend "EINLÖSEN" Button funktional machen
+3. 🟡 **E-Mail-Benachrichtigungen aktivieren**: Resend API-Key in `/app/backend/.env` eintragen
+4. 🟢 Impressum mit echten Firmendaten ergänzen (über Admin)
+5. 🟢 Weitere Menü-Artikel hinzufügen (über Shop Admin)
 
 ## Mitarbeiter-App einrichten
 **So richtest du die Personal-App für Mitarbeiter ein:**
