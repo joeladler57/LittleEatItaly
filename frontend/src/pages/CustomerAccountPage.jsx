@@ -12,6 +12,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import QRCode from "react-qr-code";
+import PushOptInModal from "../components/PushOptInModal";
 
 const CHEF_ICON = "https://customer-assets.emergentagent.com/job_red-brick-pizza/artifacts/845efg67_kopf.png";
 
@@ -25,6 +26,7 @@ const CustomerAccountPage = () => {
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState("login");
   const [redeeming, setRedeeming] = useState(null);
+  const [showPushOptIn, setShowPushOptIn] = useState(false);
   
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({ 
