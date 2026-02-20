@@ -36,7 +36,7 @@ class TerminalMenuItem(BaseModel):
     name: str
     category: str = "Hauptspeise"
     price: float
-    addons: List[str] = []
+    addons: List[Dict[str, Any]] = []  # [{name: "Extra Käse", price: 1.50}, ...]
     active: bool = True
     sort_order: int = 0
 
