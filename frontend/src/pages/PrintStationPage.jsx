@@ -188,6 +188,95 @@ const escapeXML = (str) => {
     .replace(/'/g, '&apos;');
 };
 
+// Build ePOS-Print XML for reservation list
+const buildReservationListXML = (data) => {
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+<text lang="de"/>`;
+
+  // Header
+  xml += `<text align="center"/>`;
+  xml += `<text font="font_a" dw="true" dh="true" em="true"/>`;
+  xml += `<text>RESERVIERUNGEN&#10;</text>`;
+  xml += `<text dw="false" dh="false" em="false"/>`;
+  
+  // Date
+  xml += `<text align="center"/>`;
+  xml += `<text dw="true" em="true"/>`;
+  xml += `<text>${escapeXML(data.date_formatted || data.date)}&#10;</text>`;
+  xml += `<text dw="false" em="false"/>`;
+  
+  // Restaurant name
+  xml += `<text>${escapeXML(data.restaurant_name || 'Little Eat Italy')}&#10;</text>`;
+  xml += `<text>================================&#10;</text>`;
+  
+  // Summary
+  xml += `<text align="left"/>`;
+  xml += `<text em="true"/>`;
+  xml += `<text>Gesamt: ${data.total_reservations} Reservierungen&#10;</text>`;
+  xml += `<text>Gaeste: ${data.total_guests} Personen&#10;</text>`;
+  xml += `<text em="false"/>`;
+  xml += `<text>--------------------------------&#10;</text>`;
+  xml += `<feed line="1"/>`;
+
+  // Reservations list
+  const reservations = data.reservations || [];
+  for (let i = 0; i < reservations.length; i++) {
+    const r = reservations[i];
+    
+    // Time and guests (highlighted)
+    xml += `<text dw="true" em="true"/>`;
+    xml += `<text>${escapeXML(r.time)} Uhr  [${r.guests} P]&#10;</text>`;
+    xml += `<text dw="false" em="false"/>`;
+    
+    // Customer name
+    xml += `<text em="true"/>`;
+    xml += `<text>${escapeXML(r.customer_name)}&#10;</text>`;
+    xml += `<text em="false"/>`;
+    
+    // Phone if available
+    if (r.phone) {
+      xml += `<text>Tel: ${escapeXML(r.phone)}&#10;</text>`;
+    }
+    
+    // Notes if available
+    if (r.notes && r.notes !== '[Telefonisch]') {
+      xml += `<text>* ${escapeXML(r.notes.replace('[Telefonisch] ', ''))}&#10;</text>`;
+    }
+    
+    // Staff note (table assignment) if available
+    if (r.staff_note) {
+      xml += `<text em="true"/>`;
+      xml += `<text>Tisch: ${escapeXML(r.staff_note)}&#10;</text>`;
+      xml += `<text em="false"/>`;
+    }
+    
+    // Status indicator
+    if (r.status === 'completed') {
+      xml += `<text>[ANGEKOMMEN]&#10;</text>`;
+    } else if (r.status === 'confirmed') {
+      xml += `<text>[Bestaetigt]&#10;</text>`;
+    }
+    
+    // Separator between reservations
+    if (i < reservations.length - 1) {
+      xml += `<text>- - - - - - - - - - - - - - - -&#10;</text>`;
+    }
+  }
+
+  // Footer
+  xml += `<text>================================&#10;</text>`;
+  xml += `<text align="center"/>`;
+  xml += `<text>Gedruckt: ${new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})} Uhr&#10;</text>`;
+  
+  // Feed and cut
+  xml += `<feed line="4"/>`;
+  xml += `<cut/>`;
+  xml += `</epos-print>`;
+
+  return xml;
+};
+
 const PrintStationPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pin, setPin] = useState("");
