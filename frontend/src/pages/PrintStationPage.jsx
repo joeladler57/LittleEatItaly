@@ -407,13 +407,14 @@ const PrintStationPage = () => {
       try {
         const url = `http://${printerIP}:${printerPort}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000`;
         
-        // Debug: Log the order object
-        console.log('printReceipt called with order:', JSON.stringify(order, null, 2));
-        console.log('order.job_type:', order.job_type);
-        
         // Check if this is a reservation list print job
+        // Multiple checks for robustness
+        const isReservationList = order.job_type === 'reservations' || 
+                                   order.reservations !== undefined ||
+                                   (order.total_reservations !== undefined && order.date_formatted !== undefined);
+        
         let receiptXML;
-        if (order.job_type === 'reservations') {
+        if (isReservationList) {
           console.log('=== PRINTING RESERVATION LIST ===');
           receiptXML = buildReservationListXML(order);
         } else {
@@ -421,7 +422,6 @@ const PrintStationPage = () => {
           receiptXML = buildReceiptXML(order, settings);
         }
         
-        console.log('Generated XML (first 500 chars):', receiptXML.substring(0, 500));
         console.log('Sending print job to:', url);
 
         const xhr = new XMLHttpRequest();
