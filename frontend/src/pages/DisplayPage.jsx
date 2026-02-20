@@ -170,9 +170,18 @@ const DisplayPage = () => {
     setIsPrinting(true);
     
     try {
-      // Get printer settings from localStorage first (like Print Station does)
-      const printerIP = localStorage.getItem("printer_ip") || "192.168.2.129";
-      const printerPort = localStorage.getItem("printer_port") || "8008";
+      // Get printer settings from API (same as orders/terminal)
+      const settingsRes = await axios.get(`${API}/shop/settings`);
+      const settings = settingsRes.data;
+      
+      const printerIP = settings.printer_ip;
+      const printerPort = settings.printer_port || 8008;
+      
+      if (!printerIP) {
+        toast.error("Keine Drucker-IP konfiguriert");
+        setIsPrinting(false);
+        return;
+      }
       
       // Filter active reservations
       const activeReservations = reservations.filter(r => 
@@ -236,11 +245,10 @@ const DisplayPage = () => {
       xml += `<cut/>`;
       xml += `</epos-print>`;
       
-      // Send to printer via ePOS-Print (same method as Print Station)
+      // Send to printer via ePOS-Print
       const url = `http://${printerIP}:${printerPort}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000`;
       
-      console.log('Printing to:', url);
-      console.log('XML:', xml);
+      console.log('Printing reservations to:', url);
       
       const xhr = new XMLHttpRequest();
       xhr.open('POST', url, true);
@@ -263,8 +271,7 @@ const DisplayPage = () => {
       };
       
       xhr.onerror = function() {
-        console.error('XHR error - but print might have succeeded');
-        // CORS might block response, but request may have gone through
+        console.error('XHR error - CORS may block response but print might succeed');
         toast.info("Druckauftrag gesendet...");
         setIsPrinting(false);
       };
@@ -278,7 +285,7 @@ const DisplayPage = () => {
       
     } catch (error) {
       console.error('Print error:', error);
-      toast.error("Druckfehler: " + error.message);
+      toast.error("Fehler: " + (error.message || "Unbekannt"));
       setIsPrinting(false);
     }
   };
