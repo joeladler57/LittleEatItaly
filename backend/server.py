@@ -2350,6 +2350,13 @@ async def create_reservation(reservation_data: ReservationCreate):
     # Get next reservation number
     reservation_number = await get_next_reservation_number()
     
+    # Find or create customer record
+    customer_info = await find_or_create_customer_record(
+        email=reservation_data.customer_email,
+        phone=reservation_data.customer_phone,
+        name=reservation_data.customer_name
+    )
+    
     # Create reservation
     reservation = Reservation(
         reservation_number=reservation_number,
@@ -2366,8 +2373,14 @@ async def create_reservation(reservation_data: ReservationCreate):
     reservation_dict = reservation.model_dump()
     reservation_dict["created_at"] = reservation_dict["created_at"].isoformat()
     reservation_dict["updated_at"] = reservation_dict["updated_at"].isoformat()
+    # Add customer reference
+    reservation_dict["customer_id"] = customer_info["id"]
+    reservation_dict["customer_info"] = customer_info
     
     await db.reservations.insert_one(reservation_dict)
+    
+    # Update customer statistics
+    await update_customer_reservation_stats(customer_info["id"])
     
     # Send confirmation email (non-blocking)
     asyncio.create_task(send_reservation_confirmation_email(reservation_dict, settings, confirmed=False))
