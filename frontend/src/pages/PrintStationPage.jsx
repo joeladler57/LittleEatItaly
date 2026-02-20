@@ -482,7 +482,13 @@ const PrintStationPage = () => {
         
         setPrintedCount(prev => prev + 1);
         setLastPrintTime(new Date());
-        toast.success(`✅ Bon #${job.order_number} gedruckt!`);
+        
+        // Different toast message for reservation lists
+        if (job.job_type === 'reservations' || job.order_data?.job_type === 'reservations') {
+          toast.success(`✅ Reservierungsliste gedruckt!`);
+        } else {
+          toast.success(`✅ Bon #${job.order_number} gedruckt!`);
+        }
       }
     } catch (error) {
       console.error('Process print job error:', error);
