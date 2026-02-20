@@ -1216,6 +1216,62 @@ async def delete_print_job(job_id: str, role: str = Depends(verify_staff_token))
     await db.print_queue.delete_one({"id": job_id})
     return {"message": "Print job deleted"}
 
+@api_router.post("/print-queue/reservations")
+async def add_reservations_to_print_queue(role: str = Depends(verify_staff_token)):
+    """Add today's reservation list to the print queue for the local print station"""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # Get today's reservations
+    reservations = await db.reservations.find(
+        {"date": today, "status": {"$nin": ["cancelled", "no_show"]}},
+        {"_id": 0}
+    ).to_list(100)
+    
+    # Sort by time
+    reservations.sort(key=lambda r: r.get("time", "99:99"))
+    
+    if not reservations:
+        return {"message": "Keine Reservierungen für heute", "job_id": None}
+    
+    # Get settings for restaurant name
+    settings = await db.shop_settings.find_one({"id": "shop_settings"}, {"_id": 0})
+    restaurant_name = settings.get("restaurant_name", "Little Eat Italy") if settings else "Little Eat Italy"
+    
+    # Create a special print job for reservations
+    job_id = str(uuid.uuid4())
+    job_dict = {
+        "id": job_id,
+        "job_type": "reservations",  # Special type to identify reservation list
+        "order_id": f"reservations_{today}",
+        "order_number": f"RES-{today}",
+        "order_data": {
+            "job_type": "reservations",
+            "date": today,
+            "date_formatted": datetime.now(timezone.utc).strftime("%d.%m.%Y"),
+            "restaurant_name": restaurant_name,
+            "reservations": [
+                {
+                    "time": r.get("time"),
+                    "customer_name": r.get("customer_name"),
+                    "guests": r.get("guests"),
+                    "phone": r.get("phone", ""),
+                    "notes": r.get("notes", ""),
+                    "staff_note": r.get("staff_note", ""),
+                    "status": r.get("status", "pending")
+                }
+                for r in reservations
+            ],
+            "total_guests": sum(r.get("guests", 0) for r in reservations),
+            "total_reservations": len(reservations)
+        },
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "printed_at": None
+    }
+    
+    await db.print_queue.insert_one(job_dict)
+    return {"message": f"Reservierungsliste ({len(reservations)} Reservierungen) zur Druckwarteschlange hinzugefügt", "job_id": job_id}
+
 # ============ TERMINAL ENDPOINTS ============
 # Note: Terminal endpoints moved to routers/terminal.py
 
