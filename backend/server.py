@@ -451,6 +451,10 @@ class Customer(BaseModel):
     total_spent: float = 0.0
     last_order_date: Optional[datetime] = None
     last_reservation_date: Optional[datetime] = None
+    # Loyalty Points
+    loyalty_points: int = 0
+    lifetime_points: int = 0  # Total points ever earned
+    points_history: List[Dict] = []  # [{date, amount, type, description}]
     # Metadata
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -469,6 +473,37 @@ class CustomerInfo(BaseModel):
     last_order_date: Optional[str] = None
     last_reservation_date: Optional[str] = None
     has_account: bool = False  # True if registered customer
+    loyalty_points: int = 0
+
+# ============ LOYALTY MODELS ============
+
+class LoyaltyReward(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str  # e.g., "Gratis Dessert"
+    description: str = ""
+    points_required: int  # e.g., 50
+    category: str = "general"  # general, food, drink, etc.
+    is_active: bool = True
+    sort_order: int = 0
+
+class LoyaltySettings(BaseModel):
+    enabled: bool = True
+    points_per_euro: float = 1.0  # e.g., 1 point per 1€ spent
+    min_purchase_for_points: float = 0.0  # Minimum purchase to earn points
+    points_expiry_months: int = 12  # Points expire after X months
+    welcome_bonus_points: int = 0  # Bonus points for new customers
+    rewards: List[LoyaltyReward] = []
+
+class PointsTransaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    customer_id: str
+    amount: int  # Positive for earned, negative for redeemed
+    type: str  # "earned_online", "earned_instore", "redeemed", "expired", "bonus"
+    description: str
+    order_id: Optional[str] = None
+    staff_id: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: Optional[datetime] = None
 
 # ============ CUSTOMER FUNCTIONS ============
 
