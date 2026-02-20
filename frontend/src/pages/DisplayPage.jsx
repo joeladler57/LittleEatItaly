@@ -415,21 +415,24 @@ const DisplayPage = () => {
           
           {/* Info Column */}
           <div className="flex-1 px-4 py-3">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg font-bold text-white">{reservation.customer_name}</span>
-              {isCompleted && (
-                <span className={`text-xs px-2 py-0.5 rounded ${statusInfo.color} text-white`}>
-                  {statusInfo.label}
-                </span>
-              )}
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-white">{reservation.customer_name}</span>
+                {isCompleted && (
+                  <span className={`text-xs px-2 py-0.5 rounded ${statusInfo.color} text-white`}>
+                    {statusInfo.label}
+                  </span>
+                )}
+              </div>
+              {/* Guest Count - Bold in Frame */}
+              <div className="flex items-center gap-2 bg-zinc-700/80 border border-zinc-600 rounded-lg px-3 py-1.5">
+                <Users className="w-5 h-5 text-white" />
+                <span className="text-xl font-bold text-white">{reservation.guests}</span>
+              </div>
             </div>
             <div className="flex items-center gap-3 text-zinc-400">
-              <div className="flex items-center gap-1">
-                <Users className="w-4 h-4" />
-                <span className="font-medium">{reservation.guests} Pers.</span>
-              </div>
               {reservation.notes && reservation.notes !== '[Telefonisch]' && (
-                <span className="text-xs text-zinc-500 truncate max-w-[100px]">
+                <span className="text-xs text-zinc-500 truncate max-w-[150px]">
                   {reservation.notes.replace('[Telefonisch] ', '')}
                 </span>
               )}
