@@ -1331,16 +1331,13 @@ async def get_printer_status(role: str = Depends(verify_staff_token)):
 
 @api_router.post("/printer/reservations")
 async def print_reservation_list(date: Optional[str] = None, role: str = Depends(verify_staff_token)):
-    """Print today's reservation list to the network printer"""
+    """Print today's reservation list via ePOS-Print (HTTP/XML)"""
     settings = await db.shop_settings.find_one({"id": "shop_settings"}, {"_id": 0})
     if not settings:
         settings = ShopSettings().model_dump()
     
-    if not settings.get("printer_enabled"):
-        raise HTTPException(status_code=400, detail="Drucker ist deaktiviert")
-    
     printer_ip = settings.get("printer_ip", "")
-    printer_port = settings.get("printer_port", 9100)
+    printer_port = settings.get("printer_port", 8008)
     
     if not printer_ip:
         raise HTTPException(status_code=400, detail="Keine Drucker-IP konfiguriert")
@@ -1356,21 +1353,89 @@ async def print_reservation_list(date: Optional[str] = None, role: str = Depends
     }, {"_id": 0}).sort("time", 1).to_list(100)
     
     if not reservations:
-        raise HTTPException(status_code=404, detail="Keine Reservierungen für dieses Datum")
+        raise HTTPException(status_code=404, detail="Keine Reservierungen fuer dieses Datum")
     
-    # Build and send receipt
-    try:
-        receipt_data = build_reservation_list_receipt(reservations, settings)
-        result = await send_to_network_printer(printer_ip, printer_port, receipt_data)
+    # Build ePOS-Print XML
+    def escape_xml(s):
+        if not s:
+            return ''
+        return str(s).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&apos;').replace('ä', 'ae').replace('ö', 'oe').replace('ü', 'ue').replace('Ä', 'Ae').replace('Ö', 'Oe').replace('Ü', 'Ue').replace('ß', 'ss')
+    
+    today_str = datetime.now(timezone.utc).strftime("%d.%m.%Y")
+    total_guests = sum(int(r.get("guests", 0)) for r in reservations)
+    
+    xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+<text lang="de"/>
+<text align="center"/>
+<text font="font_a" dw="true" dh="true" em="true"/>
+<text>RESERVIERUNGEN&#10;</text>
+<text dw="false" dh="false" em="false"/>
+<text>{escape_xml(today_str)}&#10;</text>
+<text>================================&#10;</text>
+<text align="center"/>
+<text em="true"/><text>{len(reservations)} Reservierungen | {total_guests} Gaeste&#10;</text>
+<text em="false"/>
+<text>================================&#10;</text>
+<text align="left"/>'''
+    
+    current_time = None
+    for res in reservations:
+        time = res.get("time", "")
+        if time != current_time:
+            xml += f'<feed line="1"/>'
+            xml += f'<text dh="true" em="true"/>'
+            xml += f'<text>--- {escape_xml(time)} Uhr ---&#10;</text>'
+            xml += f'<text dh="false" em="false"/>'
+            current_time = time
         
-        if result.get("success"):
-            return {
-                "success": True,
-                "message": f"Reservierungsliste gedruckt ({len(reservations)} Reservierungen)",
-                "count": len(reservations)
-            }
-        else:
-            raise HTTPException(status_code=500, detail=result.get("error", "Druckfehler"))
+        name = escape_xml(res.get("customer_name", ""))
+        guests = res.get("guests", 0)
+        staff_note = res.get("staff_note", "")
+        
+        xml += f'<text em="true"/>'
+        xml += f'<text>  {name}</text>'
+        xml += f'<text em="false"/>'
+        xml += f'<text>  [{guests} Pers.]</text>'
+        if staff_note:
+            xml += f'<text>  T:{escape_xml(staff_note)}</text>'
+        xml += f'<text>&#10;</text>'
+    
+    xml += f'''<text>================================&#10;</text>
+<text align="center"/>
+<text>Gedruckt: {datetime.now(timezone.utc).strftime("%H:%M")}&#10;</text>
+<feed line="4"/>
+<cut/>
+</epos-print>'''
+    
+    # Send via HTTP POST to ePOS-Print endpoint
+    import aiohttp
+    try:
+        url = f"http://{printer_ip}:{printer_port}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url,
+                data=xml,
+                headers={"Content-Type": "application/xml; charset=UTF-8"},
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as response:
+                response_text = await response.text()
+                logging.info(f"Printer response: {response.status} - {response_text[:200]}")
+                
+                if response.status == 200 and 'success="false"' not in response_text:
+                    return {
+                        "success": True,
+                        "message": f"{len(reservations)} Reservierungen gedruckt!",
+                        "count": len(reservations)
+                    }
+                else:
+                    raise HTTPException(status_code=500, detail="Drucker meldet Fehler")
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=500, detail="Drucker-Timeout")
+    except aiohttp.ClientError as e:
+        logging.error(f"Printer connection error: {e}")
+        raise HTTPException(status_code=500, detail=f"Verbindungsfehler: {str(e)}")
     except Exception as e:
         logging.error(f"Print reservation list error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
