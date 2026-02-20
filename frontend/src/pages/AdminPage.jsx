@@ -12,8 +12,9 @@ import { toast } from "sonner";
 import { 
   LogOut, Save, Image, Link as LinkIcon, Type, 
   Phone, Mail, Clock, MapPin, Settings, Lock, FileText, MessageSquare,
-  Instagram, Facebook, Share2, Plus, Trash2
+  Instagram, Facebook, Share2, Plus, Trash2, BarChart3
 } from "lucide-react";
+import StatisticsSection from "../components/admin/StatisticsSection";
 
 const AdminPage = () => {
   const navigate = useNavigate();
