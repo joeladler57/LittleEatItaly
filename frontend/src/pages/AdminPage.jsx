@@ -289,6 +289,16 @@ const AdminPage = () => {
               ))}
             </TabsList>
 
+            {/* Statistics Section */}
+            <TabsContent value="statistics" className="space-y-6">
+              <div className="p-6 border border-pizza-dark bg-pizza-dark/20">
+                <h2 className="font-anton text-xl tracking-wider text-pizza-white mb-6 flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-pizza-red" />STATISTIK-DASHBOARD
+                </h2>
+                <StatisticsSection />
+              </div>
+            </TabsContent>
+
             {/* Hero Section */}
             <TabsContent value="hero" className="space-y-6">
               <div className="p-6 border border-pizza-dark bg-pizza-dark/20">
