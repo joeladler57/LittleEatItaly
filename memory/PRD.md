@@ -386,7 +386,7 @@ POST /api/staff/loyalty/add-points # Punkte gutschreiben
 GET  /api/staff/loyalty/search     # Kunde suchen
 ```
 
-### Dezember 2025 - Backend-Refaktorisierung (Abgeschlossen ✅)
+### Dezember 2025 - Backend-Refaktorisierung Phase 1 (Abgeschlossen ✅)
 - ✅ **Code-Aufteilung**: 
   - `backend/routers/customers.py` - Kundenverwaltung, Registrierung, Login, Profil
   - `backend/routers/loyalty.py` - Treuepunkte-System, QR-Code, Prämien
@@ -398,6 +398,30 @@ GET  /api/staff/loyalty/search     # Kunde suchen
 - ✅ **Getestet**: 
   - 29/29 pytest Tests bestanden
   - 10/10 Integration-Tests bestanden (100%)
+
+### Februar 2026 - Backend-Refaktorisierung Phase 2 (Abgeschlossen ✅)
+- ✅ **Weitere Router-Module erstellt**:
+  - `backend/routers/terminal.py` - Kellner-Terminal Endpoints (Login, Tische, Kellner, Menü, Bestellungen)
+  - `backend/routers/staff.py` - Personal-Bereich Endpoints (Login, Bestellungen, Reservierungen, Loyalty)
+- ✅ **Code-Reduzierung**:
+  - ~480 Zeilen aus `server.py` in dedizierte Router verschoben
+  - `server.py` von 2940 auf 2472 Zeilen reduziert
+  - Terminal: 420 Zeilen, Staff: 287 Zeilen in eigenen Modulen
+- ✅ **Router-Architektur**:
+  ```
+  backend/routers/
+  ├── __init__.py      # Exportiert alle Router und gemeinsame Funktionen
+  ├── customers.py     # Kundenkonto-System
+  ├── database.py      # MongoDB-Verbindung
+  ├── loyalty.py       # Treuepunkte-System
+  ├── shared.py        # Gemeinsame Modelle (ShopSettings, Auth-Funktionen)
+  ├── staff.py         # Personal-Bereich
+  └── terminal.py      # Kellner-Terminal
+  ```
+- ✅ **Getestet**: 
+  - 97% Erfolgsrate (56/58 Backend-Tests bestanden)
+  - Testing-Agent Bug gefunden und behoben (TerminalMenuItem.addons Typ)
+  - Frontend: Staff-PWA und Terminal funktionieren einwandfrei
   - Alle API-Endpoints funktionieren korrekt
 
 ### Februar 2026 - Push Opt-In & Über Uns Bearbeitung (Implementiert ✅)
