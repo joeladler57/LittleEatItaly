@@ -1,4 +1,4 @@
-const CACHE_NAME = 'little-eat-italy-v2';
+const CACHE_NAME = 'little-eat-italy-v3';
 const urlsToCache = [
   '/sounds/notification.mp3'
 ];
