@@ -270,7 +270,7 @@ const AdminPage = () => {
         </div>
 
         {content && (
-          <Tabs defaultValue="hero" className="w-full">
+          <Tabs defaultValue="statistics" className="w-full">
             <TabsList className="flex flex-wrap gap-2 mb-8 bg-transparent">
               {[
                 { id: "statistics", label: "STATISTIK", icon: BarChart3 },
