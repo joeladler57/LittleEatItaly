@@ -705,7 +705,7 @@ const PrintStationPage = () => {
           <div>
             <h1 className="font-anton text-xl">DRUCK-STATION</h1>
             <p className="font-mono text-xs text-neutral-400">
-              {settings?.restaurant_name || 'Little Eat Italy'}
+              {settings?.restaurant_name || 'Little Eat Italy'} • v{PRINT_STATION_VERSION}
             </p>
           </div>
         </div>
