@@ -186,6 +186,20 @@ async def update_staff_reservation_status(reservation_id: str, status: str, role
     
     return {"message": f"Status updated to {status}"}
 
+@router.put("/reservations/{reservation_id}/note")
+async def update_staff_reservation_note(reservation_id: str, note: str = "", role: str = Depends(verify_staff_token)):
+    """Update internal staff note for reservation (e.g., table number)"""
+    reservation = await db.reservations.find_one({"id": reservation_id})
+    if not reservation:
+        raise HTTPException(status_code=404, detail="Reservation not found")
+    
+    await db.reservations.update_one(
+        {"id": reservation_id},
+        {"$set": {"staff_note": note, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": "Note updated", "staff_note": note}
+
 # ============ LOYALTY (Staff) ============
 
 @router.get("/loyalty/search")
