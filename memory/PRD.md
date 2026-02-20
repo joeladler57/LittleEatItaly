@@ -400,6 +400,19 @@ GET  /api/staff/loyalty/search     # Kunde suchen
   - 10/10 Integration-Tests bestanden (100%)
   - Alle API-Endpoints funktionieren korrekt
 
+### Februar 2026 - Push-Benachrichtigungen (Implementiert ✅)
+- ✅ **PUSH Tab im Admin-Dashboard** (`/admin/shop`):
+  - Statistiken: Gesamt Abonnenten, Mit Konto, Anonym
+  - Nachricht-Formular mit Titel, Nachricht, optionalem Link
+  - Zielgruppen-Auswahl: Alle, Nur Kunden, Nur Admins
+  - Sende-Button und Historie der gesendeten Nachrichten
+- ✅ **Backend APIs**:
+  - `POST /api/push/customer/subscribe` - Kunden können sich anmelden
+  - `POST /api/push/broadcast` - Admin sendet an ausgewählte Zielgruppe
+  - `GET /api/push/customer/stats` - Abonnenten-Statistiken
+  - `GET /api/push/broadcasts` - Gesendete Nachrichten Historie
+- ✅ **Testing:** 35/35 Tests bestanden (Backend + Frontend)
+
 ### Februar 2026 - Wallet Integration für Bonuskarte (Implementiert ✅)
 - ✅ **Apple Wallet Button**:
   - Schön gestalteter Button mit Apple-Logo
