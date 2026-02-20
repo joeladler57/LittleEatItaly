@@ -291,6 +291,7 @@ SENDER_EMAIL=bestellung@little-eat-italy.de
   - **Interne Tischnotiz:** Klick auf "Tischnotiz hinzufügen" → Eingabe → Speichern
   - Automatische Aktualisierung alle 30 Sekunden
   - Statistik-Leiste (Offen/Angekommen)
+  - **Reservierungsliste drucken:** Drucker-Icon im Header → Druckauftrag wird an PrintStation gesendet
 
 ## Mitarbeiter-App einrichten
 **So richtest du die Personal-App für Mitarbeiter ein:**
