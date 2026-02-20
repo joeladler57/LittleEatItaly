@@ -863,45 +863,75 @@ const CheckoutForm = ({ customerInfo, setCustomerInfo, pickupTimes, onBack, onSu
 );
 
 // Success View Component
-const SuccessView = ({ orderResult, settings }) => (
-  <div className="max-w-lg mx-auto px-4 mt-12">
-    <motion.div
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      className="bg-pizza-dark border border-pizza-red p-8 text-center"
-    >
+const SuccessView = ({ orderResult, settings }) => {
+  const [showPushOptIn, setShowPushOptIn] = useState(false);
+
+  useEffect(() => {
+    // Show push opt-in after a short delay
+    const timer = setTimeout(() => setShowPushOptIn(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="max-w-lg mx-auto px-4 mt-12">
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.2, type: "spring" }}
-        className="w-20 h-20 bg-pizza-red/20 rounded-full flex items-center justify-center mx-auto mb-6"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-pizza-dark border border-pizza-red p-8 text-center"
       >
-        <Check className="w-10 h-10 text-pizza-red" />
-      </motion.div>
-      
-      <h2 className="font-anton text-3xl text-pizza-white mb-2">BESTELLUNG AUFGEGEBEN!</h2>
-      <p className="font-mono text-neutral-400 mb-6">
-        Bestellnummer: <span className="text-pizza-red font-bold">#{orderResult?.order_number}</span>
-      </p>
-      
-      <div className="bg-pizza-black/50 p-4 text-left mb-6">
-        <p className="font-mono text-sm text-neutral-400 mb-2">Du erhältst eine Bestätigung per E-Mail.</p>
-        <p className="font-mono text-sm text-neutral-400">
-          <strong className="text-pizza-white">Abholadresse:</strong><br />
-          {settings?.restaurant_name || "Little Eat Italy"}<br />
-          {settings?.restaurant_address || "Europastrasse 8, 57072 Siegen"}<br />
-          Tel: {settings?.restaurant_phone || "0271 31924461"}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring" }}
+          className="w-20 h-20 bg-pizza-red/20 rounded-full flex items-center justify-center mx-auto mb-6"
+        >
+          <Check className="w-10 h-10 text-pizza-red" />
+        </motion.div>
+        
+        <h2 className="font-anton text-3xl text-pizza-white mb-2">BESTELLUNG AUFGEGEBEN!</h2>
+        <p className="font-mono text-neutral-400 mb-6">
+          Bestellnummer: <span className="text-pizza-red font-bold">#{orderResult?.order_number}</span>
         </p>
-      </div>
-      
-      <Button
-        onClick={() => window.location.href = "/"}
-        className="bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-wider rounded-none"
-      >
-        ZURÜCK ZUR STARTSEITE
-      </Button>
-    </motion.div>
-  </div>
-);
+        
+        {orderResult?.points_earned > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-yellow-500/20 border border-yellow-500/30 p-3 mb-4"
+          >
+            <p className="font-anton text-yellow-400">
+              +{orderResult.points_earned} BONUSPUNKTE GESAMMELT!
+            </p>
+          </motion.div>
+        )}
+        
+        <div className="bg-pizza-black/50 p-4 text-left mb-6">
+          <p className="font-mono text-sm text-neutral-400 mb-2">Du erhältst eine Bestätigung per E-Mail.</p>
+          <p className="font-mono text-sm text-neutral-400">
+            <strong className="text-pizza-white">Abholadresse:</strong><br />
+            {settings?.restaurant_name || "Little Eat Italy"}<br />
+            {settings?.restaurant_address || "Europastrasse 8, 57072 Siegen"}<br />
+            Tel: {settings?.restaurant_phone || "0271 31924461"}
+          </p>
+        </div>
+        
+        <Button
+          onClick={() => window.location.href = "/"}
+          className="bg-pizza-red hover:bg-red-700 text-pizza-white font-anton tracking-wider rounded-none"
+        >
+          ZURÜCK ZUR STARTSEITE
+        </Button>
+      </motion.div>
+
+      {/* Push Opt-In Modal */}
+      <PushOptInModal 
+        isOpen={showPushOptIn} 
+        onClose={() => setShowPushOptIn(false)}
+        trigger="order"
+      />
+    </div>
+  );
+};
 
 export default OrderPage;
