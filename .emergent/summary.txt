@@ -2,56 +2,75 @@
 The user initially requested a modern, graffiti-style website for their Neapolitan pizzeria, Little Eat Italy. This has evolved into a full-stack application for online ordering, reservations, and internal staff management.
 
 Recent user requests included:
-1.  **Customer Account & Loyalty System:** Create customer accounts and a points-based loyalty program. (Completed)
-2.  **Staff-Side QR Scanner:** Allow staff to scan a customer's QR code to manually add loyalty points. (Completed)
-3.  **Add to Wallet:** Allow customers to add their digital loyalty card to Apple and Google Wallets. (Placeholder implemented)
-4.  **Admin Push Notifications:** Enable admins to send broadcast push notifications to all subscribed customers from the admin dashboard. (Completed)
-5.  **Push Notification Opt-In:** Prompt users to enable push notifications after registration, ordering, or making a reservation. (Completed)
-6.  **Editable About Us Page:** Make the content of the About Us page editable from the admin dashboard. (Completed)
-7.  **Code Refactoring:** Continue refactoring the monolithic  file for better maintainability. (In Progress)
+1.  **Backend Refactoring:** Continue refactoring the monolithic . (Completed for  and  routes).
+2.  **Reservation Display:** Create a tablet-friendly, portrait-mode display () showing only today's reservations. (Completed).
+3.  **Status Updates on Display:** Add buttons on the display to mark reservations as arrived, canceled, or no-show. (Completed).
+4.  **Internal Notes on Display:** Add the ability for staff to add an internal note (e.g., table number) to each reservation on the display. (Completed).
+5.  **Statistics Dashboard:** Create a new admin dashboard tab to show statistics like revenue, order counts, reservation performance, and peak times. (Completed).
+6.  **Data Import:** A one-time request to import a list of reservations from a CSV file for testing. (Completed).
+7.  **UI/UX Improvements:** Make the guest count on the reservation display bold and framed for better visibility. (Completed).
+8.  **Print Reservation List:** Add a button to the display page to print the daily reservation list on the same printer used for orders. (In Progress/Blocked).
 
 **User's preferred language**: German
 
 **what currently exists?**
-A full-stack React/FastAPI/MongoDB application featuring customer ordering (), a comprehensive admin dashboard (), a staff PWA (), and a waiter terminal (). A complete customer account system () with a loyalty program, a push notification broadcasting system, and a content management system for the About Us page are fully implemented and tested. The backend refactoring is underway, with  and  logic already modularized.
+A full-stack React/FastAPI/MongoDB application. The core features include customer ordering, a comprehensive admin dashboard, a staff PWA, and a waiter terminal.
+
+Recent additions in this session include:
+- A new  page showing today's reservations, protected by a staff PIN. It allows status updates (arrived, canceled, no-show) and adding internal table notes. The page auto-refreshes.
+- A new Statistiken tab in the admin dashboard () with detailed analytics and charts on revenue, orders, reservations, and peak times, powered by a new  backend router.
+- The backend refactoring has progressed, with  and  logic successfully moved from  into their own router files.
+- A bug causing an infinite reload loop on Safari has been fixed.
+- A button to print the reservation list has been added to the  page, but the functionality is currently broken.
 
 **Last working item**:
-- **Last item agent was working:** Continuing the refactoring of the monolithic  file. The agent created new, empty router files for terminal () and staff () logic.
-- **Status:** IN PROGRESS
+- **Last item agent was working:** Debugging the Print Reservation List feature. The user reports that clicking the print button on the  page shows a confirmation message, but nothing is printed on their local ePOS printer. The agent correctly identified that the root cause is a network architecture problem: the cloud-hosted backend cannot access the printer on the user's local network. Attempts to fix this by proxying the request through the backend or printing directly from the frontend have so far failed.
+- **Status:** BLOCKED
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** backend testing agent
-- **User Testing Done:** N
+- **Which testing method agent to use?** Manual testing by the user is required to confirm a fix, as the agent's environment cannot connect to the user's local printer.
+- **User Testing Done:** Y (and it failed)
 
 **All Pending/In progress Issue list**:
-There are no outstanding separate issues. The main focus is the ongoing refactoring task.
+- **Issue 1: Reservation list printing does not work (P0)**
+  - **Attempted fixes:**
+    1.  **Backend Raw Socket Proxy:** Failed due to incorrect protocol (the printer uses HTTP/XML, not raw sockets) and the network block.
+    2.  **Frontend Direct Print:** Failed, likely due to a CORS issue or incorrect implementation compared to the working  component.
+    3.  **Backend HTTP/XML Proxy:** Failed because the cloud-based backend cannot resolve or connect to the local IP address () of the printer.
+  - **Next debug checklist:** The only viable solution is to print **directly from the browser (frontend)**, which avoids the cloud-to-local network issue.
+    1.  Thoroughly analyze the working printer page: . Understand how it fetches printer settings, constructs the ePOS-Print XML payload, and sends it.
+    2.  Re-implement the  function in  to perfectly mirror the logic from .
+    3.  Ensure the printer settings are fetched from the  endpoint, not .
+    4.  Instruct the user to check the browser's developer console (on the tablet/device running the display) for any CORS or network errors when the print button is clicked.
+  - **Why fix this issue and what will be achieved with the fix?** This will complete a key feature for the user's daily operations, allowing staff to have a physical copy of the day's reservation list.
+  - **Status:** BLOCKED
+  - **Is recurring issue?** Y
+  - **Should Test frontend/backend/both after fix?** Frontend (manual user testing).
+  - **Blocked on other issue:** No.
 
 **In progress Task List**:
-- **Task 1: Complete the  Refactoring (P0)**
-  - **Where to resume:** The agent has created empty files at  and . The next step is to identify all terminal- and staff-related endpoints, Pydantic models, and helper functions within , move them into their respective new router files, resolve all imports, include the new routers in the main FastAPI app, and then delete the moved code from .
-  - **What will be achieved with this?** A more modular, maintainable, and scalable backend architecture, making future development easier.
-  - **Status:** IN PROGRESS
-  - **Should Test frontend/backend/both after fix?** Backend
-  - **Blocked on something:** Nothing.
+None. The printing issue is the only active item.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - **Task 1 (P0): Continue Refactoring :** After the  and  routers are stabilized, continue the process by moving other logical sections (e.g., , , , ) into their own dedicated router files.
-  - **Task 2 (P1): Implement Loyalty Points Redemption:** The customer UI shows redeemable rewards, but the EINLÖSEN (Redeem) button functionality is not implemented. This requires creating a backend endpoint and frontend logic to deduct points and apply the reward.
+  - **Task 1 (P1): Implement Loyalty Points Redemption:** The EINLÖSEN (Redeem) button in the customer account is not yet functional. This is the next logical feature to implement.
 
 - **Future Tasks:**
-  - **Task 1 (P2): Full Wallet Integration:** The current implementation uses placeholders. The user needs to be guided on how to obtain and configure the necessary Apple Developer and Google Cloud credentials to enable native Wallet pass generation.
-  - **Task 2 (P2): Enable Email Notifications:** Guide the user on obtaining a  to activate the pre-built email notification feature for orders.
+  - **Task 2 (P2): Activate Email Notifications:** Guide the user on where to input their  to enable automated order and reservation confirmation emails.
+  - **Task 3 (P2): Full Wallet Integration:** Guide the user on obtaining the necessary Apple Developer and Google Cloud credentials to make the Add to Wallet feature functional.
+  - **Task 4 (P2): Continue Backend Refactoring:** Move other logical sections (, , , ) from  into their own router files to improve maintainability.
+  - **Task 5 (P3): Kiosk Mode for Display:** Add an option to hide the logout button on the  page to prevent accidental closing.
 
 **Completed work in this session**
-- **Backend Refactoring (Phase 1 - Customer & Loyalty):** Moved customer and loyalty endpoints from  to  and , removing ~320 lines of duplicate code and verifying system stability.
-- **Staff-Side Loyalty UI (QR Scanner):** Implemented a camera-based QR code scanner and manual customer search in the staff PWA () for adding loyalty points.
-- **Add to Wallet Feature (Placeholder):** Added UI buttons on the customer's loyalty card page. Currently, these buttons show an informational message as full integration requires user-provided credentials. Fallback options (Save QR as Image) were also added.
-- **Admin Push Notifications:** Implemented a PUSH tab in the admin dashboard to send broadcast push notifications to customers. This includes a full UI for message composition, audience targeting, and viewing sent history, supported by new backend endpoints.
-- **Customer Push Opt-in:** Implemented a modal that prompts users to enable push notifications after registration, ordering, or making a reservation.
-- **Editable About Us Page:** Created a new ÜBER UNS tab in the admin dashboard, allowing all content on the  page to be edited. The page was converted to load this content dynamically from the backend.
+- **Backend Refactoring (Staff & Terminal):** Successfully moved all staff and terminal-related endpoints from  into their own dedicated router files (, ). This was validated by the testing agent.
+- **Feature: Reservation Display ():** Implemented a new, PIN-protected page that shows today's reservations with status update buttons (arrived, canceled, no-show) and an auto-refresh mechanism.
+- **Feature: Internal Reservation Notes:** Added functionality for staff to add and edit a Tischnotiz (table note) for each reservation directly on the display page. This involved backend model and endpoint changes.
+- **Feature: Statistics Dashboard:** Implemented a new STATISTIKEN tab in the admin panel with charts and metrics for revenue, orders, reservations, and peak business hours. This required a new backend router and aggregation pipelines.
+- **Bug Fix: Safari Infinite Reload:** Resolved an issue causing the homepage to continuously reload in the Safari browser by modifying the service worker and preventing duplicate API calls in .
+- **UI Enhancement:** Improved the reservation display by making the guest count larger, bold, and visually framed.
+- **Data Seeding:** Successfully imported a user-provided CSV of reservations into the database for testing and cleared old test data.
 
 **Earlier issues found/mentioned but not fixed**
-None. The primary issue of the monolithic  is the focus of the current refactoring task.
+None.
 
 **Known issue recurrence from previous fork**
 None.
@@ -60,83 +79,75 @@ None.
 
 
 **Key Technical Concepts**
-- **Backend:** FastAPI, Pydantic, MongoDB, PyVAPID (for Web Push).
-- **Frontend:** React, TailwindCSS, shadcn/ui, , PWA (Service Workers).
-- **Refactoring:** Breaking down a monolithic application into a modular, router-based architecture.
+- **Backend:** FastAPI (Routers), MongoDB (Aggregation Pipelines),  for async HTTP requests.
+- **Frontend:** React (, ), Recharts library for data visualization, ePOS-Print XML for printer communication.
+- **Architecture:** Debugging a critical network reachability problem between a cloud-hosted backend and a local network device (printer). Understanding and attempting to mitigate CORS issues for direct browser-to-device communication.
 
 **key DB schema**
-- **customers:**  (new field)
-- **settings:**  (new field)
-- **push_messages:** (new collection) 
-- **push_subscriptions:** (new collection) 
+- **reservations:**  field updated to include . A new optional field  was added.
+- **orders, reservations:** Used as sources for new aggregation pipelines to generate statistics.
 
 **changes in tech stack**
-- **Backend:**  was installed for handling web push notifications.
-- **Frontend:**  was installed for the staff-side QR scanner.
+- ****: Installed in the backend for making asynchronous HTTP requests (used in a failed printing attempt).
+- ****: Added to the frontend to create charts for the statistics dashboard.
+- ****: Used in a one-off script to import a CSV file (not a runtime dependency).
 
 **All files of reference**
-- : The main file currently being refactored.
-- : New (empty) file for terminal endpoints.
-- : New (empty) file for staff endpoints.
-- : Modified to include the PUSH and ÜBER UNS tabs.
-- : Contains the QR scanner implementation.
-- : The new modal for push notification consent.
-- : Modified to load content dynamically.
+- : The file containing the broken print functionality.
+- : **The key reference file** containing the working frontend printing logic that must be replicated.
+- : The main server file.
+- : Contains the non-functional backend endpoint for printing.
+- : Contains routing and the Safari bug fix.
+- : Contains the updated service worker for the Safari bug fix.
 
 **Areas that need refactoring**:
-- **:** Still contains a large amount of code for terminal, staff, orders, admin, and printing that needs to be moved to separate router files.
+-  still contains numerous endpoints (, , , ) that should be moved into their own router files as part of the ongoing refactoring task.
 
 **key api endpoints**
-- **Push Notifications (NEW):**
-  - 
-  - 
-- **Content Management (NEW):**
-  - 
-  - 
-- **Wallet (NEW - Placeholder):**
-  - 
+- : (NEW) Updates the internal staff note for a reservation.
+- : (NEW) A set of endpoints providing data for the admin dashboard.
+- : (NEW & FAILED) The backend endpoint created to proxy print jobs, which fails due to the network block.
 
 **Critical Info for New Agent**
-- **Your immediate task is to continue the backend refactoring.** The user has approved this work. You need to populate the newly created  and  files with code from .
-- **Communicate in German.**
-- After moving code blocks, ensure you correctly include the new routers in , fix all imports, and remove the now-redundant code.
-- A full backend regression test using the  will be necessary after each major part of the refactoring is completed to ensure stability.
+- **Your immediate and only priority is to fix the reservation list printing.** The user is blocked on this.
+- **The root cause is a network architecture limitation.** The cloud backend cannot reach the user's local printer. Do not attempt any more backend-based solutions.
+- **The solution is to print directly from the frontend (browser).** You must perfectly replicate the working logic from  inside .
+- Pay close attention to how  fetches printer IP/port, builds the ePOS XML, and handles the  command.
+- Your primary debugging tool will be the browser's developer console on the user's device. You must be prepared to guide the user on how to check it for CORS or other network errors.
+- **All communication must be in German.**
 
 **documents and test reports created in this job**
--  (updated multiple times throughout the session)
-- Multiple test reports were created (e.g., , etc.), with the testing agent successfully validating each new feature and finding/fixing one bug.
+-  (updated multiple times)
+-  (from testing agent validation of backend refactoring)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:**  - Requested to continue the backend refactoring.
-2.  **User:**  - Requested push opt-in on user actions and an editable About Us page.
-3.  **User:**  - Requested the ability to send push notifications to customers from the admin dashboard.
-4.  **User:**  - Requested Add to Wallet functionality for the loyalty card.
-5.  **User:**  - Requested the implementation of the QR scanner.
-6.  **User:**  - Instructed the agent to continue with the last task (which was backend stabilization at the time).
+The user has been engaged in a back-and-forth debugging session for the printing feature.
+- User reported the feature doesn't work.
+- Agent tried multiple solutions (backend raw socket, backend HTTP proxy, frontend direct print).
+- User consistently reported failure (nothing prints, no reaction).
+- The final state is that the agent has identified the architectural reason for the failure (cloud backend can't access local printer) but has not yet successfully implemented the correct frontend-only solution.
+- **Pending human message:** The user is waiting for a working printing solution after the last attempt failed.
 
 **Project Health Check:**
-- **Broken:** No. The application is stable and all implemented features are functional.
+- **Broken:** The Print Reservation List feature is completely non-functional.
 - **Mocked:**
-    - Email notifications (Resend integration is inactive pending an API key).
-    - Apple/Google Wallet integration (placeholder UI/API exists, awaiting user credentials for full functionality).
+    - Email notifications (awaiting Resend API key).
+    - Apple/Google Wallet integration (awaiting user credentials).
 
 **3rd Party Integrations**
-- **Resend:** Integrated but inactive. Requires .
-- **Epson ePOS-Print:** Actively used for kitchen/receipt printing.
-- **qrcode.react:** (Frontend) Used to generate the customer's loyalty QR code.
-- **react-qr-barcode-scanner:** (Frontend) Used for the staff-side QR code scanner.
-- **py-vapid:** (Backend) Used to send web push notifications.
+- **aiohttp:** (Backend) Added for async HTTP requests.
+- **recharts:** (Frontend) Added for dashboard charts.
+- **Epson ePOS-Print:** This is the target printing system. Communication happens via HTTP/XML.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES. The agent was used successfully after the implementation of the QR scanner, Wallet placeholders, Push Notifications, and Editable About Us page. It also found and fixed a bug related to the save content functionality.
+- **Testing agent used after significant changes:** YES, successfully used to validate the backend refactoring.
 - **Test files created:** None.
 - **Known regressions:** None.
 
 **Credentials to test flow:**
 - **Admin Login:** ,  / 
-- **Staff PIN:** , 
-- **Waiter PINs (Example):**  (Marco),  (Lucia)
+- **Staff/Display PIN:**  or , 
+- **Waiter PINs:**  (Marco),  (Lucia)
 
 **What agent forgot to execute**
-- The task to implement the **redemption of loyalty points** remains pending from previous sessions.
-- The agent correctly identified that full **Wallet integration** requires user credentials and implemented a placeholder, but the follow-up task to guide the user through obtaining and configuring those credentials has not been started.</analysis>
+The agent repeatedly attempted solutions that were bound to fail due to the fundamental network architecture mismatch (cloud backend trying to access a local device). While the root cause was eventually identified, the agent failed to correctly replicate the one working pattern () to solve the problem, instead cycling through failed approaches.</analysis>
