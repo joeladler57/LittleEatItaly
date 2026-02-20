@@ -1,0 +1,92 @@
+{
+  "summary": "Tested ÜBER UNS Tab in Admin Dashboard and dynamic AboutPage content loading. Found and FIXED critical bug where ÜBER UNS save button was calling wrong API endpoint. PushOptInModal component verified to exist with proper integration.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "bugs_fixed_by_testing_agent": [
+      {
+        "file": "/app/frontend/src/pages/AdminPage.jsx",
+        "issue": "ÜBER UNS SPEICHERN button was calling saveHeroContent() which saves to /content/hero instead of /content/about",
+        "fix": "Added new saveAboutContent() function that transforms frontend data to backend format and calls /api/content/about endpoint",
+        "lines_changed": "124-159 (added saveAboutContent function), 453 (changed onClick handler)"
+      }
+    ]
+  },
+  "passed_tests": [
+    "Admin ÜBER UNS Tab vorhanden - Tab exists in Admin Dashboard tabs list",
+    "Admin ÜBER UNS Tab bearbeitbar - All form fields are editable",
+    "Über uns: Geschichte (Titel, Text, Bild) bearbeitbar - TITEL, TEXT, BILD URL inputs exist and work",
+    "Über uns: Statistiken (4 Werte) bearbeitbar - 4 stat cards with number/label inputs",
+    "Über uns: Philosophie (3 Sektionen) bearbeitbar - 3 philosophy sections with title/description",
+    "Über uns: Zitat bearbeitbar - ZITAT TEXT and AUTOR fields exist",
+    "ÜBER UNS SPEICHERN button calls correct API endpoint - Now saves to /api/content/about",
+    "AboutPage lädt dynamische Inhalte aus Backend - data-testid='about-page' present, all dynamic content visible",
+    "AboutPage shows UNSERE GESCHICHTE section",
+    "AboutPage shows GEBOREN IN NEAPEL story title",
+    "AboutPage shows 4 statistics (2015, 48, 480°, 100%)",
+    "AboutPage shows UNSERE PHILOSOPHIE with 3 sections",
+    "AboutPage shows quote section with text and author",
+    "Push Opt-In Modal Komponente existiert - PushOptInModal.jsx with proper data-testids",
+    "PushOptInModal integrated in CustomerAccountPage (after registration)",
+    "PushOptInModal integrated in OrderPage (after order success)",
+    "PushOptInModal integrated in ReservationPage (after reservation success)"
+  ],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "All ÜBER UNS sections have proper editable fields",
+    "Statistics section correctly shows 4 editable stat cards",
+    "Philosophy section shows 3 editable philosophy items",
+    "PushOptInModal properly handles 'registration', 'order', 'reservation' triggers",
+    "AboutPage uses fallback default values if backend content not set"
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/AdminPage.jsx"
+  ],
+  "success_rate": {
+    "backend": "N/A (frontend only testing)",
+    "frontend": "100% (17/17 tests passed)"
+  },
+  "test_credentials": {
+    "admin": {
+      "username": "admin",
+      "password": "LittleEatItaly2024!"
+    }
+  },
+  "seed_data_creation": "None",
+  "mocked_apis": {
+    "note": "No mocked APIs - all endpoints are real",
+    "has_mocked_apis": false
+  },
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "ÜBER UNS Tab in Admin Dashboard is fully functional. Fixed bug where save was calling wrong endpoint. AboutPage at /about route loads dynamic content from /api/content. PushOptInModal is integrated in CustomerAccountPage, OrderPage, and ReservationPage to show after registration/order/reservation completion.",
+  "routes_reference": {
+    "admin_dashboard": "/admin",
+    "about_page": "/about",
+    "customer_account": "/konto",
+    "order_page": "/bestellen",
+    "reservation_page": "/reservieren"
+  },
+  "ui_elements_verified": {
+    "admin_ueber_uns_tab": "button:has-text('ÜBER UNS')",
+    "admin_sections": [
+      "ÜBER UNS SEITE heading",
+      "UNSERE GESCHICHTE section with TITEL, TEXT, BILD URL",
+      "STATISTIKEN section with 4 editable stat cards",
+      "UNSERE PHILOSOPHIE section with 3 items",
+      "ZITAT section with ZITAT TEXT, AUTOR"
+    ],
+    "admin_save_button": "button:has-text('ÜBER UNS SPEICHERN')",
+    "about_page": "data-testid='about-page'",
+    "push_modal": {
+      "accept_button": "data-testid='push-opt-in-accept'",
+      "decline_button": "data-testid='push-opt-in-decline'"
+    }
+  }
+}
