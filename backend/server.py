@@ -43,7 +43,7 @@ from routers import (
 
 # GlobalFood API Configuration
 GLOBALFOOD_API_URL = "https://pos.globalfoodsoft.com/pos/menu"
-GLOBALFOOD_API_KEY = os.environ.get('GLOBALFOOD_API_KEY', 'pQ5d8UmzbClR90Y1DR')
+GLOBALFOOD_API_KEY = os.environ.get('GLOBALFOOD_API_KEY')
 
 # Resend Email Configuration
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
@@ -64,7 +64,7 @@ api_router = APIRouter(prefix="/api")
 
 # Security
 security = HTTPBearer()
-JWT_SECRET = os.environ.get('JWT_SECRET', 'little-eat-italy-super-secret-key-2024')
+JWT_SECRET = os.environ.get('JWT_SECRET')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
 
